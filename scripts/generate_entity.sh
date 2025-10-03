@@ -973,6 +973,53 @@ EOF
   info "Validator generado: $(realpath --relative-to="$ROOT_DIR" "$path")"
 }
 
+inject_dbset_into_dbcontext() {
+  local name="$NAME"        # p.ej. CatalogItem
+  local plural="$PLURAL"    # p.ej. CatalogItems
+  local file="$ROOT_DIR/Persistence/Context/ApplicationDbContext.cs"
+
+  if [[ ! -f "$file" ]]; then
+    warn "No existe ApplicationDbContext.cs en Persistence/Context"
+    return
+  fi
+
+  if grep -q "DbSet<${name}>" "$file"; then
+    info "DbSet<${name}> ya existe en ApplicationDbContext"
+    return
+  fi
+
+  # Asegura using Domain.Entities;
+  if ! grep -q '^using[[:space:]]\+Domain\.Entities;' "$file"; then
+    awk '
+      { lines[NR]=$0 }
+      END {
+        last_using=0
+        for (i=1;i<=NR;i++) if (lines[i] ~ /^using[[:space:]].*;/) last_using=i
+        for (i=1;i<=NR;i++) {
+          print lines[i]
+          if (i==last_using) print "using Domain.Entities;"
+        }
+      }
+    ' "$file" > "$file.tmp" && mv "$file.tmp" "$file"
+    info "Agregado: using Domain.Entities;"
+  fi
+
+  # Inserta la propiedad DbSet antes del OnModelCreating
+  awk -v line="    public DbSet<${name}> ${plural} { get; set; }" '
+    BEGIN{inserted=0}
+    {
+      if ($0 ~ /protected override void OnModelCreating/ && !inserted) {
+        print line
+        inserted=1
+      }
+      print
+    }
+  ' "$file" > "$file.tmp" && mv "$file.tmp" "$file"
+
+  info "DbSet<${name}> ${plural} inyectado en ApplicationDbContext.cs"
+}
+
+
 
 # === EJECUCIÓN ===
 generate_dto
@@ -983,6 +1030,7 @@ ensure_mapping_profile
 inject_dbset_into_dbcontext
 generate_repository_interface
 generate_repository_impl
+inject_dbset_into_dbcontext
 inject_repository_into_unitofwork_interface
 inject_repository_into_unitofwork_impl
 

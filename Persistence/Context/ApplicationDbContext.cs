@@ -21,8 +21,8 @@ public class ApplicationDbContext : DbContext
     }
 
     public DbSet<Catalog> Catalogs { get; set; }
-    public DbSet<CatalogItem> CatalogItems { get; set; }
 
+    public DbSet<CatalogItem> CatalogItems { get; set; }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
