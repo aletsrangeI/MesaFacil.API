@@ -944,10 +944,41 @@ inject_repository_into_unitofwork_impl() {
   fi
 }
 
+generate_validator() {
+  local name="$NAME"
+  local dir="$ROOT_DIR/Validator"
+  local path="$dir/${name}DTOValidator.cs"
+
+  ensure_dir "$dir"
+
+  create_file "$path" "$(cat <<'EOF'
+using DTO.__NAME__;
+using FluentValidation;
+
+namespace Validator;
+
+public class __NAME__DTOValidator : AbstractValidator<__NAME__DTO>
+{
+    public __NAME__DTOValidator()
+    {
+        // TODO: Agrega las reglas de validación específicas para __NAME__DTO.
+        // Ejemplo:
+        // RuleFor(x => x.Code).NotEmpty().WithMessage("El campo Code es requerido");
+        // RuleFor(x => x.Name).NotEmpty().WithMessage("El campo Name es requerido");
+    }
+}
+EOF
+)"
+  sed -i "s/__NAME__/$name/g" "$path"
+  info "Validator generado: $(realpath --relative-to="$ROOT_DIR" "$path")"
+}
+
+
 # === EJECUCIÓN ===
 generate_dto
 generate_interface_application
 generate_usecase_application
+generate_validator
 ensure_mapping_profile
 inject_dbset_into_dbcontext
 generate_repository_interface
