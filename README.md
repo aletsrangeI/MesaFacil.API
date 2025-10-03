@@ -17,6 +17,45 @@ El modelo es **modular, escalable y extensible**, lo que permite adaptar el sist
 
 ---
 
+## Automatización para nuevas entidades
+
+Para evitar crear manualmente toda la estructura de capas al agregar una nueva entidad, el repositorio incluye:
+
+- `scripts/generate_entity.sh` para entornos Linux/macOS.
+- `scripts/generate_entity.ps1` para Windows (PowerShell 7+).
+
+Ambos generadores toman como referencia la implementación de **Catalog** y actualizan automáticamente:
+
+- Entidades y configuraciones de EF Core en `Domain` y `Persistence`.
+- DTOs, validadores y perfiles de AutoMapper.
+- Interfaces y clases de aplicación en `UseCases`.
+- Repositorios, unidad de trabajo y registros de inyección en `Persistence`.
+- Endpoints mínimos en `WebApi`.
+
+### Uso básico
+
+```bash
+./scripts/generate_entity.sh Menu --plural Menus
+```
+
+En Windows (PowerShell):
+
+```powershell
+pwsh ./scripts/generate_entity.ps1 -Name Menu -Plural Menus
+```
+
+El parámetro de nombre debe estar en PascalCase. Si el plural no sigue la forma estándar agregando `s`, proporciónalo con `--plural` (`-Plural` en PowerShell). Para validar los archivos que se crearían sin escribirlos utiliza `--dry-run` o `-DryRun`:
+
+```bash
+./scripts/generate_entity.sh Menu --dry-run
+```
+
+```powershell
+pwsh ./scripts/generate_entity.ps1 -Name Menu -DryRun
+```
+
+Los scripts detendrán la ejecución si alguno de los archivos de destino ya existe.
+
 ## Esquema de Tablas por Módulos
 
 1. **Catálogos**
