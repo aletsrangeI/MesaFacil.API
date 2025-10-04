@@ -1,5 +1,6 @@
 using Persistence;
 using MesaFacil.API.Modules.Authentication;
+using MesaFacil.API.Modules.Endpoints;
 using MesaFacil.API.Modules.Feature;
 using MesaFacil.API.Modules.Injection;
 using MesaFacil.API.Modules.Watch;
@@ -53,6 +54,7 @@ app.UseWatchDog(conf =>
     conf.WatchPagePassword = builder.Configuration["WatchDog:WatchPagePassword"];
 });
 
+app.MapCatalogoEndpoints();
 
 app.Run();
 
