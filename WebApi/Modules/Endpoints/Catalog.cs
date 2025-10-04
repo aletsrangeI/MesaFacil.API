@@ -10,70 +10,57 @@ public static class CatalogoEndpoints
 {
     public static IEndpointRouteBuilder MapCatalogoEndpoints(this IEndpointRouteBuilder app)
     {
-        // /api/catalogo
         var group = app.MapGroup("/api/catalogo")
-            .RequireAuthorization() // equivale a [Authorize]
-            .WithTags("Catalogo") // tag de OpenAPI
+            .WithTags("Catalogo")
             .WithOpenApi();
 
-        // ---------- Estilo RESTful y async (recomendado) ----------
-
-        // Crear
-        group.MapPost("/", async (CatalogDTO dto, ICatalogApplication svc, CancellationToken ct) =>
+        // INSERT
+        group.MapPost("/insert", async (CatalogDTO dto, ICatalogApplication svc, CancellationToken ct) =>
             {
                 var result = await svc.InsertAsync(dto);
                 return Results.Ok(result);
             })
-            .WithName("Catalogo_Create");
+            .WithName("Catalogo_Insert");
 
-        // Actualizar (id en ruta; si tu DTO ya trae Id, puedes ignorar esta asignación)
-        group.MapPut("/{id:int}", async (int id, CatalogDTO dto, ICatalogApplication svc, CancellationToken ct) =>
+        // UPDATE
+        group.MapPut("/update/{id:int}", async (int id, CatalogDTO dto, ICatalogApplication svc, CancellationToken ct) =>
             {
-                try
-                {
-                    dto.Id = id;
-                }
-                catch
-                {
-                    /* si no hay Id en el DTO simplemente omite */
-                }
-
+                try { dto.Id = id; } catch { /* si no hay Id en el DTO, se ignora */ }
                 var result = await svc.UpdateAsync(dto);
                 return Results.Ok(result);
             })
             .WithName("Catalogo_Update");
 
-        // Eliminar
-        group.MapDelete("/{id:int}", async (int id, ICatalogApplication svc, CancellationToken ct) =>
+        // DELETE
+        group.MapDelete("/delete/{id:int}", async (int id, ICatalogApplication svc, CancellationToken ct) =>
             {
                 var result = await svc.DeleteAsync(id);
                 return Results.Ok(result);
             })
             .WithName("Catalogo_Delete");
 
-        // Obtener todos
-        group.MapGet("/", async (ICatalogApplication svc, CancellationToken ct) =>
+        // GET ALL
+        group.MapGet("/getall", async (ICatalogApplication svc, CancellationToken ct) =>
             {
                 var result = await svc.GetAllAsync();
                 return Results.Ok(result);
             })
             .WithName("Catalogo_GetAll");
 
-        // Obtener por Id
-        group.MapGet("/{id:int}",
+        // GET BY ID
+        group.MapGet("/getbyid/{id:int}",
                 async Task<Results<Ok<Response<CatalogDTO>>, NotFound>> (int id, ICatalogApplication svc) =>
                 {
-                    var result = await svc.GetAsync(id); // devuelve Response<CatalogDTO> o null
+                    var result = await svc.GetAsync(id);
                     return (result is null || result.Data is null)
                         ? TypedResults.NotFound()
-                        : TypedResults.Ok(result); // Ok<Response<CatalogDTO>>
+                        : TypedResults.Ok(result);
                 })
             .WithName("Catalogo_GetById");
 
-        // Paginado
-        group.MapGet("/paged", async (int page, int pageSize, ICatalogApplication svc, CancellationToken ct) =>
+        // GET PAGED
+        group.MapGet("/getpaged", async (int page, int pageSize, ICatalogApplication svc, CancellationToken ct) =>
             {
-                // Guardas mínimas
                 page = page <= 0 ? 1 : page;
                 pageSize = pageSize <= 0 ? 10 : pageSize;
 
@@ -82,7 +69,7 @@ public static class CatalogoEndpoints
             })
             .WithName("Catalogo_GetPaged");
 
-        // Conteo
+        // COUNT
         group.MapGet("/count", async (ICatalogApplication svc, CancellationToken ct) =>
             {
                 var result = await svc.CountAsync();
@@ -90,15 +77,18 @@ public static class CatalogoEndpoints
             })
             .WithName("Catalogo_Count");
 
-        // ---------- (Opcional) Compat: mismas rutas del controller original ----------
-        // Si necesitas mantener URLs existentes mientras migras, descomenta:
+        // (Opcional) Rutas REST anteriores — si quieres compatibilidad temporal, descomenta:
         /*
-        group.MapPost("/InsertAsync", async (CatalogDTO dto, ICatalogApplication svc) => Results.Ok(await svc.InsertAsync(dto)));
-        group.MapPut("/UpdateAsync", async (CatalogDTO dto, ICatalogApplication svc) => Results.Ok(await svc.UpdateAsync(dto)));
-        group.MapDelete("/DeleteAsync", async (int id, ICatalogApplication svc) => Results.Ok(await svc.DeleteAsync(id)));
-        group.MapGet("/GetAllAsync", async (ICatalogApplication svc) => Results.Ok(await svc.GetAllAsync()));
-        group.MapGet("/GetAllWithPaginationAsync", async (int page, int pageSize, ICatalogApplication svc) => Results.Ok(await svc.GetAllWithPaginationAsync(page, pageSize)));
-        group.MapGet("/CountAsync", async (ICatalogApplication svc) => Results.Ok(await svc.CountAsync()));
+        group.MapPost("/", async (CatalogDTO dto, ICatalogApplication svc, CancellationToken ct) => Results.Ok(await svc.InsertAsync(dto))).WithName("Catalogo_Create_LEGACY");
+        group.MapPut("/{id:int}", async (int id, CatalogDTO dto, ICatalogApplication svc, CancellationToken ct) => { try { dto.Id = id; } catch {} return Results.Ok(await svc.UpdateAsync(dto)); }).WithName("Catalogo_Update_LEGACY");
+        group.MapDelete("/{id:int}", async (int id, ICatalogApplication svc, CancellationToken ct) => Results.Ok(await svc.DeleteAsync(id))).WithName("Catalogo_Delete_LEGACY");
+        group.MapGet("/", async (ICatalogApplication svc, CancellationToken ct) => Results.Ok(await svc.GetAllAsync())).WithName("Catalogo_GetAll_LEGACY");
+        group.MapGet("/{id:int}", async Task<Results<Ok<Response<CatalogDTO>>, NotFound>> (int id, ICatalogApplication svc) => {
+            var result = await svc.GetAsync(id);
+            return (result is null || result.Data is null) ? TypedResults.NotFound() : TypedResults.Ok(result);
+        }).WithName("Catalogo_GetById_LEGACY");
+        group.MapGet("/paged", async (int page, int pageSize, ICatalogApplication svc, CancellationToken ct) => Results.Ok(await svc.GetAllWithPaginationAsync(page <= 0 ? 1 : page, pageSize <= 0 ? 10 : pageSize))).WithName("Catalogo_GetPaged_LEGACY");
+        group.MapGet("/count", async (ICatalogApplication svc, CancellationToken ct) => Results.Ok(await svc.CountAsync())).WithName("Catalogo_Count_LEGACY_DUP");
         */
 
         return app;
