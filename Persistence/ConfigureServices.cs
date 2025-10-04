@@ -26,6 +26,7 @@ public static class ConfigureServices
         );
 
         services.AddScoped<ICatalogRepository, CatalogRepository>();
+        services.AddScoped<ICatalogItemRepository, CatalogItemRepository>();
 
         services.AddScoped<IUnitOfWork, UnitOfWork>();
 

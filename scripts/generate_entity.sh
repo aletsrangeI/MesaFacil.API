@@ -1,403 +1,157 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-usage() {
-  cat <<'USAGE'
-Usage: generate_entity.sh <Name> [--plural Plural] [--dry-run]
+# ===============================================
+# generate_entity.sh — scaffolding desde Domain
+# Uso: ./scripts/generate_entity.sh Menu --plural Menus
+# Requisitos:
+#   - Debe existir Domain/Entities/<Name>.cs
+#   - Crea/actualiza:
+#       DTO/<Name>/<Name>DTO.cs
+#       Interface/UseCases/I<Name>Application.cs
+#       UseCases/<Plural>/<Name>Application.cs
+#       Persistence/Repositories/I<Name>Repository.cs
+#       Persistence/Repositories/<Name>Repository.cs
+#   - Inyecta:
+#       MappingsProfile.cs (CreateMap<Domain.Entities.Name, DTO.Name.NameDTO>().ReverseMap())
+#       ApplicationDbContext (DbSet<Name> <Plural> { get; set; })
+#       UnitOfWork (propiedad y constructor para repositorio)
+# ===============================================
 
-Options:
-  --plural    Provide an explicit PascalCase plural form.
-  --dry-run   Show the operations without writing to disk.
-  -h, --help  Show this help message.
-USAGE
-}
+# --- util consola ---
+info()  { printf "[INFO] %s\n" "$*"; }
+warn()  { printf "[WARN] %s\n" "$*" >&2; }
+error() { printf "[ERROR] %s\n" "$*" >&2; exit 1; }
 
-error() {
-  echo "Error: $1" >&2
-  exit 1
-}
-
-ensure_pascal() {
-  local value="$1"
-  if [[ ! $value =~ ^[A-Z][A-Za-z0-9]*$ ]]; then
-    error "'$value' must be in PascalCase"
-  fi
-}
-
-default_plural() {
-  local value="$1"
-  if [[ $value =~ [^aeiou]y$ ]]; then
-    echo "${value::-1}ies"
-  elif [[ $value =~ s$ ]]; then
-    echo "${value}es"
+# --- helpers de archivo ---
+ensure_dir() { mkdir -p "$1"; }
+create_file() {
+  local path="$1"; shift
+  if [[ -f "$path" ]]; then
+    warn "Ya existe $path (no se sobreescribe)."
   else
-    echo "${value}s"
+    printf "%s" "$*" > "$path"
+    info "Creado: $path"
   fi
 }
 
-to_kebab() {
-  local value="$1"
-  echo "$value" | sed -E 's/([a-z0-9])([A-Z])/\1-\2/g' | tr '[:upper:]' '[:lower:]'
-}
-
-insert_after_last_using() {
-  local file="$1"
-  local line="$2"
-  local tmp="$3"
-  awk -v newline="$line" '
-    BEGIN { inserted=0 }
-    /^using / { last=NR }
-    { lines[NR]=$0 }
-    END {
-      for (i=1; i<=NR; i++) {
-        print lines[i]
-        if (!inserted && i==last) {
-          print newline
-          inserted=1
-        }
-      }
-      if (!inserted) {
-        print newline
-      }
-    }
-  ' "$file" > "$tmp"
-}
-
-ensure_directory() {
-  local dir="$1"
-  if [[ ! -d $dir ]]; then
-    mkdir -p "$dir"
-  fi
-}
-
-DRY_RUN=0
-NAME=""
-PLURAL=""
-
-while [[ $# -gt 0 ]]; do
-  case "$1" in
-    -h|--help)
-      usage
-      exit 0
-      ;;
-    --plural)
-      shift || error "Missing value for --plural"
-      PLURAL="$1"
-      ;;
-    --dry-run)
-      DRY_RUN=1
-      ;;
-    --*)
-      error "Unknown option: $1"
-      ;;
-    *)
-      if [[ -z $NAME ]]; then
-        NAME="$1"
-      else
-        error "Unexpected argument: $1"
-      fi
-      ;;
-  esac
-  shift
-done
-
-[[ -n $NAME ]] || { usage; error "Entity name is required"; }
-ensure_pascal "$NAME"
-
-if [[ -n $PLURAL ]]; then
-  ensure_pascal "$PLURAL"
-else
-  PLURAL=$(default_plural "$NAME")
-  ensure_pascal "$PLURAL"
+# --- args ---
+if [[ $# -lt 1 ]]; then
+  error "Uso: $0 <EntityName> [--plural PluralName]"
 fi
 
-CAMEL="${NAME,}"
-CAMEL_PLURAL="${PLURAL,}"
-KEBAB=$(to_kebab "$NAME")
+NAME="$1"; shift || true
+PLURAL=""
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --plural)
+      PLURAL="${2:-}"; shift 2 || true;;
+    *)
+      warn "Argumento no reconocido: $1"; shift;;
+  esac
+done
+if [[ -z "${PLURAL:-}" ]]; then
+  PLURAL="${NAME}s"
+fi
 
-ROOT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
+# --- paths ---
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
-create_file() {
-  local path="$1"
-  local content="$2"
-  if [[ -e $path ]]; then
-    error "File already exists: $path"
-  fi
-  if [[ $DRY_RUN -eq 1 ]]; then
-    echo "[dry-run] create $path"
-    return
-  fi
-  ensure_directory "$(dirname "$path")"
-  printf '%s\n' "$content" > "$path"
-  echo "created $path"
+# === EXTRAER PROPIEDADES DESDE DOMAIN ===
+domain_entity_path() {
+  echo "$ROOT_DIR/Domain/Entities/${NAME}.cs"
 }
 
-render_template() {
-  local template="$1"
-  local result="${template//__NAME__/$NAME}"
-  result="${result//__PLURAL__/$PLURAL}"
-  result="${result//__KEBAB__/$KEBAB}"
-  result="${result//__CAMEL__/$CAMEL}"
-  printf '%s' "$result"
-}
-
-update_file_with_temp() {
-  local path="$1"
-  local callback="$2"
-  local tmp
-  tmp=$(mktemp)
-  "$callback" "$path" "$tmp"
-  if ! cmp -s "$path" "$tmp"; then
-    if [[ $DRY_RUN -eq 1 ]]; then
-      echo "[dry-run] update $path"
-      rm -f "$tmp"
-      return
-    fi
-    mv "$tmp" "$path"
-    echo "updated $path"
-  else
-    rm -f "$tmp"
+# Devuelve las propiedades como líneas "    public <Tipo> <Nombre> { get; set; }"
+# Heurística:
+# - Ignora atributos [ ... ]
+# - Toma propiedades con get/set (misma línea)
+# - Limpia inicializadores (= ...;) y 'virtual'
+extract_domain_properties() {
+  local file
+  file="$(domain_entity_path)"
+  if [[ ! -f "$file" ]] ; then
+    error "No existe el archivo de entidad en: $file"
   fi
-}
 
-add_dbset_impl() {
-  local file="$1"
-  local tmp="$2"
-  awk -v newline="    public DbSet<$NAME> $PLURAL { get; set; }" '
-    BEGIN { inserted=0 }
+  awk '
+    /^\s*\[/ { next }
+    /^\s*using\b/ { next }
     {
-      if (!inserted && $0 ~ /^\s*protected override void OnModelCreating/) {
-        print newline
-        inserted=1
+      line=$0
+      sub(/\/\/.*/, "", line)
+      if (line ~ /^\s*public[ \t]+[A-Za-z0-9_<>,\?\[\]\.]+[ \t]+[A-Za-z0-9_]+[ \t]*\{[^}]*\}/ && line ~ /get;.*set;|set;.*get;/) {
+        gsub(/\bvirtual\b[ \t]*/, "", line)
+        sub(/=[^;]*;/, ";", line)
+        match(line, /^\s*public[ \t]+([A-Za-z0-9_<>,\?\[\]\.]+)[ \t]+([A-Za-z0-9_]+)/, m)
+        if (m[1] != "" && m[2] != "") {
+          printf("    public %s %s { get; set; }\n", m[1], m[2])
+        }
       }
-      print
     }
-  ' "$file" > "$tmp"
+  ' "$file"
 }
 
-add_dbset() {
-  local file="$ROOT_DIR/Persistence/Context/ApplicationDbContext.cs"
-  local line="    public DbSet<$NAME> $PLURAL { get; set; }"
-  if grep -qF "$line" "$file"; then
-    return
-  fi
-  update_file_with_temp "$file" add_dbset_impl
-}
-
-update_mappings_profile() {
-  local file="$ROOT_DIR/UseCases/Common/Mapping/MappingsProfile.cs"
-  local using_line="using DTO.$NAME;"
-  local map_line="        CreateMap<$NAME, ${NAME}DTO>().ReverseMap();"
-  local tmp
-  tmp=$(mktemp)
-  cp "$file" "$tmp"
-  local changed=0
-
-  if ! grep -qF "$using_line" "$tmp"; then
-    local tmp2
-    tmp2=$(mktemp)
-    insert_after_last_using "$tmp" "$using_line" "$tmp2"
-    mv "$tmp2" "$tmp"
-    changed=1
-  fi
-
-  if ! grep -qF "$map_line" "$tmp"; then
-    sed -i "/CreateMap<Catalog, CatalogDTO>().ReverseMap();/a\\        CreateMap<$NAME, ${NAME}DTO>().ReverseMap();" "$tmp"
-    changed=1
-  fi
-
-  if [[ $changed -eq 0 ]]; then
-    rm -f "$tmp"
-    return
-  fi
-
-  if [[ $DRY_RUN -eq 1 ]]; then
-    echo "[dry-run] update $file"
-    rm -f "$tmp"
-  else
-    mv "$tmp" "$file"
-    echo "updated $file"
-  fi
-}
-
-update_usecases_config() {
-  local file="$ROOT_DIR/UseCases/ConfigureServices.cs"
-  local using_line="using UseCases.$PLURAL;"
-  local service_line="        services.AddScoped<I${NAME}Application, ${NAME}Application>();"
-  local validator_line="        services.AddTransient<${NAME}DTOValidator>();"
-  local tmp
-  tmp=$(mktemp)
-  cp "$file" "$tmp"
-  local changed=0
-
-  if ! grep -qF "$using_line" "$tmp"; then
-    local tmp2
-    tmp2=$(mktemp)
-    insert_after_last_using "$tmp" "$using_line" "$tmp2"
-    mv "$tmp2" "$tmp"
-    changed=1
-  fi
-
-  if ! grep -qF "$service_line" "$tmp"; then
-    sed -i "/services.AddScoped<ICatalogApplication, CatalogApplication>();/a\\        services.AddScoped<I${NAME}Application, ${NAME}Application>();" "$tmp"
-    changed=1
-  fi
-
-  if ! grep -qF "$validator_line" "$tmp"; then
-    sed -i "/services.AddTransient<CatalogDTOValidator>();/a\\        services.AddTransient<${NAME}DTOValidator>();" "$tmp"
-    changed=1
-  fi
-
-  if [[ $changed -eq 0 ]]; then
-    rm -f "$tmp"
-    return
-  fi
-
-  if [[ $DRY_RUN -eq 1 ]]; then
-    echo "[dry-run] update $file"
-    rm -f "$tmp"
-  else
-    mv "$tmp" "$file"
-    echo "updated $file"
-  fi
-}
-
-update_persistence_config() {
-  local file="$ROOT_DIR/Persistence/ConfigureServices.cs"
-  local registration="        services.AddScoped<I${NAME}Repository, ${NAME}Repository>();"
-  if grep -qF "$registration" "$file"; then
-    return
-  fi
-  local tmp
-  tmp=$(mktemp)
-  cp "$file" "$tmp"
-  sed -i "/services.AddScoped<IUnitOfWork, UnitOfWork>();/i\\        services.AddScoped<I${NAME}Repository, ${NAME}Repository>();" "$tmp"
-  if [[ $DRY_RUN -eq 1 ]]; then
-    echo "[dry-run] update $file"
-    rm -f "$tmp"
-  else
-    mv "$tmp" "$file"
-    echo "updated $file"
-  fi
-}
-
-update_iunitofwork_impl() {
-  local file="$1"
-  local tmp="$2"
-  awk -v newline="    I${NAME}Repository $PLURAL { get; }" '
-    /^}/ {
-      print newline
-    }
-    { print }
-  ' "$file" > "$tmp"
-}
-
-update_iunitofwork() {
-  local file="$ROOT_DIR/Interface/Persistence/IUnitOfWork.cs"
-  local property="    I${NAME}Repository $PLURAL { get; }"
-  if grep -qF "$property" "$file"; then
-    return
-  fi
-  update_file_with_temp "$file" update_iunitofwork_impl
-}
-
-update_unitofwork() {
-  local file="$ROOT_DIR/Persistence/Repositories/UnitOfWork.cs"
-  local property="    public I${NAME}Repository $PLURAL { get; }"
-  local parameter="I${NAME}Repository ${CAMEL}Repository"
-  local assignment="        $PLURAL = ${CAMEL}Repository;"
-
-  local tmp
-  tmp=$(mktemp)
-  cp "$file" "$tmp"
-  local changed=0
-
-  if ! grep -qF "$property" "$tmp"; then
-    sed -i "/public ICatalogRepository Catalogs { get; }/a\\    public I${NAME}Repository $PLURAL { get; }" "$tmp"
-    changed=1
-  fi
-
-  if ! grep -q "$parameter" "$tmp"; then
-    sed -i "s/ICatalogRepository catalogRepository)/ICatalogRepository catalogRepository,\\\n        I${NAME}Repository ${CAMEL}Repository)/" "$tmp"
-    changed=1
-  fi
-
-  if ! grep -qF "$assignment" "$tmp"; then
-    sed -i "/Catalogs = catalogRepository;/a\\        $PLURAL = ${CAMEL}Repository;" "$tmp"
-    changed=1
-  fi
-
-  if [[ $changed -eq 0 ]]; then
-    rm -f "$tmp"
-    return
-  fi
-
-  if [[ $DRY_RUN -eq 1 ]]; then
-    echo "[dry-run] update $file"
-    rm -f "$tmp"
-  else
-    mv "$tmp" "$file"
-    echo "updated $file"
-  fi
-}
-
-create_files() {
-  local template
-
-  template=$(cat <<'TEMPLATE'
-namespace Domain.Entities;
-
-public class __NAME__ : BaseAuditableEntity
-{
+fallback_dto_properties() {
+  cat <<'EOF'
+    public int Id { get; set; }
     public string Code { get; set; } = null!;
     public string Name { get; set; } = null!;
+EOF
 }
-TEMPLATE
-)
-  create_file "$ROOT_DIR/Domain/Entities/$NAME.cs" "$(render_template "$template")"
 
-  template=$(cat <<'TEMPLATE'
+# === GENERADORES ===
+generate_dto() {
+  local name="$NAME"
+  local dir="$ROOT_DIR/DTO/$name"
+  local path="$dir/${name}DTO.cs"
+
+  ensure_dir "$dir"
+
+  local props
+  props="$(extract_domain_properties || true)"
+  if [[ -z "${props:-}" ]]; then
+    warn "No se detectaron props en Domain/Entities/${name}.cs; usando fallback."
+    props="$(fallback_dto_properties)"
+  fi
+
+  create_file "$path" "$(cat <<'EOF'
 namespace DTO.__NAME__;
 
 public class __NAME__DTO
 {
-    public int Id { get; set; }
-    public string Code { get; set; } = null!;
-    public string Name { get; set; } = null!;
+__PROPS__
 }
-TEMPLATE
-)
-  create_file "$ROOT_DIR/DTO/$NAME/${NAME}DTO.cs" "$(render_template "$template")"
-
-  template=$(cat <<'TEMPLATE'
-using DTO.__NAME__;
-using FluentValidation;
-
-namespace Validator;
-
-public class __NAME__DTOValidator : AbstractValidator<__NAME__DTO>
-{
-    public __NAME__DTOValidator()
+EOF
+)"
+  # Sustituciones
+  # shellcheck disable=SC2016
+  props_escaped="$(printf "%s" "$props")"
+  sed -i \
+    -e "s/__NAME__/$name/g" \
+    "$path"
+  # Inserta propiedades donde está __PROPS__
+  awk -v repl="$props_escaped" '
     {
-        RuleFor(x => x.Code).NotEmpty().WithMessage("El campo es requerido");
-        RuleFor(x => x.Name).NotEmpty().WithMessage("El campo es requerido");
+      if ($0 ~ /__PROPS__/) {
+        gsub(/__PROPS__/, repl)
+      }
+      print
     }
+  ' "$path" > "$path.tmp" && mv "$path.tmp" "$path"
+
+  info "DTO generado: $(realpath --relative-to="$ROOT_DIR" "$path")"
 }
-TEMPLATE
-)
-  create_file "$ROOT_DIR/Validator/${NAME}DTOValidator.cs" "$(render_template "$template")"
 
-  template=$(cat <<'TEMPLATE'
-using Domain.Entities;
+generate_interface_application() {
+  local name="$NAME"
+  local dir="$ROOT_DIR/Interface/UseCases"
+  local path="$dir/I${name}Application.cs"
 
-namespace Interface.Persistence;
+  ensure_dir "$dir"
 
-public interface I__NAME__Repository : IGenericRepository<__NAME__> {}
-TEMPLATE
-)
-  create_file "$ROOT_DIR/Interface/Persistence/I${NAME}Repository.cs" "$(render_template "$template")"
-
-  template=$(cat <<'TEMPLATE'
+  create_file "$path" "$(cat <<'EOF'
 using Common;
 using DTO.__NAME__;
 
@@ -429,11 +183,22 @@ public interface I__NAME__Application
 
     #endregion
 }
-TEMPLATE
-)
-  create_file "$ROOT_DIR/Interface/UseCases/I${NAME}Application.cs" "$(render_template "$template")"
+EOF
+)"
+  sed -i "s/__NAME__/$name/g" "$path"
+  info "Interface I${name}Application lista."
+}
 
-  template=$(cat <<'TEMPLATE'
+generate_usecase_application() {
+  local name="$NAME"
+  local plural="$PLURAL"
+  local ns_plural="$PLURAL"
+  local dir="$ROOT_DIR/UseCases/$ns_plural"
+  local path="$dir/${name}Application.cs"
+
+  ensure_dir "$dir"
+
+  create_file "$path" "$(cat <<'EOF'
 using AutoMapper;
 using Common;
 using Domain.Entities;
@@ -451,7 +216,10 @@ public class __NAME__Application : I__NAME__Application
     private readonly __NAME__DTOValidator _validationRules;
     private readonly IAppLogger<__NAME__Application> _logger;
 
-    public __NAME__Application(IUnitOfWork unitOfWork, IMapper mapper, __NAME__DTOValidator validationRules,
+    public __NAME__Application(
+        IUnitOfWork unitOfWork,
+        IMapper mapper,
+        __NAME__DTOValidator validationRules,
         IAppLogger<__NAME__Application> logger)
     {
         _unitOfWork = unitOfWork;
@@ -460,12 +228,11 @@ public class __NAME__Application : I__NAME__Application
         _logger = logger;
     }
 
-    #region Metodos Sincronos
+    #region Metodos sincronos
 
     public Response<bool> Insert(__NAME__DTO dto)
     {
         var response = new Response<bool>();
-
         try
         {
             var entity = _mapper.Map<__NAME__>(dto);
@@ -474,7 +241,7 @@ public class __NAME__Application : I__NAME__Application
             if (response.Data)
             {
                 response.isSuccess = true;
-                response.Message = "Registro creado correctamente";
+                response.Message = "__NAME__ creado correctamente";
             }
         }
         catch (Exception ex)
@@ -482,14 +249,12 @@ public class __NAME__Application : I__NAME__Application
             response.Message = ex.Message;
             _logger.LogError(ex.Message);
         }
-
         return response;
     }
 
     public Response<bool> Update(__NAME__DTO dto)
     {
         var response = new Response<bool>();
-
         try
         {
             var entity = _mapper.Map<__NAME__>(dto);
@@ -498,7 +263,7 @@ public class __NAME__Application : I__NAME__Application
             if (response.Data)
             {
                 response.isSuccess = true;
-                response.Message = "Registro actualizado correctamente";
+                response.Message = "__NAME__ modificado correctamente";
             }
         }
         catch (Exception ex)
@@ -506,14 +271,12 @@ public class __NAME__Application : I__NAME__Application
             response.Message = ex.Message;
             _logger.LogError(ex.Message);
         }
-
         return response;
     }
 
     public Response<bool> Delete(int id)
     {
         var response = new Response<bool>();
-
         try
         {
             response.Data = _unitOfWork.__PLURAL__.Delete(id);
@@ -521,7 +284,7 @@ public class __NAME__Application : I__NAME__Application
             if (response.Data)
             {
                 response.isSuccess = true;
-                response.Message = "Registro eliminado correctamente";
+                response.Message = "__NAME__ eliminado correctamente";
             }
         }
         catch (Exception ex)
@@ -529,23 +292,21 @@ public class __NAME__Application : I__NAME__Application
             response.Message = ex.Message;
             _logger.LogError(ex.Message);
         }
-
         return response;
     }
 
     public Response<__NAME__DTO> Get(int id)
     {
         var response = new Response<__NAME__DTO>();
-
         try
         {
             var entity = _unitOfWork.__PLURAL__.Get(id);
             response.Data = _mapper.Map<__NAME__DTO>(entity);
 
-            if (response.Data is not null)
+            if (response.Data != null)
             {
                 response.isSuccess = true;
-                response.Message = "Registro encontrado";
+                response.Message = "__NAME__ encontrado";
             }
         }
         catch (Exception ex)
@@ -553,78 +314,59 @@ public class __NAME__Application : I__NAME__Application
             response.Message = ex.Message;
             _logger.LogError(ex.Message);
         }
-
         return response;
     }
 
     public Response<IEnumerable<__NAME__DTO>> GetAll()
     {
         var response = new Response<IEnumerable<__NAME__DTO>>();
-
         try
         {
-            var entities = _unitOfWork.__PLURAL__.GetAll();
-            response.Data = _mapper.Map<IEnumerable<__NAME__DTO>>(entities);
-
-            if (response.Data is not null)
-            {
-                response.isSuccess = true;
-                response.Message = "Registros encontrados";
-            }
+            var list = _unitOfWork.__PLURAL__.GetAll();
+            response.Data = _mapper.Map<IEnumerable<__NAME__DTO>>(list);
+            response.isSuccess = true;
         }
         catch (Exception ex)
         {
             response.Message = ex.Message;
             _logger.LogError(ex.Message);
         }
-
         return response;
     }
 
-    public ResponsePagination<IEnumerable<__NAME__DTO>> GetAllWithPagination(int pageNumber, int pageSize)
+    public ResponsePagination<IEnumerable<__NAME__DTO>> GetAllWithPagination(int page, int pageSize)
     {
         var response = new ResponsePagination<IEnumerable<__NAME__DTO>>();
-
         try
         {
-            var entities = _unitOfWork.__PLURAL__.GetAllWithPagination(pageNumber, pageSize);
-            response.Data = _mapper.Map<IEnumerable<__NAME__DTO>>(entities);
-
-            if (response.Data is not null)
-            {
-                response.isSuccess = true;
-                response.Message = "Registros encontrados";
-            }
+            var list = _unitOfWork.__PLURAL__.GetAllWithPagination(page, pageSize);
+            response.Data = _mapper.Map<IEnumerable<__NAME__DTO>>(list);
+            response.isSuccess = true;
+            response.Page = page;
+            response.PageSize = pageSize;
+            response.Total = _unitOfWork.__PLURAL__.Count();
         }
         catch (Exception ex)
         {
             response.Message = ex.Message;
             _logger.LogError(ex.Message);
         }
-
         return response;
     }
 
     public Response<int> Count()
     {
         var response = new Response<int>();
-
         try
         {
             response.Data = _unitOfWork.__PLURAL__.Count();
-
-            if (response.Data > 0)
-            {
-                response.isSuccess = true;
-                response.Message = "Total de registros";
-            }
+            response.isSuccess = true;
         }
         catch (Exception ex)
         {
             response.Message = ex.Message;
             _logger.LogError(ex.Message);
         }
-
         return response;
     }
 
@@ -635,7 +377,6 @@ public class __NAME__Application : I__NAME__Application
     public async Task<Response<bool>> InsertAsync(__NAME__DTO dto)
     {
         var response = new Response<bool>();
-
         try
         {
             var entity = _mapper.Map<__NAME__>(dto);
@@ -644,7 +385,7 @@ public class __NAME__Application : I__NAME__Application
             if (response.Data)
             {
                 response.isSuccess = true;
-                response.Message = "Registro creado correctamente";
+                response.Message = "__NAME__ creado correctamente";
             }
         }
         catch (Exception ex)
@@ -652,14 +393,12 @@ public class __NAME__Application : I__NAME__Application
             response.Message = ex.Message;
             _logger.LogError(ex.Message);
         }
-
         return response;
     }
 
     public async Task<Response<bool>> UpdateAsync(__NAME__DTO dto)
     {
         var response = new Response<bool>();
-
         try
         {
             var entity = _mapper.Map<__NAME__>(dto);
@@ -668,7 +407,7 @@ public class __NAME__Application : I__NAME__Application
             if (response.Data)
             {
                 response.isSuccess = true;
-                response.Message = "Registro actualizado correctamente";
+                response.Message = "__NAME__ modificado correctamente";
             }
         }
         catch (Exception ex)
@@ -676,14 +415,12 @@ public class __NAME__Application : I__NAME__Application
             response.Message = ex.Message;
             _logger.LogError(ex.Message);
         }
-
         return response;
     }
 
     public async Task<Response<bool>> DeleteAsync(int id)
     {
         var response = new Response<bool>();
-
         try
         {
             response.Data = await _unitOfWork.__PLURAL__.DeleteAsync(id);
@@ -691,7 +428,7 @@ public class __NAME__Application : I__NAME__Application
             if (response.Data)
             {
                 response.isSuccess = true;
-                response.Message = "Registro eliminado correctamente";
+                response.Message = "__NAME__ eliminado correctamente";
             }
         }
         catch (Exception ex)
@@ -699,23 +436,21 @@ public class __NAME__Application : I__NAME__Application
             response.Message = ex.Message;
             _logger.LogError(ex.Message);
         }
-
         return response;
     }
 
     public async Task<Response<__NAME__DTO>> GetAsync(int id)
     {
         var response = new Response<__NAME__DTO>();
-
         try
         {
             var entity = await _unitOfWork.__PLURAL__.GetAsync(id);
             response.Data = _mapper.Map<__NAME__DTO>(entity);
 
-            if (response.Data is not null)
+            if (response.Data != null)
             {
                 response.isSuccess = true;
-                response.Message = "Registro encontrado";
+                response.Message = "__NAME__ encontrado";
             }
         }
         catch (Exception ex)
@@ -723,88 +458,232 @@ public class __NAME__Application : I__NAME__Application
             response.Message = ex.Message;
             _logger.LogError(ex.Message);
         }
-
         return response;
     }
 
     public async Task<Response<IEnumerable<__NAME__DTO>>> GetAllAsync()
     {
         var response = new Response<IEnumerable<__NAME__DTO>>();
-
         try
         {
-            var entities = await _unitOfWork.__PLURAL__.GetAllAsync();
-            response.Data = _mapper.Map<IEnumerable<__NAME__DTO>>(entities);
-
-            if (response.Data is not null)
-            {
-                response.isSuccess = true;
-                response.Message = "Registros encontrados";
-            }
+            var list = await _unitOfWork.__PLURAL__.GetAllAsync();
+            response.Data = _mapper.Map<IEnumerable<__NAME__DTO>>(list);
+            response.isSuccess = true;
         }
         catch (Exception ex)
         {
             response.Message = ex.Message;
             _logger.LogError(ex.Message);
         }
-
         return response;
     }
 
-    public async Task<ResponsePagination<IEnumerable<__NAME__DTO>>> GetAllWithPaginationAsync(int pageNumber, int pageSize)
+    public async Task<ResponsePagination<IEnumerable<__NAME__DTO>>> GetAllWithPaginationAsync(int page, int pageSize)
     {
         var response = new ResponsePagination<IEnumerable<__NAME__DTO>>();
-
         try
         {
-            var entities = await _unitOfWork.__PLURAL__.GetAllWithPaginationAsync(pageNumber, pageSize);
-            response.Data = _mapper.Map<IEnumerable<__NAME__DTO>>(entities);
-
-            if (response.Data is not null)
-            {
-                response.isSuccess = true;
-                response.Message = "Registros encontrados";
-            }
+            var list = await _unitOfWork.__PLURAL__.GetAllWithPaginationAsync(page, pageSize);
+            response.Data = _mapper.Map<IEnumerable<__NAME__DTO>>(list);
+            response.isSuccess = true;
+            response.Page = page;
+            response.PageSize = pageSize;
+            response.Total = await _unitOfWork.__PLURAL__.CountAsync();
         }
         catch (Exception ex)
         {
             response.Message = ex.Message;
             _logger.LogError(ex.Message);
         }
-
         return response;
     }
 
     public async Task<Response<int>> CountAsync()
     {
         var response = new Response<int>();
-
         try
         {
             response.Data = await _unitOfWork.__PLURAL__.CountAsync();
-
-            if (response.Data > 0)
-            {
-                response.isSuccess = true;
-                response.Message = "Total de registros";
-            }
+            response.isSuccess = true;
         }
         catch (Exception ex)
         {
             response.Message = ex.Message;
             _logger.LogError(ex.Message);
         }
-
         return response;
     }
 
     #endregion
 }
-TEMPLATE
-)
-  create_file "$ROOT_DIR/UseCases/$PLURAL/${NAME}Application.cs" "$(render_template "$template")"
+EOF
+)"
+  sed -i \
+    -e "s/__NAME__/$name/g" \
+    -e "s/__PLURAL__/$PLURAL/g" \
+    "$path"
 
-  template=$(cat <<'TEMPLATE'
+  info "UseCase ${name}Application listo."
+}
+
+ensure_mapping_profile() {
+  local name="$NAME"
+  local file="$ROOT_DIR/UseCases/Common/Mapping/MappingsProfile.cs"
+  local newline="CreateMap<Domain.Entities.$name, DTO.$name.${name}DTO>().ReverseMap();"
+
+  if [[ ! -f "$file" ]]; then
+    warn "No existe $file; omitiendo inyección de mapping."
+    return
+  fi
+
+  # Añade using DTO.<Entidad>; si no existe
+  local using_ns="using DTO.$name;"
+  if ! grep -q "^$using_ns\$" "$file"; then
+    awk -v ins="$using_ns" '
+      { lines[NR]=$0 }
+      END {
+        last_using=0
+        for (i=1;i<=NR;i++) if (lines[i] ~ /^using[[:space:]].*;/) last_using=i
+        for (i=1;i<=NR;i++) {
+          print lines[i]
+          if (i==last_using) print ins
+        }
+      }
+    ' "$file" > "$file.tmp" && mv "$file.tmp" "$file"
+    info "Agregado: $using_ns"
+  fi
+
+  # Inserta línea en el constructor
+  awk -v mapline="$newline" '
+    BEGIN{inserted=0; waitbrace=0}
+    {
+      print
+      if (!inserted) {
+        if ($0 ~ /public[[:space:]]+MappingsProfile\(\)[[:space:]]*\{/) {
+          print "        " mapline
+          inserted=1
+        } else if ($0 ~ /public[[:space:]]+MappingsProfile\(\)/) {
+          waitbrace=1
+        } else if (waitbrace && $0 ~ /\{/) {
+          print "        " mapline
+          inserted=1
+          waitbrace=0
+        }
+      }
+    }
+  ' "$file" > "$file.tmp" && mv "$file.tmp" "$file"
+
+  if grep -qF "$newline" "$file"; then
+    info "Mapping añadido en MappingsProfile.cs"
+  else
+    warn "No se pudo inyectar mapping; revisa el formato del constructor."
+  fi
+}
+
+inject_dbset_into_dbcontext() {
+  local name="$NAME"
+  local plural="$PLURAL"
+  local root="$ROOT_DIR"
+
+  local file=""
+  if [[ -f "$root/Persistence/Context/ApplicationDbContext.cs" ]]; then
+    file="$root/Persistence/Context/ApplicationDbContext.cs"
+  elif [[ -f "$root/Persistence/ApplicationDbContext.cs" ]]; then
+    file="$root/Persistence/ApplicationDbContext.cs"
+  else
+    file="$(find "$root/Persistence" -type f -name '*DbContext.cs' | head -n 1 || true)"
+  fi
+
+  if [[ -z "$file" || ! -f "$file" ]]; then
+    warn "No se encontró DbContext en Persistence; omitiendo DbSet."
+    return
+  fi
+
+  if grep -q "DbSet<${name}>" "$file"; then
+    info "DbSet<${name}> ya existe."
+    return
+  fi
+
+  # using Domain.Entities;
+  if ! grep -q '^using[[:space:]]\+Domain\.Entities;' "$file"; then
+    awk '
+      { lines[NR]=$0 }
+      END {
+        last_using=0
+        for (i=1;i<=NR;i++) if (lines[i] ~ /^using[[:space:]].*;/) last_using=i
+        for (i=1;i<=NR;i++) {
+          print lines[i]
+          if (i==last_using) print "using Domain.Entities;"
+        }
+      }
+    ' "$file" > "$file.tmp" && mv "$file.tmp" "$file"
+    info "Agregado: using Domain.Entities;"
+  fi
+
+  # Inserta la propiedad DbSet dentro de la clase DbContext (antes de la última llave)
+  awk -v line="    public DbSet<${name}> ${plural} { get; set; }" '
+    BEGIN{inserted=0}
+    {
+      if ($0 ~ /^\}/ && !inserted) {
+        print "    " line
+        inserted=1
+      }
+      print
+    }
+  ' "$file" > "$file.tmp" && mv "$file.tmp" "$file"
+
+  info "DbSet<${name}> ${plural} inyectado en $(realpath --relative-to="$root" "$file")"
+}
+
+generate_repository_interface() {
+  local name="$NAME"
+  local dir="$ROOT_DIR/Interface/Persistence"
+  local path="$dir/I${name}Repository.cs"
+
+  ensure_dir "$dir"
+
+  create_file "$path" "$(cat <<'EOF'
+using Domain.Entities;
+
+namespace Interface.Persistence;
+
+public interface I__NAME__Repository
+{
+    #region Metodos sincronos
+    bool Insert(__NAME__ entity);
+    bool Update(__NAME__ entity);
+    bool Delete(int id);
+    __NAME__ Get(int id);
+    IEnumerable<__NAME__> GetAll();
+    IEnumerable<__NAME__> GetAllWithPagination(int page, int pageSize);
+    int Count();
+    #endregion
+
+    #region Metodos asincronos
+    Task<bool> InsertAsync(__NAME__ entity);
+    Task<bool> UpdateAsync(__NAME__ entity);
+    Task<bool> DeleteAsync(int id);
+    Task<__NAME__> GetAsync(int id);
+    Task<IEnumerable<__NAME__>> GetAllAsync();
+    Task<IEnumerable<__NAME__>> GetAllWithPaginationAsync(int page, int pageSize);
+    Task<int> CountAsync();
+    #endregion
+}
+EOF
+)"
+  sed -i "s/__NAME__/$name/g" "$path"
+  info "Interface repo I${name}Repository lista."
+}
+
+generate_repository_impl() {
+  local name="$NAME"        # p.ej. CatalogItem
+  local plural="$PLURAL"    # p.ej. CatalogItems (DbSet y propiedad pública)
+  local dir="$ROOT_DIR/Persistence/Repositories"
+  local path="$dir/${name}Repository.cs"
+
+  ensure_dir "$dir"
+
+  create_file "$path" "$(cat <<'EOF'
 using Domain.Entities;
 using Interface.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -814,7 +693,7 @@ namespace Persistence.Repositories;
 
 public class __NAME__Repository : I__NAME__Repository
 {
-    private readonly ApplicationDbContext _context;
+    protected readonly ApplicationDbContext _context;
 
     public __NAME__Repository(ApplicationDbContext context)
     {
@@ -825,37 +704,37 @@ public class __NAME__Repository : I__NAME__Repository
 
     public bool Insert(__NAME__ entity)
     {
-        _context.__PLURAL__.Add(entity);
+        _context.__DBSET__.Add(entity);
         return _context.SaveChanges() > 0;
     }
 
     public bool Update(__NAME__ entity)
     {
-        _context.__PLURAL__.Update(entity);
+        _context.__DBSET__.Update(entity);
         return _context.SaveChanges() > 0;
     }
 
     public bool Delete(int id)
     {
         var entity = Get(id);
-        if (entity is null) return false;
-        _context.__PLURAL__.Remove(entity);
+        if (entity == null) return false;
+        _context.__DBSET__.Remove(entity);
         return _context.SaveChanges() > 0;
     }
 
-    public __NAME__? Get(int id)
+    public __NAME__ Get(int id)
     {
-        return _context.__PLURAL__.Find(id);
+        return _context.__DBSET__.Find(id);
     }
 
     public IEnumerable<__NAME__> GetAll()
     {
-        return _context.__PLURAL__;
+        return _context.__DBSET__;
     }
 
     public IEnumerable<__NAME__> GetAllWithPagination(int page, int pageSize)
     {
-        return _context.__PLURAL__
+        return _context.__DBSET__
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToList();
@@ -863,7 +742,7 @@ public class __NAME__Repository : I__NAME__Repository
 
     public int Count()
     {
-        return _context.__PLURAL__.Count();
+        return _context.__DBSET__.Count();
     }
 
     #endregion
@@ -872,37 +751,37 @@ public class __NAME__Repository : I__NAME__Repository
 
     public async Task<bool> InsertAsync(__NAME__ entity)
     {
-        await _context.__PLURAL__.AddAsync(entity);
+        await _context.__DBSET__.AddAsync(entity);
         return await _context.SaveChangesAsync() > 0;
     }
 
     public async Task<bool> UpdateAsync(__NAME__ entity)
     {
-        _context.__PLURAL__.Update(entity);
+        _context.__DBSET__.Update(entity);
         return await _context.SaveChangesAsync() > 0;
     }
 
     public async Task<bool> DeleteAsync(int id)
     {
         var entity = await GetAsync(id);
-        if (entity is null) return false;
-        _context.__PLURAL__.Remove(entity);
+        if (entity == null) return false;
+        _context.__DBSET__.Remove(entity);
         return await _context.SaveChangesAsync() > 0;
     }
 
-    public async Task<__NAME__?> GetAsync(int id)
+    public async Task<__NAME__> GetAsync(int id)
     {
-        return await _context.__PLURAL__.FindAsync(id);
+        return await _context.__DBSET__.FindAsync(id);
     }
 
     public async Task<IEnumerable<__NAME__>> GetAllAsync()
     {
-        return await _context.__PLURAL__.ToListAsync();
+        return await _context.__DBSET__.ToListAsync();
     }
 
     public async Task<IEnumerable<__NAME__>> GetAllWithPaginationAsync(int page, int pageSize)
     {
-        return await _context.__PLURAL__
+        return await _context.__DBSET__
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync();
@@ -910,131 +789,249 @@ public class __NAME__Repository : I__NAME__Repository
 
     public async Task<int> CountAsync()
     {
-        return await _context.__PLURAL__.CountAsync();
+        return await _context.__DBSET__.CountAsync();
     }
 
     #endregion
 }
-TEMPLATE
-)
-  create_file "$ROOT_DIR/Persistence/Repositories/${NAME}Repository.cs" "$(render_template "$template")"
+EOF
+)"
+  sed -i \
+    -e "s/__NAME__/$name/g" \
+    -e "s/__DBSET__/$plural/g" \
+    "$path"
 
-  template=$(cat <<'TEMPLATE'
-using Domain.Entities;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Builders;
-
-namespace Persistence.Configurations;
-
-public class __NAME__Configuration : IEntityTypeConfiguration<__NAME__>
-{
-    public void Configure(EntityTypeBuilder<__NAME__> builder)
-    {
-        builder.ToTable("__PLURAL__");
-        builder.HasKey(x => x.Id);
-
-        builder.Property(t => t.Name).IsRequired();
-        builder.Property(t => t.Code).IsRequired();
-
-        builder.HasIndex(x => x.Code).IsUnique();
-
-        builder.Property(x => x.CreatedBy).HasMaxLength(128);
-        builder.Property(x => x.UpdatedBy).HasMaxLength(128);
-    }
+  info "Repository impl creada: $(realpath --relative-to="$ROOT_DIR" "$path")"
 }
-TEMPLATE
-)
-  create_file "$ROOT_DIR/Persistence/Configurations/${NAME}Configuration.cs" "$(render_template "$template")"
 
-  template=$(cat <<'TEMPLATE'
-using Common;
+inject_repository_into_unitofwork_interface() {
+  local name="$NAME"
+  local plural="$PLURAL"
+  local file="$ROOT_DIR/Interface/Persistence/IUnitOfWork.cs"
+
+  if [[ ! -f "$file" ]]; then
+    warn "No existe IUnitOfWork.cs; omitiendo inyección (interface)."
+    return
+  fi
+
+  # using Interface.Persistence;
+  if ! grep -q "^using[[:space:]]\+Interface\.Persistence;" "$file"; then
+    awk '
+      { lines[NR]=$0 }
+      END {
+        last_using=0
+        for (i=1;i<=NR;i++) if (lines[i] ~ /^using[[:space:]].*;/) last_using=i
+        for (i=1;i<=NR;i++) {
+          print lines[i]
+          if (i==last_using) print "using Interface.Persistence;"
+        }
+      }
+    ' "$file" > "$file.tmp" && mv "$file.tmp" "$file"
+  fi
+
+  # Inserta propiedad si no existe
+  if grep -q "I${name}Repository[[:space:]]\+${plural}[[:space:]]*{[[:space:]]*get;" "$file"; then
+    info "IUnitOfWork ya expone ${plural}."
+  else
+    awk -v newline="    I${name}Repository ${plural} { get; }" '
+      BEGIN{inserted=0}
+      {
+        if ($0 ~ /^\}/ && !inserted) {
+          print newline
+          inserted=1
+        }
+        print
+      }
+    ' "$file" > "$file.tmp" && mv "$file.tmp" "$file"
+    info "IUnitOfWork: agregada propiedad I${name}Repository ${plural} { get; }"
+  fi
+}
+
+inject_repository_into_unitofwork_impl() {
+  local name="$NAME"
+  local plural="$PLURAL"
+  local root="$ROOT_DIR"
+  local file="$root/Persistence/Repositories/UnitOfWork.cs"
+
+  if [[ ! -f "$file" ]]; then
+    warn "No existe Persistence/Repositories/UnitOfWork.cs; omitiendo inyección (impl)."
+    return
+  fi
+
+  # using Interface.Persistence;
+  if ! grep -q "^using[[:space:]]\+Interface\.Persistence;" "$file"; then
+    awk '
+      { lines[NR]=$0 }
+      END {
+        last_using=0
+        for (i=1;i<=NR;i++) if (lines[i] ~ /^using[[:space:]].*;/) last_using=i
+        for (i=1;i<=NR;i++) {
+          print lines[i]
+          if (i==last_using) print "using Interface.Persistence;"
+        }
+      }
+    ' "$file" > "$file.tmp" && mv "$file.tmp" "$file"
+    info "Agregado using Interface.Persistence; en UnitOfWork.cs"
+  fi
+
+  # Propiedad pública si no existe
+  if grep -q "public[[:space:]]\+I${name}Repository[[:space:]]\+${plural}[[:space:]]*{[[:space:]]*get;" "$file"; then
+    info "UnitOfWork ya tiene propiedad ${plural}."
+  else
+    awk -v newline="    public I${name}Repository ${plural} { get; }" '
+      { print }
+      /private readonly ApplicationDbContext _context;|private readonly .*_context;/ && !done {
+        # mantenemos después del campo _context;
+      }
+    ' "$file" > "$file.tmp" && mv "$file.tmp" "$file"
+
+    # Si no pudo inyectar en lugar específico, añádelo antes del constructor
+    if ! grep -q "public[[:space:]]\+I${name}Repository[[:space:]]\+${plural}[[:space:]]*{[[:space:]]*get;" "$file"; then
+      awk -v newline="    public I${name}Repository ${plural} { get; }" '
+        BEGIN{done=0}
+        {
+          if (!done && $0 ~ /public[[:space:]]+UnitOfWork\(/) {
+            print newline
+            done=1
+          }
+          print
+        }
+      ' "$file" > "$file.tmp" && mv "$file.tmp" "$file"
+    fi
+    info "UnitOfWork: agregada propiedad ${plural}."
+  fi
+
+  # Inyección por constructor: añade parámetro I<Name>Repository <camelRepo>
+  local camelRepo
+  camelRepo="$(echo "${name}Repository" | sed -E 's/^([A-Z])/\L\1/')" # e.g. catalogItemRepository
+  if grep -q "${camelRepo}" "$file"; then
+    info "UnitOfWork: parece que ya recibe ${camelRepo}."
+  else
+    # Añadir parámetro y asignación básica
+    awk -v name="$name" -v camel="$camelRepo" -v plural="$plural" '
+      BEGIN{inCtor=0; addedParam=0; assigned=0}
+      {
+        line=$0
+        if ($0 ~ /public[[:space:]]+UnitOfWork\(/) inCtor=1
+        if (inCtor && !addedParam && $0 ~ /\)\s*\{/ ) {
+          sub(/\)\s*\{/, ", I"name"Repository "camel") 
+          print
+          inCtor=0; addedParam=1
+          next
+        }
+        print
+      }
+    ' "$file" > "$file.tmp" && mv "$file.tmp" "$file"
+
+    # Asignación de propiedad dentro del constructor
+    awk -v plural="$plural" -v camel="$camelRepo" '
+      BEGIN{inCtor=0; done=0}
+      {
+        print
+        if ($0 ~ /public[[:space:]]+UnitOfWork\(/) inCtor=1
+        else if (inCtor && $0 ~ /\{/) { 
+          if (!done) {
+            print "        " plural " = " camel ";"
+            done=1
+          }
+        } else if (inCtor && $0 ~ /\}/) {
+          inCtor=0
+        }
+      }
+    ' "$file" > "$file.tmp" && mv "$file.tmp" "$file"
+
+    info "UnitOfWork: inyectado parámetro y asignación para ${plural}."
+  fi
+}
+
+generate_validator() {
+  local name="$NAME"
+  local dir="$ROOT_DIR/Validator"
+  local path="$dir/${name}DTOValidator.cs"
+
+  ensure_dir "$dir"
+
+  create_file "$path" "$(cat <<'EOF'
 using DTO.__NAME__;
-using Interface.UseCases;
-using Microsoft.AspNetCore.Http.HttpResults;
+using FluentValidation;
 
-namespace MesaFacil.API.Modules.Endpoints;
+namespace Validator;
 
-public static class __NAME__Endpoints
+public class __NAME__DTOValidator : AbstractValidator<__NAME__DTO>
 {
-    public static IEndpointRouteBuilder Map__NAME__Endpoints(this IEndpointRouteBuilder app)
+    public __NAME__DTOValidator()
     {
-        var group = app.MapGroup("/api/__KEBAB__")
-            .RequireAuthorization()
-            .WithTags("__NAME__")
-            .WithOpenApi();
-
-        group.MapPost("/", async (__NAME__DTO dto, I__NAME__Application svc, CancellationToken ct) =>
-            {
-                var result = await svc.InsertAsync(dto);
-                return Results.Ok(result);
-            })
-            .WithName("__NAME___Create");
-
-        group.MapPut("/{id:int}", async (int id, __NAME__DTO dto, I__NAME__Application svc, CancellationToken ct) =>
-            {
-                dto.Id = id;
-                var result = await svc.UpdateAsync(dto);
-                return Results.Ok(result);
-            })
-            .WithName("__NAME___Update");
-
-        group.MapDelete("/{id:int}", async (int id, I__NAME__Application svc, CancellationToken ct) =>
-            {
-                var result = await svc.DeleteAsync(id);
-                return Results.Ok(result);
-            })
-            .WithName("__NAME___Delete");
-
-        group.MapGet("/", async (I__NAME__Application svc, CancellationToken ct) =>
-            {
-                var result = await svc.GetAllAsync();
-                return Results.Ok(result);
-            })
-            .WithName("__NAME___GetAll");
-
-        group.MapGet("/{id:int}",
-                async Task<Results<Ok<Response<__NAME__DTO>>, NotFound>> (int id, I__NAME__Application svc) =>
-                {
-                    var result = await svc.GetAsync(id);
-                    return (result is null || result.Data is null)
-                        ? TypedResults.NotFound()
-                        : TypedResults.Ok(result);
-                })
-            .WithName("__NAME___GetById");
-
-        group.MapGet("/paged", async (int page, int pageSize, I__NAME__Application svc, CancellationToken ct) =>
-            {
-                page = page <= 0 ? 1 : page;
-                pageSize = pageSize <= 0 ? 10 : pageSize;
-
-                var result = await svc.GetAllWithPaginationAsync(page, pageSize);
-                return Results.Ok(result);
-            })
-            .WithName("__NAME___GetPaged");
-
-        group.MapGet("/count", async (I__NAME__Application svc, CancellationToken ct) =>
-            {
-                var result = await svc.CountAsync();
-                return Results.Ok(result);
-            })
-            .WithName("__NAME___Count");
-
-        return app;
+        // TODO: Agrega las reglas de validación específicas para __NAME__DTO.
+        // Ejemplo:
+        // RuleFor(x => x.Code).NotEmpty().WithMessage("El campo Code es requerido");
+        // RuleFor(x => x.Name).NotEmpty().WithMessage("El campo Name es requerido");
     }
 }
-TEMPLATE
-)
-  create_file "$ROOT_DIR/WebApi/Modules/Endpoints/$NAME.cs" "$(render_template "$template")"
+EOF
+)"
+  sed -i "s/__NAME__/$name/g" "$path"
+  info "Validator generado: $(realpath --relative-to="$ROOT_DIR" "$path")"
 }
 
-main() {
-  create_files
-  add_dbset
-  update_mappings_profile
-  update_usecases_config
-  update_persistence_config
-  update_iunitofwork
-  update_unitofwork
+inject_dbset_into_dbcontext() {
+  local name="$NAME"        # p.ej. CatalogItem
+  local plural="$PLURAL"    # p.ej. CatalogItems
+  local file="$ROOT_DIR/Persistence/Context/ApplicationDbContext.cs"
+
+  if [[ ! -f "$file" ]]; then
+    warn "No existe ApplicationDbContext.cs en Persistence/Context"
+    return
+  fi
+
+  if grep -q "DbSet<${name}>" "$file"; then
+    info "DbSet<${name}> ya existe en ApplicationDbContext"
+    return
+  fi
+
+  # Asegura using Domain.Entities;
+  if ! grep -q '^using[[:space:]]\+Domain\.Entities;' "$file"; then
+    awk '
+      { lines[NR]=$0 }
+      END {
+        last_using=0
+        for (i=1;i<=NR;i++) if (lines[i] ~ /^using[[:space:]].*;/) last_using=i
+        for (i=1;i<=NR;i++) {
+          print lines[i]
+          if (i==last_using) print "using Domain.Entities;"
+        }
+      }
+    ' "$file" > "$file.tmp" && mv "$file.tmp" "$file"
+    info "Agregado: using Domain.Entities;"
+  fi
+
+  # Inserta la propiedad DbSet antes del OnModelCreating
+  awk -v line="    public DbSet<${name}> ${plural} { get; set; }" '
+    BEGIN{inserted=0}
+    {
+      if ($0 ~ /protected override void OnModelCreating/ && !inserted) {
+        print line
+        inserted=1
+      }
+      print
+    }
+  ' "$file" > "$file.tmp" && mv "$file.tmp" "$file"
+
+  info "DbSet<${name}> ${plural} inyectado en ApplicationDbContext.cs"
 }
 
-main
+
+
+# === EJECUCIÓN ===
+generate_dto
+generate_interface_application
+generate_usecase_application
+generate_validator
+ensure_mapping_profile
+inject_dbset_into_dbcontext
+generate_repository_interface
+generate_repository_impl
+inject_dbset_into_dbcontext
+inject_repository_into_unitofwork_interface
+inject_repository_into_unitofwork_impl
+
+info "Listo. Revisa cambios y compila."
