@@ -9,9 +9,13 @@ public class UnitOfWork : IUnitOfWork
 
     private readonly ApplicationDbContext _context;
 
+    public ICatalogItemRepository CatalogItems { get; }
+
     public UnitOfWork(ApplicationDbContext context,
-        ICatalogRepository catalogRepository)
+        ICatalogRepository catalogRepository,
+        ICatalogItemRepository catalogItems)
     {
+        CatalogItems = catalogItems;
         _context = context;
         Catalogs = catalogRepository;
     }
