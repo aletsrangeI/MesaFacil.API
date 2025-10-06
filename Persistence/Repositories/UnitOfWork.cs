@@ -11,10 +11,17 @@ public class UnitOfWork : IUnitOfWork
 
     public ICatalogItemRepository CatalogItems { get; }
 
+    public IAreaRepository Areas { get; }
+
+    public ICategoriaMenuRepository CategoriaMenus { get; }
     public UnitOfWork(ApplicationDbContext context,
         ICatalogRepository catalogRepository,
-        ICatalogItemRepository catalogItems)
+        ICatalogItemRepository catalogItems,
+        IAreaRepository areaRepository, 
+        ICategoriaMenuRepository categoriaMenuRepository)
     {
+        CategoriaMenus = categoriaMenuRepository;
+        Areas = areaRepository;
         CatalogItems = catalogItems;
         _context = context;
         Catalogs = catalogRepository;
