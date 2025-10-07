@@ -18,15 +18,19 @@ public class UnitOfWork : IUnitOfWork
 
     public ICorteCajaRepository CorteCajas { get; }
 
+    public ICredencialRepository Credenciales { get; }
+
     public UnitOfWork(ApplicationDbContext context,
         ICatalogRepository catalogRepository,
         ICatalogItemRepository catalogItems,
         IAreaRepository areaRepository,
         ICategoriaMenuRepository categoriaMenuRepository,
         IClienteRepository clienteRepository,
-        ICorteCajaRepository corteCajasRepository
+        ICorteCajaRepository corteCajasRepository,
+        ICredencialRepository credencialRepository
     )
     {
+        Credenciales = credencialRepository;
         CorteCajas = corteCajasRepository;
         Clientes = clienteRepository;
         CategoriaMenus = categoriaMenuRepository;

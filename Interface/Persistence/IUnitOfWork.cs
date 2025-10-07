@@ -8,4 +8,5 @@ public interface IUnitOfWork : IDisposable
     ICategoriaMenuRepository CategoriaMenus { get; }
     IClienteRepository Clientes { get; }
     ICorteCajaRepository CorteCajas { get; }
+    ICredencialRepository Credenciales { get; }
 }
