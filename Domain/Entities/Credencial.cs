@@ -9,7 +9,6 @@ public class Credencial : BaseAuditableEntity
 
     public string Hash { get; set; } = null!;
     public string? Salt { get; set; }
-    public DateTime? ActualizadoEn { get; set; }
 
     public Usuario Usuario { get; set; } = null!;
     public CatalogItem TipoItem { get; set; } = null!;
