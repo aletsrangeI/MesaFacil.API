@@ -1,3 +1,4 @@
+// Validator/CategoriaMenuDTOValidator.cs
 using DTO.CategoriaMenu;
 using FluentValidation;
 
@@ -7,9 +8,19 @@ public class CategoriaMenuDTOValidator : AbstractValidator<CategoriaMenuDTO>
 {
     public CategoriaMenuDTOValidator()
     {
-        // TODO: Agrega las reglas de validación específicas para CategoriaMenuDTO.
-        // Ejemplo:
-        // RuleFor(x => x.Code).NotEmpty().WithMessage("El campo Code es requerido");
-        // RuleFor(x => x.Name).NotEmpty().WithMessage("El campo Name es requerido");
+        // IdMenu requerido y válido (> 0)
+        RuleFor(x => x.IdMenu)
+            .GreaterThan(0)
+            .WithMessage("El campo IdMenu es requerido y debe ser mayor a 0.");
+
+        // Nombre requerido, sin espacios en blanco, máximo 100 caracteres
+        RuleFor(x => x.Nombre)
+            .NotEmpty().WithMessage("El campo Nombre es requerido.")
+            .MaximumLength(100).WithMessage("El campo Nombre no debe exceder los 100 caracteres.");
+
+        // Orden no negativo
+        RuleFor(x => x.Orden)
+            .GreaterThanOrEqualTo(0)
+            .WithMessage("El campo Orden no puede ser negativo.");
     }
 }

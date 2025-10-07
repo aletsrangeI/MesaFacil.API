@@ -29,6 +29,8 @@ public static class ConfigureServices
         services.AddScoped<ICatalogItemRepository, CatalogItemRepository>();
         services.AddScoped<IAreaRepository, AreaRepository>();
         services.AddScoped<ICategoriaMenuRepository, CategoriaMenuRepository>();
+        services.AddScoped<IClienteRepository, ClienteRepository>();
+        services.AddScoped<ICorteCajaRepository, CorteCajaRepository>();
 
         services.AddScoped<IUnitOfWork, UnitOfWork>();
 

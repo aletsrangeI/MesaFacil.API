@@ -5,6 +5,8 @@ using UseCases.Areas;
 using UseCases.CatalogItems;
 using UseCases.Catalogs;
 using UseCases.CategoriaMenus;
+using UseCases.Clientes;
+using UseCases.CorteCajas;
 using Validator;
 
 namespace UseCases;
@@ -24,12 +26,16 @@ public static class ConfigureServices
         services.AddScoped<IAreaApplication, AreaApplication>();
         services.AddScoped<ICategoriaMenuApplication, CategoriaMenuApplication>();
         services.AddScoped<ICatalogItemApplication, CatalogItemApplication>();
+        services.AddScoped<IClienteApplication, ClienteApplication>();
+        services.AddScoped<ICorteCajaApplication, CorteCajaApplication>();
 
         //validators
         services.AddTransient<CatalogDTOValidator>();
         services.AddTransient<AreaDTOValidator>();
         services.AddTransient<CatalogItemDTOValidator>();
         services.AddTransient<CategoriaMenuDTOValidator>();
+        services.AddTransient<ClienteDTOValidator>();
+        services.AddTransient<CorteCajaDTOValidator>();
 
         return services;
     }
