@@ -14,12 +14,21 @@ public class UnitOfWork : IUnitOfWork
     public IAreaRepository Areas { get; }
 
     public ICategoriaMenuRepository CategoriaMenus { get; }
+    public IClienteRepository Clientes { get; }
+
+    public ICorteCajaRepository CorteCajas { get; }
+
     public UnitOfWork(ApplicationDbContext context,
         ICatalogRepository catalogRepository,
         ICatalogItemRepository catalogItems,
-        IAreaRepository areaRepository, 
-        ICategoriaMenuRepository categoriaMenuRepository)
+        IAreaRepository areaRepository,
+        ICategoriaMenuRepository categoriaMenuRepository,
+        IClienteRepository clienteRepository,
+        ICorteCajaRepository corteCajasRepository
+    )
     {
+        CorteCajas = corteCajasRepository;
+        Clientes = clienteRepository;
         CategoriaMenus = categoriaMenuRepository;
         Areas = areaRepository;
         CatalogItems = catalogItems;

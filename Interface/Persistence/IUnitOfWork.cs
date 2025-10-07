@@ -6,4 +6,6 @@ public interface IUnitOfWork : IDisposable
     ICatalogItemRepository CatalogItems { get; }
     IAreaRepository Areas { get; }
     ICategoriaMenuRepository CategoriaMenus { get; }
+    IClienteRepository Clientes { get; }
+    ICorteCajaRepository CorteCajas { get; }
 }

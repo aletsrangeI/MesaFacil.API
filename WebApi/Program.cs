@@ -57,6 +57,7 @@ app.UseWatchDog(conf =>
 app.MapCatalogoEndpoints();
 app.MapAreaEndpoints();
 app.MapCategoriaMenuEndpoints();
+app.MapClienteEndpoints();
 
 app.Run();
 

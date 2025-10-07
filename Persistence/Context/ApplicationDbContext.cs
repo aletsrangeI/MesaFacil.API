@@ -24,6 +24,8 @@ public class ApplicationDbContext : DbContext
     public DbSet<CatalogItem> CatalogItems { get; set; }
     public DbSet<Area> Areas { get; set; }
     public DbSet<CategoriaMenu> CategoriaMenus { get; set; }
+    public DbSet<Cliente> Clientes { get; set; }
+    public DbSet<CorteCaja> CorteCajas { get; set; }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
