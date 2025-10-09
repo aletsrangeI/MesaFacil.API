@@ -20,6 +20,7 @@ public class UnitOfWork : IUnitOfWork
 
     public ICredencialRepository Credenciales { get; }
 
+    public ICuentaRepository Cuentas { get; }
     public UnitOfWork(ApplicationDbContext context,
         ICatalogRepository catalogRepository,
         ICatalogItemRepository catalogItems,
@@ -27,9 +28,11 @@ public class UnitOfWork : IUnitOfWork
         ICategoriaMenuRepository categoriaMenuRepository,
         IClienteRepository clienteRepository,
         ICorteCajaRepository corteCajasRepository,
-        ICredencialRepository credencialRepository
+        ICredencialRepository credencialRepository,
+        ICuentaRepository cuentaRepository
     )
     {
+        Cuentas = cuentaRepository;
         Credenciales = credencialRepository;
         CorteCajas = corteCajasRepository;
         Clientes = clienteRepository;

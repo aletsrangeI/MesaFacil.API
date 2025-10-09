@@ -33,6 +33,7 @@ public static class ConfigureServices
         services.AddScoped<ICorteCajaRepository, CorteCajaRepository>();
         services.AddScoped<ICredencialRepository, CredencialRepository>();
         services.AddScoped<IUsuarioRepository, UsuarioRepository>();
+        services.AddScoped<ICuentaRepository, CuentaRepository>();
         
 
         services.AddScoped<IUnitOfWork, UnitOfWork>();

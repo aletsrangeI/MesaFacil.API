@@ -27,6 +27,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<Cliente> Clientes { get; set; }
     public DbSet<CorteCaja> CorteCajas { get; set; }
     public DbSet<Credencial> Credenciales { get; set; }
+    public DbSet<Cuenta> Cuentas { get; set; }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());

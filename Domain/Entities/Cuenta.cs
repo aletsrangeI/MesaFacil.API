@@ -8,7 +8,6 @@ public class Cuenta : BaseAuditableEntity
     public decimal CargoServicio { get; set; }
     public decimal ImpuestoTotal { get; set; }
     public decimal Total { get; set; }
-    public DateTime CreadaEn { get; set; }
 
     public int EstadoCatalogId { get; set; }
     public int EstadoItemId { get; set; }

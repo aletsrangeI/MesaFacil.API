@@ -9,4 +9,5 @@ public interface IUnitOfWork : IDisposable
     IClienteRepository Clientes { get; }
     ICorteCajaRepository CorteCajas { get; }
     ICredencialRepository Credenciales { get; }
+    ICuentaRepository Cuentas { get; }
 }

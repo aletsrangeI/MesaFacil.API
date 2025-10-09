@@ -67,6 +67,7 @@ app.MapAreaEndpoints();
 app.MapCategoriaMenuEndpoints();
 app.MapClienteEndpoints();
 app.MapAuthEndpoints();
+app.MapCuentaEndpoints();
 
 app.Run();
 
