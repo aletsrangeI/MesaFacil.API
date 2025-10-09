@@ -5,8 +5,6 @@ public class Usuario : BaseAuditableEntity
     public int IdEmpresa { get; set; }
     public string? NombreCompleto { get; set; }
     public string? Correo { get; set; }
-    public bool Activo { get; set; } = true;
-    public DateTime CreadoEn { get; set; }
 
     public Empresa Empresa { get; set; } = null!;
     public ICollection<UsuarioRol> UsuarioRoles { get; set; } = new List<UsuarioRol>();

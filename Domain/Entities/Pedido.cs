@@ -1,6 +1,6 @@
 namespace Domain.Entities;
 
-public class Pedido
+public class Pedido : BaseAuditableEntity
 {
     public int IdEmpresa { get; set; }
     public int IdSucursal { get; set; }

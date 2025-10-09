@@ -30,6 +30,29 @@ public class ApplicationDbContext : DbContext
     public DbSet<Cuenta> Cuentas { get; set; }
     public DbSet<DescuentoAplicado> DescuentosAplicados { get; set; }
     public DbSet<DetalleCuenta> DetalleCuentas { get; set; }
+    public DbSet<Empresa> Empresas { get; set; }
+    public DbSet<EstacionCocina> EstacionesCocina { get; set; }
+    public DbSet<EventoPedido> EventosPedido { get; set; }
+    public DbSet<GrupoModificador> GruposModificador { get; set; }
+    public DbSet<Menu> Menus { get; set; }
+    public DbSet<Mesa> Mesas { get; set; }
+    public DbSet<MovimientoCaja> MovimientosCaja { get; set; }
+    public DbSet<OpcionModificador> OpcionesModificador { get; set; }
+    public DbSet<Pago> Pagos { get; set; }
+    public DbSet<Pedido> Pedidos { get; set; }
+    public DbSet<PedidoAsiento> PedidosAsiento { get; set; }
+    public DbSet<PedidoDetalle> PedidoDetalles { get; set; }
+    public DbSet<PedidoModificador> PedidoModificadores { get; set; }
+    public DbSet<Precio> Precios { get; set; }
+    public DbSet<Producto> Productos { get; set; }
+    public DbSet<Rol> Roles { get; set; }
+    public DbSet<Sucursal> Sucursales { get; set; }
+    public DbSet<TicketCocina> TicketsCocina { get; set; }
+    public DbSet<TicketDetalle> TicketDetalles { get; set; }
+    public DbSet<Turno> Turnos { get; set; }
+    public DbSet<Usuario> Usuarios { get; set; }
+    public DbSet<UsuarioRol> UsuarioRoles { get; set; }
+    public DbSet<VarianteProducto> VarianteProductos { get; set; }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());

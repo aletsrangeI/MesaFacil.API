@@ -2,12 +2,8 @@ namespace Domain.Entities;
 
 public class Empresa : BaseAuditableEntity
 {
-    //Todo: Agregar entidades faltantes
-
     public string? Nombre { get; set; }
     public string? Rfc { get; set; }
-    public DateTime CreadoEn { get; set; }
-    public DateTime? ActualizadoEn { get; set; }
 
     public ICollection<Sucursal> Sucursales { get; set; } = new List<Sucursal>();
     public ICollection<Usuario> Usuarios { get; set; } = new List<Usuario>();

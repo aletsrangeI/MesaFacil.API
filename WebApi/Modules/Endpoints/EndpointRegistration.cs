@@ -15,6 +15,29 @@ public static class EndpointRegistration
 
         app.MapDescuentoAplicadoEndpoints();
         app.MapDetalleCuentaEndpoints();
+        app.MapEmpresaEndpoints();
+        app.MapEstacionCocinaEndpoints();
+        app.MapEventoPedidoEndpoints();
+        app.MapGrupoModificadorEndpoints();
+        app.MapMenuEndpoints();
+        app.MapMesaEndpoints();
+        app.MapMovimientoCajaEndpoints();
+        app.MapOpcionModificadorEndpoints();
+        app.MapPagoEndpoints();
+        app.MapPedidoEndpoints();
+        app.MapPedidoAsientoEndpoints();
+        app.MapPedidoDetalleEndpoints();
+        app.MapPedidoModificadorEndpoints();
+        app.MapPrecioEndpoints();
+        app.MapProductoEndpoints();
+        app.MapRolEndpoints();
+        app.MapSucursalEndpoints();
+        app.MapTicketCocinaEndpoints();
+        app.MapTicketDetalleEndpoints();
+        app.MapTurnoEndpoints();
+        app.MapUsuarioEndpoints();
+        app.MapUsuarioRolEndpoints();
+        app.MapVarianteProductoEndpoints();
         return app;
     }
 }

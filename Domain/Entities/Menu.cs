@@ -4,8 +4,6 @@ public class Menu : BaseAuditableEntity
 {
     public int IdSucursal { get; set; }
     public string? Nombre { get; set; }
-    public bool Activo { get; set; } = true;
-    public DateTime CreadoEn { get; set; }
 
     public Sucursal Sucursal { get; set; } = null!;
     public ICollection<CategoriaMenu> Categorias { get; set; } = new List<CategoriaMenu>();
