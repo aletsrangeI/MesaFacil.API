@@ -10,4 +10,6 @@ public interface IUnitOfWork : IDisposable
     ICorteCajaRepository CorteCajas { get; }
     ICredencialRepository Credenciales { get; }
     ICuentaRepository Cuentas { get; }
+    IDescuentoAplicadoRepository DescuentosAplicados { get; }
+    IDetalleCuentaRepository DetalleCuentas { get; }
 }

@@ -62,12 +62,7 @@ app.UseWatchDog(conf =>
     conf.WatchPagePassword = builder.Configuration["WatchDog:WatchPagePassword"];
 });
 
-app.MapCatalogoEndpoints();
-app.MapAreaEndpoints();
-app.MapCategoriaMenuEndpoints();
-app.MapClienteEndpoints();
-app.MapAuthEndpoints();
-app.MapCuentaEndpoints();
+app.MapMesaFacilEndpoints();
 
 app.Run();
 
