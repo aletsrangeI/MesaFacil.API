@@ -2,8 +2,6 @@ namespace Domain.Entities;
 
 public class Mesa : BaseAuditableEntity
 {
-    //Todo: Agregar entidades faltantes
-    
     public int IdSucursal { get; set; }
     public int? IdArea { get; set; }
     public string Codigo { get; set; } = null!;
@@ -11,9 +9,7 @@ public class Mesa : BaseAuditableEntity
 
     public int EstadoCatalogId { get; set; }
     public int EstadoItemId { get; set; }
-
-    public DateTime CreadoEn { get; set; }
-    public DateTime? ActualizadoEn { get; set; }
+    
 
     public Sucursal Sucursal { get; set; } = null!;
     public Area? Area { get; set; }

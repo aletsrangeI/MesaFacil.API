@@ -6,8 +6,6 @@ public class Rol : BaseAuditableEntity
     public bool IsSystem { get; set; } = false;
     public bool IsAssignable { get; set; } = true;
     public string? ConcurrencyStamp { get; set; }
-    public DateTime? CreadoEn { get; set; }
-    public DateTime? ActualizadoEn { get; set; }
 
     public ICollection<UsuarioRol> UsuarioRoles { get; set; } = new List<UsuarioRol>();
 }

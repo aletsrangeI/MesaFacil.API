@@ -25,6 +25,39 @@ public class UnitOfWork : IUnitOfWork
 
     public IDetalleCuentaRepository DetalleCuentas { get; }
 
+    public IEmpresaRepository Empresas { get; }
+    public IEstacionCocinaRepository EstacionesCocina { get; }
+    public IEventoPedidoRepository EventosPedido { get; }
+
+    public IGrupoModificadorRepository GruposModificador { get; }
+    public IMenuRepository Menus { get; }
+    public IMesaRepository Mesas { get; }
+
+    public IMovimientoCajaRepository MovimientosCaja { get; }
+    public IOpcionModificadorRepository OpcionesModificador { get; }
+    public IPagoRepository Pagos { get; }
+
+    public IPedidoRepository Pedidos { get; }
+
+    public IPedidoAsientoRepository PedidosAsiento { get; }
+
+    public IPedidoDetalleRepository PedidoDetalles { get; }
+
+    public IPedidoModificadorRepository PedidoModificadores { get; }
+    public IPrecioRepository Precios { get; }
+
+    public IProductoRepository Productos { get; }
+    public IRolRepository Roles { get; }
+
+    public ISucursalRepository Sucursales { get; }
+    public ITicketCocinaRepository TicketsCocina { get; }
+    public ITicketDetalleRepository TicketDetalles { get; }
+
+    public ITurnoRepository Turnos { get; }
+    public IUsuarioRepository Usuarios { get; }
+    public IUsuarioRolRepository UsuarioRoles { get; }
+    public IVarianteProductoRepository VarianteProductos { get; }
+
     public UnitOfWork(ApplicationDbContext context,
         ICatalogRepository catalogRepository,
         ICatalogItemRepository catalogItems,
@@ -35,9 +68,55 @@ public class UnitOfWork : IUnitOfWork
         ICredencialRepository credencialRepository,
         ICuentaRepository cuentaRepository,
         IDescuentoAplicadoRepository descuentosAplicadosRepository,
-        IDetalleCuentaRepository detalleCuentaRepository
+        IDetalleCuentaRepository detalleCuentaRepository,
+        IEmpresaRepository empresaRepository,
+        IEstacionCocinaRepository estacionesCocinaRepository,
+        IEventoPedidoRepository eventosPedidoRepository,
+        IGrupoModificadorRepository grupoModificadorRepository,
+        IMenuRepository menuRepository,
+        IMesaRepository mesaRepository,
+        IMovimientoCajaRepository movimientoCajaRepository,
+        IOpcionModificadorRepository opcionesModificadorRepository,
+        IPagoRepository pagoRepository,
+        IPedidoRepository pedidoRepository,
+        IPedidoAsientoRepository pedidoAsientoRepository,
+        IPedidoDetalleRepository pedidoDetalleRepository,
+        IPedidoModificadorRepository pedidoModificadorRepository,
+        IPrecioRepository precioRepository,
+        IProductoRepository productoRepository,
+        IRolRepository rolRepository,
+        ISucursalRepository sucursalRepository,
+        ITicketCocinaRepository ticketCocinaRepository,
+        ITicketDetalleRepository ticketDetalleRepository,
+        ITurnoRepository turnoRepository,
+        IUsuarioRepository usuarioRepository,
+        IUsuarioRolRepository usuarioRolRepository,
+        IVarianteProductoRepository varianteProductoRepository
     )
     {
+        VarianteProductos = varianteProductoRepository;
+        UsuarioRoles = usuarioRolRepository;
+        Usuarios = usuarioRepository;
+        Turnos = turnoRepository;
+        TicketDetalles = ticketDetalleRepository;
+        TicketsCocina = ticketCocinaRepository;
+        Sucursales = sucursalRepository;
+        Roles = rolRepository;
+        Productos = productoRepository;
+        Precios = precioRepository;
+        PedidoModificadores = pedidoModificadorRepository;
+        PedidoDetalles = pedidoDetalleRepository;
+        PedidosAsiento = pedidoAsientoRepository;
+        Pedidos = pedidoRepository;
+        Pagos = pagoRepository;
+        OpcionesModificador = opcionesModificadorRepository;
+        MovimientosCaja = movimientoCajaRepository;
+        Mesas = mesaRepository;
+        Menus = menuRepository;
+        GruposModificador = grupoModificadorRepository;
+        EventosPedido = eventosPedidoRepository;
+        EstacionesCocina = estacionesCocinaRepository;
+        Empresas = empresaRepository;
         DetalleCuentas = detalleCuentaRepository;
         DescuentosAplicados = descuentosAplicadosRepository;
         Cuentas = cuentaRepository;

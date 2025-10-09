@@ -6,8 +6,6 @@ public class Sucursal : BaseAuditableEntity
     public string? Nombre { get; set; }
     public string? Direccion { get; set; }
     public string? ZonaHoraria { get; set; }
-    public DateTime CreadoEn { get; set; }
-    public DateTime? ActualizadoEn { get; set; }
 
     public Empresa Empresa { get; set; } = null!;
     public ICollection<Area> Areas { get; set; } = new List<Area>();

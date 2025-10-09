@@ -36,6 +36,28 @@ public static class ConfigureServices
         services.AddScoped<ICuentaRepository, CuentaRepository>();
         services.AddScoped<IDescuentoAplicadoRepository, DescuentoAplicadoRepository>();
         services.AddScoped<IDetalleCuentaRepository, DetalleCuentaRepository>();
+        services.AddScoped<IEmpresaRepository, EmpresaRepository>();
+        services.AddScoped<IEstacionCocinaRepository, EstacionCocinaRepository>();
+        services.AddScoped<IEventoPedidoRepository, EventoPedidoRepository>();
+        services.AddScoped<IGrupoModificadorRepository, GrupoModificadorRepository>();
+        services.AddScoped<IMenuRepository, MenuRepository>();
+        services.AddScoped<IMesaRepository, MesaRepository>();
+        services.AddScoped<IMovimientoCajaRepository, MovimientoCajaRepository>();
+        services.AddScoped<IOpcionModificadorRepository, OpcionModificadorRepository>();
+        services.AddScoped<IPagoRepository, PagoRepository>();
+        services.AddScoped<IPedidoRepository, PedidoRepository>();
+        services.AddScoped<IPedidoAsientoRepository, PedidoAsientoRepository>();
+        services.AddScoped<IPedidoDetalleRepository, PedidoDetalleRepository>();
+        services.AddScoped<IPedidoModificadorRepository, PedidoModificadorRepository>();
+        services.AddScoped<IPrecioRepository, PrecioRepository>();
+        services.AddScoped<IProductoRepository, ProductoRepository>();
+        services.AddScoped<IRolRepository, RolRepository>();
+        services.AddScoped<ISucursalRepository, SucursalRepository>();
+        services.AddScoped<ITicketCocinaRepository, TicketCocinaRepository>();
+        services.AddScoped<ITicketDetalleRepository, TicketDetalleRepository>();
+        services.AddScoped<ITurnoRepository, TurnoRepository>();
+        services.AddScoped<IUsuarioRolRepository, UsuarioRolRepository>();
+        services.AddScoped<IVarianteProductoRepository, VarianteProductoRepository>();
 
 
         services.AddScoped<IUnitOfWork, UnitOfWork>();

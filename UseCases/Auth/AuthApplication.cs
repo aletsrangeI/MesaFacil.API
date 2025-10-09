@@ -22,7 +22,7 @@ public class AuthApplication : IAuthApplication
     {
         // 1) Buscar usuario por correo (o username si agregas campo)
         var usuario = await _usuarios.GetByCorreoWithRolesAndCredentialsAsync(request.UserOrEmail, ct);
-        if (usuario is null || !usuario.Activo)
+        if (usuario is null || !usuario.IsActive)
             return new TokenResult(false, null, null, null, "Usuario no encontrado o inactivo.");
 
         // 2) Seleccionar credencial de tipo "Password" (según tu catálogo)
