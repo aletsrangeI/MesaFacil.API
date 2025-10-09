@@ -334,58 +334,18 @@ public class __NAME__Application : I__NAME__Application
         return response;
     }
 
-    public ResponsePagination<IEnumerable<__NAME__DTO>> GetAllWithPagination(int page, int pageSize)
+        public ResponsePagination<IEnumerable<__NAME__DTO>> GetAllWithPagination(int page, int pageSize)
     {
         var response = new ResponsePagination<IEnumerable<__NAME__DTO>>();
         try
         {
             var list = _unitOfWork.__PLURAL__.GetAllWithPagination(page, pageSize);
-            response.Data = _mapper.Map<IEnumerable<__NAME__DTO>>(list);
-            response.isSuccess = true;
-            response.Page = page;
-            response.PageSize = pageSize;
-            response.Total = _unitOfWork.__PLURAL__.Count();
-        }
-        catch (Exception ex)
-        {
-            response.Message = ex.Message;
-            _logger.LogError(ex.Message);
-        }
-        return response;
-    }
 
-    public Response<int> Count()
-    {
-        var response = new Response<int>();
-        try
-        {
-            response.Data = _unitOfWork.__PLURAL__.Count();
-            response.isSuccess = true;
-        }
-        catch (Exception ex)
-        {
-            response.Message = ex.Message;
-            _logger.LogError(ex.Message);
-        }
-        return response;
-    }
-
-    #endregion
-
-    #region Metodos asincronos
-
-    public async Task<Response<bool>> InsertAsync(__NAME__DTO dto)
-    {
-        var response = new Response<bool>();
-        try
-        {
-            var entity = _mapper.Map<__NAME__>(dto);
-            response.Data = await _unitOfWork.__PLURAL__.InsertAsync(entity);
-
-            if (response.Data)
+            if (list != null)
             {
+                response.Data = _mapper.Map<IEnumerable<__NAME__DTO>>(list);
                 response.isSuccess = true;
-                response.Message = "__NAME__ creado correctamente";
+                response.Message = "__PLURAL__ encontradas con exito";
             }
         }
         catch (Exception ex)
@@ -393,129 +353,9 @@ public class __NAME__Application : I__NAME__Application
             response.Message = ex.Message;
             _logger.LogError(ex.Message);
         }
+
         return response;
     }
-
-    public async Task<Response<bool>> UpdateAsync(__NAME__DTO dto)
-    {
-        var response = new Response<bool>();
-        try
-        {
-            var entity = _mapper.Map<__NAME__>(dto);
-            response.Data = await _unitOfWork.__PLURAL__.UpdateAsync(entity);
-
-            if (response.Data)
-            {
-                response.isSuccess = true;
-                response.Message = "__NAME__ modificado correctamente";
-            }
-        }
-        catch (Exception ex)
-        {
-            response.Message = ex.Message;
-            _logger.LogError(ex.Message);
-        }
-        return response;
-    }
-
-    public async Task<Response<bool>> DeleteAsync(int id)
-    {
-        var response = new Response<bool>();
-        try
-        {
-            response.Data = await _unitOfWork.__PLURAL__.DeleteAsync(id);
-
-            if (response.Data)
-            {
-                response.isSuccess = true;
-                response.Message = "__NAME__ eliminado correctamente";
-            }
-        }
-        catch (Exception ex)
-        {
-            response.Message = ex.Message;
-            _logger.LogError(ex.Message);
-        }
-        return response;
-    }
-
-    public async Task<Response<__NAME__DTO>> GetAsync(int id)
-    {
-        var response = new Response<__NAME__DTO>();
-        try
-        {
-            var entity = await _unitOfWork.__PLURAL__.GetAsync(id);
-            response.Data = _mapper.Map<__NAME__DTO>(entity);
-
-            if (response.Data != null)
-            {
-                response.isSuccess = true;
-                response.Message = "__NAME__ encontrado";
-            }
-        }
-        catch (Exception ex)
-        {
-            response.Message = ex.Message;
-            _logger.LogError(ex.Message);
-        }
-        return response;
-    }
-
-    public async Task<Response<IEnumerable<__NAME__DTO>>> GetAllAsync()
-    {
-        var response = new Response<IEnumerable<__NAME__DTO>>();
-        try
-        {
-            var list = await _unitOfWork.__PLURAL__.GetAllAsync();
-            response.Data = _mapper.Map<IEnumerable<__NAME__DTO>>(list);
-            response.isSuccess = true;
-        }
-        catch (Exception ex)
-        {
-            response.Message = ex.Message;
-            _logger.LogError(ex.Message);
-        }
-        return response;
-    }
-
-    public async Task<ResponsePagination<IEnumerable<__NAME__DTO>>> GetAllWithPaginationAsync(int page, int pageSize)
-    {
-        var response = new ResponsePagination<IEnumerable<__NAME__DTO>>();
-        try
-        {
-            var list = await _unitOfWork.__PLURAL__.GetAllWithPaginationAsync(page, pageSize);
-            response.Data = _mapper.Map<IEnumerable<__NAME__DTO>>(list);
-            response.isSuccess = true;
-            response.Page = page;
-            response.PageSize = pageSize;
-            response.Total = await _unitOfWork.__PLURAL__.CountAsync();
-        }
-        catch (Exception ex)
-        {
-            response.Message = ex.Message;
-            _logger.LogError(ex.Message);
-        }
-        return response;
-    }
-
-    public async Task<Response<int>> CountAsync()
-    {
-        var response = new Response<int>();
-        try
-        {
-            response.Data = await _unitOfWork.__PLURAL__.CountAsync();
-            response.isSuccess = true;
-        }
-        catch (Exception ex)
-        {
-            response.Message = ex.Message;
-            _logger.LogError(ex.Message);
-        }
-        return response;
-    }
-
-    #endregion
-}
 EOF
 )"
   sed -i \
