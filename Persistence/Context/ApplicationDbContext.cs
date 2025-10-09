@@ -28,6 +28,8 @@ public class ApplicationDbContext : DbContext
     public DbSet<CorteCaja> CorteCajas { get; set; }
     public DbSet<Credencial> Credenciales { get; set; }
     public DbSet<Cuenta> Cuentas { get; set; }
+    public DbSet<DescuentoAplicado> DescuentosAplicados { get; set; }
+    public DbSet<DetalleCuenta> DetalleCuentas { get; set; }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());

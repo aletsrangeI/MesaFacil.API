@@ -34,7 +34,9 @@ public static class ConfigureServices
         services.AddScoped<ICredencialRepository, CredencialRepository>();
         services.AddScoped<IUsuarioRepository, UsuarioRepository>();
         services.AddScoped<ICuentaRepository, CuentaRepository>();
-        
+        services.AddScoped<IDescuentoAplicadoRepository, DescuentoAplicadoRepository>();
+        services.AddScoped<IDetalleCuentaRepository, DetalleCuentaRepository>();
+
 
         services.AddScoped<IUnitOfWork, UnitOfWork>();
 

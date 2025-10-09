@@ -10,8 +10,10 @@ using UseCases.Clientes;
 using UseCases.CorteCajas;
 using UseCases.Credenciales;
 using UseCases.Cuentas;
-// Si registras validadores aquí, mantén solo los que no dependen de WebApi
+using UseCases.DescuentosAplicados;
+using UseCases.DetalleCuentas;
 using Validator;
+// Si registras validadores aquí, mantén solo los que no dependen de WebApi
 
 namespace UseCases;
 
@@ -34,6 +36,8 @@ public static class ConfigureServices
         services.AddScoped<ICredencialApplication, CredencialApplication>();
         services.AddScoped<IAuthApplication, AuthApplication>();
         services.AddScoped<ICuentaApplication, CuentaApplication>();
+        services.AddScoped<IDescuentoAplicadoApplication, DescuentoAplicadoApplication>();
+        services.AddScoped<IDetalleCuentaApplication, DetalleCuentaApplication>();
 
         // Validadores (si quieres mantenerlos aquí está bien; no dependen de WebApi)
         services.AddTransient<CatalogDTOValidator>();
@@ -45,6 +49,8 @@ public static class ConfigureServices
         services.AddTransient<CredencialDTOValidator>();
         services.AddTransient<LoginRequestValidator>();
         services.AddTransient<CuentaDTOValidator>();
+        services.AddTransient<DescuentoAplicadoDTOValidator>();
+        services.AddTransient<DetalleCuentaDTOValidator>();
 
         return services;
     }

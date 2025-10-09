@@ -19,4 +19,8 @@
       <ProjectReference Include="..\Validator\Validator.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="DescuentosAplicados\" />
+    </ItemGroup>
+
 </Project>
