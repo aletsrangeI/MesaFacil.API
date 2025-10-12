@@ -58,6 +58,7 @@ public class UnitOfWork : IUnitOfWork
     public IUsuarioRolRepository UsuarioRoles { get; }
     public IVarianteProductoRepository VarianteProductos { get; }
 
+    public IFormFieldRepository FormFields { get; }
     public UnitOfWork(ApplicationDbContext context,
         ICatalogRepository catalogRepository,
         ICatalogItemRepository catalogItems,
@@ -91,9 +92,11 @@ public class UnitOfWork : IUnitOfWork
         ITurnoRepository turnoRepository,
         IUsuarioRepository usuarioRepository,
         IUsuarioRolRepository usuarioRolRepository,
-        IVarianteProductoRepository varianteProductoRepository
+        IVarianteProductoRepository varianteProductoRepository,
+        IFormFieldRepository formFieldRepository
     )
     {
+        FormFields = formFieldRepository;
         VarianteProductos = varianteProductoRepository;
         UsuarioRoles = usuarioRolRepository;
         Usuarios = usuarioRepository;

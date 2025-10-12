@@ -53,8 +53,11 @@ public class ApplicationDbContext : DbContext
     public DbSet<Usuario> Usuarios { get; set; }
     public DbSet<UsuarioRol> UsuarioRoles { get; set; }
     public DbSet<VarianteProducto> VarianteProductos { get; set; }
+    public DbSet<FormField> FormFields { get; set; }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.Ignore<FormValidation>();
+        modelBuilder.Ignore<SelectFormOption>();
         modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
         base.OnModelCreating(modelBuilder);
     }
