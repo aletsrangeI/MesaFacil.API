@@ -58,6 +58,7 @@ public static class ConfigureServices
         services.AddScoped<ITurnoRepository, TurnoRepository>();
         services.AddScoped<IUsuarioRolRepository, UsuarioRolRepository>();
         services.AddScoped<IVarianteProductoRepository, VarianteProductoRepository>();
+        services.AddScoped<IFormFieldRepository, FormFieldRepository>();
 
 
         services.AddScoped<IUnitOfWork, UnitOfWork>();
