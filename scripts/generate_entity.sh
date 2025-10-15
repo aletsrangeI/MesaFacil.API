@@ -324,7 +324,11 @@ public class __NAME__Application : I__NAME__Application
         {
             var list = _unitOfWork.__PLURAL__.GetAll();
             response.Data = _mapper.Map<IEnumerable<__NAME__DTO>>(list);
-            response.isSuccess = true;
+            if (response.Data != null)
+            {
+            	response.isSuccess = true;
+            	response.Message = "__NAME__ encontrado";
+            }
         }
         catch (Exception ex)
         {
@@ -340,11 +344,13 @@ public class __NAME__Application : I__NAME__Application
         try
         {
             var list = _unitOfWork.__PLURAL__.GetAllWithPagination(page, pageSize);
-            response.Data = _mapper.Map<IEnumerable<__NAME__DTO>>(list);
-            response.isSuccess = true;
-            response.Page = page;
-            response.PageSize = pageSize;
-            response.Total = _unitOfWork.__PLURAL__.Count();
+            
+            if (list != null)
+            {
+            	response.Data = _mapper.Map<IEnumerable<__NAME__DTO>>(list);
+            	response.isSuccess = true;
+            	response.Message = "__NAME__ encontrado";
+            }
         }
         catch (Exception ex)
         {
@@ -468,7 +474,12 @@ public class __NAME__Application : I__NAME__Application
         {
             var list = await _unitOfWork.__PLURAL__.GetAllAsync();
             response.Data = _mapper.Map<IEnumerable<__NAME__DTO>>(list);
-            response.isSuccess = true;
+            
+            if (response.Data != null)
+            {
+            	response.isSuccess = true;
+            	response.Message = "__NAME__ encontrado";
+            }
         }
         catch (Exception ex)
         {
@@ -484,11 +495,13 @@ public class __NAME__Application : I__NAME__Application
         try
         {
             var list = await _unitOfWork.__PLURAL__.GetAllWithPaginationAsync(page, pageSize);
-            response.Data = _mapper.Map<IEnumerable<__NAME__DTO>>(list);
-            response.isSuccess = true;
-            response.Page = page;
-            response.PageSize = pageSize;
-            response.Total = await _unitOfWork.__PLURAL__.CountAsync();
+            
+            if (list != null)
+            {
+            	response.Data = _mapper.Map<IEnumerable<__NAME__DTO>>(list);
+            	response.isSuccess = true;
+            	response.Message = "__NAME__ encontrado";
+            }
         }
         catch (Exception ex)
         {
@@ -504,7 +517,12 @@ public class __NAME__Application : I__NAME__Application
         try
         {
             response.Data = await _unitOfWork.__PLURAL__.CountAsync();
-            response.isSuccess = true;
+            
+            if (response.Data != null)
+            {
+            	response.isSuccess = true;
+            	response.Message = "__NAME__ encontrado";
+            }
         }
         catch (Exception ex)
         {
@@ -1019,6 +1037,477 @@ inject_dbset_into_dbcontext() {
   info "DbSet<${name}> ${plural} inyectado en ApplicationDbContext.cs"
 }
 
+inject_application_and_validator_into_usecases_config() {
+  local name="$NAME"
+  local plural="$PLURAL"
+  local root="$ROOT_DIR"
+  local file="$root/UseCases/ConfigureServices.cs"
+
+  if [[ ! -f "$file" ]]; then
+    warn "No se encontró UseCases/ConfigureServices.cs para inyectar DI."
+    return 0
+  fi
+
+  # 1) using UseCases.<Plural>;
+  if ! grep -qE "^using UseCases\.${plural};" "$file"; then
+    # insertar después del último using UseCases.*
+    if grep -nE "^using UseCases\." "$file" >/dev/null; then
+      local last_using_line
+      last_using_line="$(grep -nE "^using UseCases\." "$file" | tail -n1 | cut -d: -f1)"
+      awk -v ins="using UseCases.${plural};" -v line="$last_using_line" '{
+        print
+        if (NR==line) print ins
+      }' "$file" > "$file.tmp" && mv "$file.tmp" "$file"
+      info "Agregado: using UseCases.${plural};"
+    else
+      # fallback: insertar después de using Interface.UseCases;
+      if grep -nE "^using Interface\.UseCases;" "$file" >/dev/null; then
+        local after
+        after="$(grep -nE "^using Interface\.UseCases;" "$file" | tail -n1 | cut -d: -f1)"
+        awk -v ins="using UseCases.${plural};" -v line="$after" '{
+          print
+          if (NR==line) print ins
+        }' "$file" > "$file.tmp" && mv "$file.tmp" "$file"
+        info "Agregado: using UseCases.${plural}; (fallback)"
+      else
+        # al inicio
+        sed -i "1iusing UseCases.${plural};" "$file"
+        info "Agregado: using UseCases.${plural}; (al inicio)"
+      fi
+    fi
+  else
+    info "Ya existe: using UseCases.${plural};"
+  fi
+
+  # 2) services.AddScoped<I<Name>Application, <Name>Application>();
+  local app_line="services.AddScoped<I${name}Application, ${name}Application>();"
+  if ! grep -qF "$app_line" "$file"; then
+    # insertar después del último AddScoped<I...Application, ...Application>();
+    if grep -nE "services\.AddScoped<I[A-Za-z0-9_]+Application,\s*[A-Za-z0-9_]+Application>\(\);" "$file" >/dev/null; then
+      local last_scoped
+      last_scoped="$(grep -nE "services\.AddScoped<I[A-Za-z0-9_]+Application,\s*[A-Za-z0-9_]+Application>\(\);" "$file" | tail -n1 | cut -d: -f1)"
+      awk -v ins="$app_line" -v line="$last_scoped" '{
+        print
+        if (NR==line) print "        " ins
+      }' "$file" > "$file.tmp" && mv "$file.tmp" "$file"
+      info "Agregado AddScoped para ${name}Application."
+    else
+      # buscar comentario de Casos de uso
+      if grep -n "// Casos de uso" "$file" >/dev/null; then
+        local anchor
+        anchor="$(grep -n "// Casos de uso" "$file" | head -n1 | cut -d: -f1)"
+        awk -v ins="$app_line" -v line="$anchor" '{
+          print
+          if (NR==line) print "        " ins
+        }' "$file" > "$file.tmp" && mv "$file.tmp" "$file"
+        info "Agregado AddScoped para ${name}Application (en sección Casos de uso)."
+      else
+        # antes del return services;
+        awk -v ins="$app_line" '{
+          if ($0 ~ /return services;/ && !done) {
+            print "        " ins
+            done=1
+          }
+          print
+        }' "$file" > "$file.tmp" && mv "$file.tmp" "$file"
+        info "Agregado AddScoped para ${name}Application (antes de return)."
+      fi
+    fi
+  else
+    info "Ya existía AddScoped para ${name}Application."
+  fi
+
+  # 3) services.AddTransient<<Name>DTOValidator>();
+  local val_line="services.AddTransient<${name}DTOValidator>();"
+  if ! grep -qF "$val_line" "$file"; then
+    # insertar después del último AddTransient<*Validator>();
+    if grep -nE "services\.AddTransient<.*Validator>\(\);" "$file" >/dev/null; then
+      local last_transient
+      last_transient="$(grep -nE "services\.AddTransient<.*Validator>\(\);" "$file" | tail -n1 | cut -d: -f1)"
+      awk -v ins="$val_line" -v line="$last_transient" '{
+        print
+        if (NR==line) print "        " ins
+      }' "$file" > "$file.tmp" && mv "$file.tmp" "$file"
+      info "Agregado AddTransient para ${name}DTOValidator."
+    else
+      # buscar comentario de Validadores
+      if grep -n "// Validadores" "$file" >/dev/null; then
+        local anchor
+        anchor="$(grep -n "// Validadores" "$file" | head -n1 | cut -d: -f1)"
+        awk -v ins="$val_line" -v line="$anchor" '{
+          print
+          if (NR==line) print "        " ins
+        }' "$file" > "$file.tmp" && mv "$file.tmp" "$file"
+        info "Agregado AddTransient para ${name}DTOValidator (en sección Validadores)."
+      else
+        # antes del return services;
+        awk -v ins="$val_line" '{
+          if ($0 ~ /return services;/ && !done) {
+            print "        " ins
+            done=1
+          }
+          print
+        }' "$file" > "$file.tmp" && mv "$file.tmp" "$file"
+        info "Agregado AddTransient para ${name}DTOValidator (antes de return)."
+      fi
+    fi
+  else
+    info "Ya existía AddTransient para ${name}DTOValidator."
+  fi
+}
+
+generate_entity_configuration() {
+  local name="$NAME"                           # e.g., Cuenta
+  local dir="$ROOT_DIR/Persistence/Configurations"
+  local path="$dir/${name}Configuration.cs"
+
+  mkdir -p "$dir"
+
+  if [[ -f "$path" && -z "${FORCE:-}" ]]; then
+    info "Configuration ya existe: $(realpath --relative-to="$ROOT_DIR" "$path") (omite, usa FORCE=1 para sobrescribir)"
+    return 0
+  fi
+
+  cat > "$path" <<EOF
+using Domain.Entities;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+
+namespace Persistence.Configurations;
+
+public class ${name}Configuration : IEntityTypeConfiguration<${name}>
+{
+    public void Configure(EntityTypeBuilder<${name}> e)
+    {
+        // TODO: agregar configuración de tabla
+        // Ejemplos:
+        // e.ToTable("${name}");
+        // e.HasKey(x => x.Id);
+        // e.Property(x => x.Total).HasPrecision(18, 2);
+        // e.HasOne(x => x.Pedido).WithOne(p => p.Cuenta).HasForeignKey<${name}>(x => x.IdPedido);
+        // e.Navigation(x => x.Detalles).AutoInclude(); // si aplica
+    }
+}
+EOF
+
+  info "Configuration generado: $(realpath --relative-to="$ROOT_DIR" "$path")"
+}
+
+generate_entity_endpoints() {
+  local name="$NAME"         # p.ej. Cuenta
+  local plural="$PLURAL"     # p.ej. Cuentas
+  local ns="MesaFacil.API.Modules.Endpoints"
+  local dir="$ROOT_DIR/WebApi/Modules/Endpoints"
+  local path="$dir/${name}Endpoints.cs"
+
+  mkdir -p "$dir"
+
+  if [[ -f "$path" && -z "${FORCE:-}" ]]; then
+    info "Endpoints ya existen: $(realpath --relative-to="$ROOT_DIR" "$path") (omite, usa FORCE=1 para sobrescribir)"
+    return 0
+  fi
+
+  cat > "$path" <<EOF
+using Common;
+using DTO.${name};
+using Interface.UseCases;
+using Microsoft.AspNetCore.Http.HttpResults;
+
+namespace ${ns};
+
+public static class ${name}Endpoints
+{
+    public static IEndpointRouteBuilder Map${name}Endpoints(this IEndpointRouteBuilder endpoints)
+    {
+        var group = endpoints.MapGroup("/api/${name,,}")
+            .WithTags("${name}")
+            .WithOpenApi();
+
+        // =========================================================
+        // INSERT
+        // =========================================================
+
+        group.MapPost("/insert",
+                (${name}DTO dto, I${name}Application svc, CancellationToken ct) =>
+                {
+                    Response<bool> result = svc.Insert(dto);
+                    return TypedResults.Ok(result);
+                })
+            .WithName("${name}_Insert");
+
+        group.MapPost("/insert-async",
+                async (${name}DTO dto, I${name}Application svc, CancellationToken ct) =>
+                {
+                    Response<bool> result = await svc.InsertAsync(dto);
+                    return TypedResults.Ok(result);
+                })
+            .WithName("${name}_Insert_Async");
+
+        // =========================================================
+        // UPDATE
+        // =========================================================
+
+        group.MapPut("/update/{id:int}",
+                (int id, ${name}DTO dto, I${name}Application svc, CancellationToken ct) =>
+                {
+                    try { dto.Id = id; } catch { }
+                    Response<bool> result = svc.Update(dto);
+                    return TypedResults.Ok(result);
+                })
+            .WithName("${name}_Update");
+
+        group.MapPut("/update-async/{id:int}",
+                async (int id, ${name}DTO dto, I${name}Application svc, CancellationToken ct) =>
+                {
+                    try { dto.Id = id; } catch { }
+                    Response<bool> result = await svc.UpdateAsync(dto);
+                    return TypedResults.Ok(result);
+                })
+            .WithName("${name}_Update_Async");
+
+        // =========================================================
+        // DELETE
+        // =========================================================
+
+        group.MapDelete("/delete/{id:int}",
+                (int id, I${name}Application svc, CancellationToken ct) =>
+                {
+                    Response<bool> result = svc.Delete(id);
+                    return TypedResults.Ok(result);
+                })
+            .WithName("${name}_Delete");
+
+        group.MapDelete("/delete-async/{id:int}",
+                async (int id, I${name}Application svc, CancellationToken ct) =>
+                {
+                    Response<bool> result = await svc.DeleteAsync(id);
+                    return TypedResults.Ok(result);
+                })
+            .WithName("${name}_Delete_Async");
+
+        // =========================================================
+        // GET ALL
+        // =========================================================
+
+        group.MapGet("/getall",
+                (I${name}Application svc, CancellationToken ct) =>
+                {
+                    Response<IEnumerable<${name}DTO>> result = svc.GetAll();
+                    return TypedResults.Ok(result);
+                })
+            .WithName("${name}_GetAll");
+
+        group.MapGet("/getall-async",
+                async (I${name}Application svc, CancellationToken ct) =>
+                {
+                    Response<IEnumerable<${name}DTO>> result = await svc.GetAllAsync();
+                    return TypedResults.Ok(result);
+                })
+            .WithName("${name}_GetAll_Async");
+
+        // =========================================================
+        // GET BY ID
+        // =========================================================
+
+        group.MapGet("/getbyid/{id:int}",
+                Results<Ok<Response<${name}DTO>>, NotFound<Response<${name}DTO>>>
+                    (int id, I${name}Application svc, CancellationToken ct) =>
+                {
+                    Response<${name}DTO>? result = svc.Get(id);
+                    if (result is null || result.Data is null)
+                    {
+                        var notFound = new Response<${name}DTO>
+                        {
+                            Data = default!,
+                            isSuccess = false,
+                            Message = "${name} con id \${id} no encontrada",
+                            Errors = Array.Empty<FluentValidation.Results.ValidationFailure>()
+                        };
+                        return TypedResults.NotFound(notFound);
+                    }
+                    return TypedResults.Ok(result);
+                })
+            .WithName("${name}_GetById");
+
+        group.MapGet("/getbyid-async/{id:int}",
+                async Task<Results<Ok<Response<${name}DTO>>, NotFound<Response<${name}DTO>>>>
+                    (int id, I${name}Application svc, CancellationToken ct) =>
+                {
+                    Response<${name}DTO>? result = await svc.GetAsync(id);
+                    if (result is null || result.Data is null)
+                    {
+                        var notFound = new Response<${name}DTO>
+                        {
+                            Data = default!,
+                            isSuccess = false,
+                            Message = "${name} con id \${id} no encontrada",
+                            Errors = Array.Empty<FluentValidation.Results.ValidationFailure>()
+                        };
+                        return TypedResults.NotFound(notFound);
+                    }
+                    return TypedResults.Ok(result);
+                })
+            .WithName("${name}_GetById_Async");
+
+        // =========================================================
+        // PAGINADO & COUNT
+        // =========================================================
+
+        group.MapGet("/getpaged",
+                (int page, int pageSize, I${name}Application svc, CancellationToken ct) =>
+                {
+                    page = page <= 0 ? 1 : page;
+                    pageSize = pageSize <= 0 ? 10 : pageSize;
+                    ResponsePagination<IEnumerable<${name}DTO>> result = svc.GetAllWithPagination(page, pageSize);
+                    return TypedResults.Ok(result);
+                })
+            .WithName("${name}_GetPaged");
+
+        group.MapGet("/getpaged-async",
+                async (int page, int pageSize, I${name}Application svc, CancellationToken ct) =>
+                {
+                    page = page <= 0 ? 1 : page;
+                    pageSize = pageSize <= 0 ? 10 : pageSize;
+                    ResponsePagination<IEnumerable<${name}DTO>> result =
+                        await svc.GetAllWithPaginationAsync(page, pageSize);
+                    return TypedResults.Ok(result);
+                })
+            .WithName("${name}_GetPaged_Async");
+
+        group.MapGet("/count",
+                (I${name}Application svc, CancellationToken ct) =>
+                {
+                    Response<int> result = svc.Count();
+                    return TypedResults.Ok(result);
+                })
+            .WithName("${name}_Count");
+
+        group.MapGet("/count-async",
+                async (I${name}Application svc, CancellationToken ct) =>
+                {
+                    Response<int> result = await svc.CountAsync();
+                    return TypedResults.Ok(result);
+                })
+            .WithName("${name}_Count_Async");
+
+        return endpoints;
+    }
+}
+EOF
+
+  info "Endpoints generados: $(realpath --relative-to="$ROOT_DIR" "$path")"
+}
+
+inject_endpoint_registration() {
+  local name="$NAME"   # p.ej. Cuenta
+  local file="$ROOT_DIR/WebApi/Modules/Endpoints/EndpointRegistration.cs"
+
+  if [[ ! -f "$file" ]]; then
+    warn "No existe EndpointRegistration.cs en WebApi/Modules/Endpoints"
+    return
+  fi
+
+  # Línea a insertar
+  local newline="        app.Map${name}Endpoints();"
+
+  # Verificar si ya existe
+  if grep -q "app.Map${name}Endpoints();" "$file"; then
+    info "EndpointRegistration ya contiene Map${name}Endpoints()"
+    return
+  fi
+
+  # Insertar justo antes de 'return app;'
+  awk -v ins="$newline" '
+    /return app;/ && !done {
+      print ins
+      done=1
+    }
+    { print }
+  ' "$file" > "$file.tmp" && mv "$file.tmp" "$file"
+
+  info "EndpointRegistration actualizado con Map${name}Endpoints()"
+}
+
+inject_repository_into_persistence_config() {
+  local name="$NAME"   # p.ej., DetalleCuenta
+  local file="$ROOT_DIR/Persistence/ConfigureServices.cs"
+
+  if [[ ! -f "$file" ]]; then
+    warn "No se encontró $file"
+    return 0
+  fi
+
+  # Asegurar using Persistence.Repositories;
+  if ! grep -qE '^using[[:space:]]+Persistence\.Repositories;' "$file"; then
+    # Insertar después del último 'using Persistence.' o, como fallback, después de 'using Microsoft.Extensions.DependencyInjection;'
+    if grep -nE '^using[[:space:]]+Persistence\.' "$file" >/dev/null; then
+      local last_using_line
+      last_using_line="$(grep -nE '^using[[:space:]]+Persistence\.' "$file" | tail -n1 | cut -d: -f1)"
+      awk -v ins='using Persistence.Repositories;' -v line="$last_using_line" '{
+        print
+        if (NR==line) print ins
+      }' "$file" > "$file.tmp" && mv "$file.tmp" "$file"
+      info "Agregado: using Persistence.Repositories;"
+    elif grep -nE '^using[[:space:]]+Microsoft\.Extensions\.DependencyInjection;' "$file" >/dev/null; then
+      local after
+      after="$(grep -nE '^using[[:space:]]+Microsoft\.Extensions\.DependencyInjection;' "$file" | tail -n1 | cut -d: -f1)"
+      awk -v ins='using Persistence.Repositories;' -v line="$after" '{
+        print
+        if (NR==line) print ins
+      }' "$file" > "$file.tmp" && mv "$file.tmp" "$file"
+      info "Agregado: using Persistence.Repositories; (fallback)"
+    else
+      # Si no hay anclas, lo ponemos al inicio del archivo
+      sed -i '1iusing Persistence.Repositories;' "$file"
+      info "Agregado: using Persistence.Repositories; (al inicio)"
+    fi
+  else
+    info "Ya existe: using Persistence.Repositories;"
+  fi
+
+  # Línea a registrar, por ejemplo: services.AddScoped<IDetalleCuentaRepository, DetalleCuentaRepository>();
+  local iface="I${name}Repository"
+  local impl="${name}Repository"
+  local reg_line="services.AddScoped<${iface}, ${impl}>();"
+
+  # Evitar duplicados
+  if grep -qF "$reg_line" "$file"; then
+    info "ConfigureServices.cs ya contiene: $reg_line"
+    return 0
+  fi
+
+  # Insertar preferentemente después del último AddScoped<I...Repository, ...Repository>();
+  if grep -nE 'services\.AddScoped<I[A-Za-z0-9_]+Repository,\s*[A-Za-z0-9_]+Repository>\(\);' "$file" >/dev/null; then
+    local last_repo_line
+    last_repo_line="$(grep -nE 'services\.AddScoped<I[A-Za-z0-9_]+Repository,\s*[A-Za-z0-9_]+Repository>\(\);' "$file" | tail -n1 | cut -d: -f1)"
+    awk -v ins="$reg_line" -v line="$last_repo_line" '{
+      print
+      if (NR==line) print "        " ins
+    }' "$file" > "$file.tmp" && mv "$file.tmp" "$file"
+    info "Agregado AddScoped repositorio: $reg_line"
+  # Si hay comentario de sección de Repositorios, úsalo como ancla (opcional)
+  elif grep -nE '//[[:space:]]*Repositorios' "$file" >/dev/null; then
+    local anchor
+    anchor="$(grep -nE '//[[:space:]]*Repositorios' "$file" | head -n1 | cut -d: -f1)"
+    awk -v ins="$reg_line" -v line="$anchor" '{
+      print
+      if (NR==line) print "        " ins
+    }' "$file" > "$file.tmp" && mv "$file.tmp" "$file"
+    info "Agregado AddScoped repositorio en sección Repositorios: $reg_line"
+  else
+    # Inserta antes de 'return services;'
+    awk -v ins="$reg_line" '
+      {
+        if ($0 ~ /return[[:space:]]+services;/ && !done) {
+          print "        " ins
+          done=1
+        }
+        print
+      }
+    ' "$file" > "$file.tmp" && mv "$file.tmp" "$file"
+    info "Agregado AddScoped repositorio antes de return: $reg_line"
+  fi
+}
 
 
 # === EJECUCIÓN ===
@@ -1027,11 +1516,14 @@ generate_interface_application
 generate_usecase_application
 generate_validator
 ensure_mapping_profile
+inject_application_and_validator_into_usecases_config
 inject_dbset_into_dbcontext
 generate_repository_interface
+inject_repository_into_persistence_config
 generate_repository_impl
-inject_dbset_into_dbcontext
+generate_entity_configuration
 inject_repository_into_unitofwork_interface
 inject_repository_into_unitofwork_impl
-
+generate_entity_endpoints
+inject_endpoint_registration
 info "Listo. Revisa cambios y compila."

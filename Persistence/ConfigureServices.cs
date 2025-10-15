@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Npgsql;
 using Persistence.Context;
 using Persistence.Interceptors;
 using Persistence.Repositories;
@@ -24,9 +25,49 @@ public static class ConfigureServices
                         )
                 )
         );
+        
+        var connString = configuration.GetConnectionString("mesafacil_db");
+        var dsBuilder  = new NpgsqlDataSourceBuilder(connString);
+        dsBuilder.EnableDynamicJson(); // <== Clave para json/jsonb con List<T>
+        // Opcional: dsBuilder.UseNodaTime();
+        var dataSource = dsBuilder.Build();
 
         services.AddScoped<ICatalogRepository, CatalogRepository>();
         services.AddScoped<ICatalogItemRepository, CatalogItemRepository>();
+        services.AddScoped<IAreaRepository, AreaRepository>();
+        services.AddScoped<ICategoriaMenuRepository, CategoriaMenuRepository>();
+        services.AddScoped<IClienteRepository, ClienteRepository>();
+        services.AddScoped<ICorteCajaRepository, CorteCajaRepository>();
+        services.AddScoped<ICredencialRepository, CredencialRepository>();
+        services.AddScoped<IUsuarioRepository, UsuarioRepository>();
+        services.AddScoped<ICuentaRepository, CuentaRepository>();
+        services.AddScoped<IDescuentoAplicadoRepository, DescuentoAplicadoRepository>();
+        services.AddScoped<IDetalleCuentaRepository, DetalleCuentaRepository>();
+        services.AddScoped<IEmpresaRepository, EmpresaRepository>();
+        services.AddScoped<IEstacionCocinaRepository, EstacionCocinaRepository>();
+        services.AddScoped<IEventoPedidoRepository, EventoPedidoRepository>();
+        services.AddScoped<IGrupoModificadorRepository, GrupoModificadorRepository>();
+        services.AddScoped<IMenuRepository, MenuRepository>();
+        services.AddScoped<IMesaRepository, MesaRepository>();
+        services.AddScoped<IMovimientoCajaRepository, MovimientoCajaRepository>();
+        services.AddScoped<IOpcionModificadorRepository, OpcionModificadorRepository>();
+        services.AddScoped<IPagoRepository, PagoRepository>();
+        services.AddScoped<IPedidoRepository, PedidoRepository>();
+        services.AddScoped<IPedidoAsientoRepository, PedidoAsientoRepository>();
+        services.AddScoped<IPedidoDetalleRepository, PedidoDetalleRepository>();
+        services.AddScoped<IPedidoModificadorRepository, PedidoModificadorRepository>();
+        services.AddScoped<IPrecioRepository, PrecioRepository>();
+        services.AddScoped<IProductoRepository, ProductoRepository>();
+        services.AddScoped<IRolRepository, RolRepository>();
+        services.AddScoped<ISucursalRepository, SucursalRepository>();
+        services.AddScoped<ITicketCocinaRepository, TicketCocinaRepository>();
+        services.AddScoped<ITicketDetalleRepository, TicketDetalleRepository>();
+        services.AddScoped<ITurnoRepository, TurnoRepository>();
+        services.AddScoped<IUsuarioRolRepository, UsuarioRolRepository>();
+        services.AddScoped<IVarianteProductoRepository, VarianteProductoRepository>();
+        services.AddScoped<IFormFieldRepository, FormFieldRepository>();
+        services.AddScoped<IDatabaseInitializer, DatabaseInitializer>();
+
 
         services.AddScoped<IUnitOfWork, UnitOfWork>();
 
