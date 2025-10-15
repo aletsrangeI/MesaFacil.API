@@ -54,6 +54,8 @@ public class ApplicationDbContext : DbContext
     public DbSet<UsuarioRol> UsuarioRoles { get; set; }
     public DbSet<VarianteProducto> VarianteProductos { get; set; }
     public DbSet<FormField> FormFields { get; set; }
+    public DbSet<AccesoRuta> AccesoRutas { get; set; }
+    public DbSet<RolAccesoRuta> RolAccesoRutas { get; set; }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Ignore<FormValidation>();

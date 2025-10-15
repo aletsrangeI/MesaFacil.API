@@ -8,4 +8,5 @@ public class Rol : BaseAuditableEntity
     public string? ConcurrencyStamp { get; set; }
 
     public ICollection<UsuarioRol> UsuarioRoles { get; set; } = new List<UsuarioRol>();
+    public ICollection<RolAccesoRuta> AccesosRuta { get; set; } = new List<RolAccesoRuta>();
 }

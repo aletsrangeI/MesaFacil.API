@@ -4,10 +4,6 @@ namespace Interface.Persistence;
 
 public interface IUsuarioRepository
 {
-    /// <summary>
-    /// Obtiene un usuario por correo o username (si tu modelo usa username después podrás extender).
-    /// Incluye Usuarioes->Rol y Credenciales.
-    /// </summary>
     
     #region Metodos sincronos
     bool Insert(Usuario entity);
@@ -33,4 +29,28 @@ public interface IUsuarioRepository
     Task<Usuario?> GetByCorreoWithRolesAndCredentialsAsync(string correo, CancellationToken ct);
 
     Task<bool> HasOpenTurnoAsync(int idUsuario, CancellationToken ct);
+    
+    /// <summary>
+    /// Devuelve el usuario por userOrEmail (usuario o correo), incluyendo
+    /// lo necesario para autenticación (p.ej. relación a Credencial de password).
+    /// No es obligatorio cargar roles aquí si prefieres separarlo.
+    /// </summary>
+    Task<Usuario?> GetByUserOrEmailWithAuthGraphAsync(string userOrEmail, CancellationToken ct);
+
+    /// <summary>
+    /// Nombres de roles asignados al usuario (p.ej. ["Admin","Mesero"]).
+    /// </summary>
+    Task<IReadOnlyList<string>> GetRoleNamesAsync(int usuarioId, CancellationToken ct);
+
+    /// <summary>
+    /// Paths de accesos permitidos a partir de los roles del usuario (p.ej. ["/", "/admin"]).
+    /// Implementación típica: Usuario -> UsuarioRol -> Rol -> RolAccesoRuta -> AccesoRuta.Path
+    /// </summary>
+    Task<IReadOnlyList<string>> GetAccesoPathsByUsuarioIdAsync(int usuarioId, CancellationToken ct);
+
+    /// <summary>
+    /// (Opcional) Obtiene la credencial de password del usuario si manejas tipos de credencial.
+    /// Útil si quieres validar hash/salt en capa de aplicación.
+    /// </summary>
+    Task<Credencial?> GetPasswordCredentialAsync(int usuarioId, CancellationToken ct);
 }
