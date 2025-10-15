@@ -2,6 +2,38 @@ using AutoMapper;
 using Domain.Entities;
 using DTO.Catalog;
 using DTO.CatalogItem;
+using DTO.Area;
+using DTO.CategoriaMenu;
+using DTO.Cliente;
+using DTO.CorteCaja;
+using DTO.Credencial;
+using DTO.Cuenta;
+using DTO.DescuentoAplicado;
+using DTO.DetalleCuenta;
+using DTO.Empresa;
+using DTO.EstacionCocina;
+using DTO.EventoPedido;
+using DTO.GrupoModificador;
+using DTO.Menu;
+using DTO.Mesa;
+using DTO.MovimientoCaja;
+using DTO.OpcionModificador;
+using DTO.Pago;
+using DTO.Pedido;
+using DTO.PedidoAsiento;
+using DTO.PedidoDetalle;
+using DTO.PedidoModificador;
+using DTO.Precio;
+using DTO.Producto;
+using DTO.Rol;
+using DTO.Sucursal;
+using DTO.TicketCocina;
+using DTO.TicketDetalle;
+using DTO.Turno;
+using DTO.Usuario;
+using DTO.UsuarioRol;
+using DTO.VarianteProducto;
+using DTO.FormField;
 
 namespace UseCases.Common.Mapping;
 
@@ -9,7 +41,48 @@ public class MappingsProfile : Profile
 {
     public MappingsProfile()
     {
-        CreateMap<Domain.Entities.CatalogItem, DTO.CatalogItem.CatalogItemDTO>().ReverseMap();
+        CreateMap<Domain.Entities.FormField, DTO.FormField.FormFieldDTO>().ReverseMap();
+        CreateMap<Domain.Entities.VarianteProducto, DTO.VarianteProducto.VarianteProductoDTO>().ReverseMap();
+        CreateMap<Domain.Entities.UsuarioRol, DTO.UsuarioRol.UsuarioRolDTO>().ReverseMap();
+        CreateMap<Domain.Entities.Usuario, DTO.Usuario.UsuarioDTO>().ReverseMap();
+        CreateMap<Domain.Entities.Turno, DTO.Turno.TurnoDTO>().ReverseMap();
+        CreateMap<Domain.Entities.TicketDetalle, DTO.TicketDetalle.TicketDetalleDTO>().ReverseMap();
+        CreateMap<Domain.Entities.TicketCocina, DTO.TicketCocina.TicketCocinaDTO>().ReverseMap();
+        CreateMap<Domain.Entities.Sucursal, DTO.Sucursal.SucursalDTO>().ReverseMap();
+        CreateMap<Domain.Entities.Rol, DTO.Rol.RolDTO>().ReverseMap();
+        CreateMap<Domain.Entities.Producto, DTO.Producto.ProductoDTO>().ReverseMap();
+        CreateMap<Domain.Entities.Precio, DTO.Precio.PrecioDTO>().ReverseMap();
+        CreateMap<Domain.Entities.PedidoModificador, DTO.PedidoModificador.PedidoModificadorDTO>().ReverseMap();
+        CreateMap<Domain.Entities.PedidoDetalle, DTO.PedidoDetalle.PedidoDetalleDTO>().ReverseMap();
+        CreateMap<Domain.Entities.PedidoAsiento, DTO.PedidoAsiento.PedidoAsientoDTO>().ReverseMap();
+        CreateMap<Domain.Entities.Pedido, DTO.Pedido.PedidoDTO>().ReverseMap();
+        CreateMap<Domain.Entities.Pago, DTO.Pago.PagoDTO>().ReverseMap();
+        CreateMap<Domain.Entities.OpcionModificador, DTO.OpcionModificador.OpcionModificadorDTO>().ReverseMap();
+        CreateMap<Domain.Entities.MovimientoCaja, DTO.MovimientoCaja.MovimientoCajaDTO>().ReverseMap();
+        CreateMap<Domain.Entities.Mesa, DTO.Mesa.MesaDTO>().ReverseMap();
+        CreateMap<Domain.Entities.Menu, DTO.Menu.MenuDTO>().ReverseMap();
+        CreateMap<Domain.Entities.GrupoModificador, DTO.GrupoModificador.GrupoModificadorDTO>().ReverseMap();
+        CreateMap<Domain.Entities.EventoPedido, DTO.EventoPedido.EventoPedidoDTO>().ReverseMap();
+        CreateMap<Domain.Entities.EstacionCocina, DTO.EstacionCocina.EstacionCocinaDTO>().ReverseMap();
+        CreateMap<Domain.Entities.Empresa, DTO.Empresa.EmpresaDTO>().ReverseMap();
+        CreateMap<Domain.Entities.DetalleCuenta, DTO.DetalleCuenta.DetalleCuentaDTO>().ReverseMap();
+        CreateMap<Domain.Entities.DetalleCuenta, DTO.DetalleCuenta.DetalleCuentaDTO>().ReverseMap();
+        CreateMap<Domain.Entities.DetalleCuenta, DTO.DetalleCuenta.DetalleCuentaDTO>().ReverseMap();
+        CreateMap<Domain.Entities.DetalleCuenta, DTO.DetalleCuenta.DetalleCuentaDTO>().ReverseMap();
+        CreateMap<Domain.Entities.DescuentoAplicado, DTO.DescuentoAplicado.DescuentoAplicadoDTO>().ReverseMap();
+        CreateMap<Domain.Entities.DescuentoAplicado, DTO.DescuentoAplicado.DescuentoAplicadoDTO>().ReverseMap();
+        CreateMap<Domain.Entities.DescuentoAplicado, DTO.DescuentoAplicado.DescuentoAplicadoDTO>().ReverseMap();
+        CreateMap<Domain.Entities.DescuentoAplicado, DTO.DescuentoAplicado.DescuentoAplicadoDTO>().ReverseMap();
+        CreateMap<Domain.Entities.DescuentoAplicado, DTO.DescuentoAplicado.DescuentoAplicadoDTO>().ReverseMap();
+        CreateMap<Domain.Entities.DescuentoAplicado, DTO.DescuentoAplicado.DescuentoAplicadoDTO>().ReverseMap();
+        CreateMap<Domain.Entities.DescuentoAplicado, DTO.DescuentoAplicado.DescuentoAplicadoDTO>().ReverseMap();
+        CreateMap<Domain.Entities.Cuenta, DTO.Cuenta.CuentaDTO>().ReverseMap();
+        CreateMap<Domain.Entities.Credencial, DTO.Credencial.CredencialDTO>().ReverseMap();
+        CreateMap<Domain.Entities.CorteCaja, DTO.CorteCaja.CorteCajaDTO>().ReverseMap();
+        CreateMap<Cliente, ClienteDTO>().ReverseMap();
+        CreateMap<CategoriaMenu, CategoriaMenuDTO>().ReverseMap();
+        CreateMap<Area, AreaDTO>().ReverseMap();
+        CreateMap<CatalogItem, CatalogItemDTO>().ReverseMap();
         CreateMap<Catalog, CatalogDTO>().ReverseMap();
     }
 }

@@ -1,12 +1,16 @@
+using Interface.Persistence;
+using Interface.UseCases;
 using Persistence;
 using MesaFacil.API.Modules.Authentication;
 using MesaFacil.API.Modules.Endpoints;
 using MesaFacil.API.Modules.Feature;
 using MesaFacil.API.Modules.Injection;
 using MesaFacil.API.Modules.Watch;
+using Persistence.Security;
 using Scalar.AspNetCore;
 using UseCases;
 using WatchDog;
+using JwtOptions = MesaFacil.API.Modules.Authentication.JwtOptions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,11 +23,22 @@ builder.Services.AddFeature(builder.Configuration);
 builder.Services.AddInjection(builder.Configuration);
 builder.Services.AddPersistenceServices(builder.Configuration);
 builder.Services.AddApplicationServices();
-builder.Services.AddAuthentication(builder.Configuration);
 builder.Services.AddWatchDog(builder.Configuration);
 builder.Services.AddOpenApi();
 
+builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection(JwtOptions.SectionName));
+builder.Services.AddJwtAuthentication(builder.Configuration);
+
+builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
+builder.Services.AddScoped<IPasswordHasher, Pbkdf2PasswordHasher>();
+
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var initializer = scope.ServiceProvider.GetRequiredService<IDatabaseInitializer>();
+    await initializer.InitializeAsync();
+}
 
 app.UseDeveloperExceptionPage();
 
@@ -54,7 +69,7 @@ app.UseWatchDog(conf =>
     conf.WatchPagePassword = builder.Configuration["WatchDog:WatchPagePassword"];
 });
 
-app.MapCatalogoEndpoints();
+app.MapMesaFacilEndpoints();
 
 app.Run();
 
