@@ -48,6 +48,7 @@ public class FormFieldApplication : IFormFieldApplication
             response.Message = ex.Message;
             _logger.LogError(ex.Message);
         }
+
         return response;
     }
 
@@ -70,6 +71,7 @@ public class FormFieldApplication : IFormFieldApplication
             response.Message = ex.Message;
             _logger.LogError(ex.Message);
         }
+
         return response;
     }
 
@@ -91,6 +93,7 @@ public class FormFieldApplication : IFormFieldApplication
             response.Message = ex.Message;
             _logger.LogError(ex.Message);
         }
+
         return response;
     }
 
@@ -113,6 +116,7 @@ public class FormFieldApplication : IFormFieldApplication
             response.Message = ex.Message;
             _logger.LogError(ex.Message);
         }
+
         return response;
     }
 
@@ -125,8 +129,8 @@ public class FormFieldApplication : IFormFieldApplication
             response.Data = _mapper.Map<IEnumerable<FormFieldDTO>>(list);
             if (response.Data != null)
             {
-            	response.isSuccess = true;
-            	response.Message = "FormField encontrado";
+                response.isSuccess = true;
+                response.Message = "FormField encontrado";
             }
         }
         catch (Exception ex)
@@ -134,6 +138,7 @@ public class FormFieldApplication : IFormFieldApplication
             response.Message = ex.Message;
             _logger.LogError(ex.Message);
         }
+
         return response;
     }
 
@@ -143,12 +148,12 @@ public class FormFieldApplication : IFormFieldApplication
         try
         {
             var list = _unitOfWork.FormFields.GetAllWithPagination(page, pageSize);
-            
+
             if (list != null)
             {
-            	response.Data = _mapper.Map<IEnumerable<FormFieldDTO>>(list);
-            	response.isSuccess = true;
-            	response.Message = "FormField encontrado";
+                response.Data = _mapper.Map<IEnumerable<FormFieldDTO>>(list);
+                response.isSuccess = true;
+                response.Message = "FormField encontrado";
             }
         }
         catch (Exception ex)
@@ -156,6 +161,7 @@ public class FormFieldApplication : IFormFieldApplication
             response.Message = ex.Message;
             _logger.LogError(ex.Message);
         }
+
         return response;
     }
 
@@ -172,6 +178,29 @@ public class FormFieldApplication : IFormFieldApplication
             response.Message = ex.Message;
             _logger.LogError(ex.Message);
         }
+
+        return response;
+    }
+
+    public Response<IEnumerable<FormFieldDTO>> GetFormFieldByFormCatId(int id)
+    {
+        var response = new Response<IEnumerable<FormFieldDTO>>();
+        try
+        {
+            var list = _unitOfWork.FormFields.GetFormFieldByFormCatId(id);
+            response.Data = _mapper.Map<IEnumerable<FormFieldDTO>>(list);
+            if (response.Data != null)
+            {
+                response.isSuccess = true;
+                response.Message = "FormField encontrado";
+            }
+        }
+        catch (Exception ex)
+        {
+            response.Message = ex.Message;
+            _logger.LogError(ex.Message);
+        }
+
         return response;
     }
 
@@ -198,6 +227,7 @@ public class FormFieldApplication : IFormFieldApplication
             response.Message = ex.Message;
             _logger.LogError(ex.Message);
         }
+
         return response;
     }
 
@@ -220,6 +250,7 @@ public class FormFieldApplication : IFormFieldApplication
             response.Message = ex.Message;
             _logger.LogError(ex.Message);
         }
+
         return response;
     }
 
@@ -241,6 +272,7 @@ public class FormFieldApplication : IFormFieldApplication
             response.Message = ex.Message;
             _logger.LogError(ex.Message);
         }
+
         return response;
     }
 
@@ -263,6 +295,7 @@ public class FormFieldApplication : IFormFieldApplication
             response.Message = ex.Message;
             _logger.LogError(ex.Message);
         }
+
         return response;
     }
 
@@ -273,11 +306,11 @@ public class FormFieldApplication : IFormFieldApplication
         {
             var list = await _unitOfWork.FormFields.GetAllAsync();
             response.Data = _mapper.Map<IEnumerable<FormFieldDTO>>(list);
-            
+
             if (response.Data != null)
             {
-            	response.isSuccess = true;
-            	response.Message = "FormField encontrado";
+                response.isSuccess = true;
+                response.Message = "FormField encontrado";
             }
         }
         catch (Exception ex)
@@ -285,6 +318,7 @@ public class FormFieldApplication : IFormFieldApplication
             response.Message = ex.Message;
             _logger.LogError(ex.Message);
         }
+
         return response;
     }
 
@@ -294,12 +328,12 @@ public class FormFieldApplication : IFormFieldApplication
         try
         {
             var list = await _unitOfWork.FormFields.GetAllWithPaginationAsync(page, pageSize);
-            
+
             if (list != null)
             {
-            	response.Data = _mapper.Map<IEnumerable<FormFieldDTO>>(list);
-            	response.isSuccess = true;
-            	response.Message = "FormField encontrado";
+                response.Data = _mapper.Map<IEnumerable<FormFieldDTO>>(list);
+                response.isSuccess = true;
+                response.Message = "FormField encontrado";
             }
         }
         catch (Exception ex)
@@ -307,6 +341,7 @@ public class FormFieldApplication : IFormFieldApplication
             response.Message = ex.Message;
             _logger.LogError(ex.Message);
         }
+
         return response;
     }
 
@@ -316,11 +351,11 @@ public class FormFieldApplication : IFormFieldApplication
         try
         {
             response.Data = await _unitOfWork.FormFields.CountAsync();
-            
+
             if (response.Data != null)
             {
-            	response.isSuccess = true;
-            	response.Message = "FormField encontrado";
+                response.isSuccess = true;
+                response.Message = "FormField encontrado";
             }
         }
         catch (Exception ex)
@@ -328,6 +363,30 @@ public class FormFieldApplication : IFormFieldApplication
             response.Message = ex.Message;
             _logger.LogError(ex.Message);
         }
+
+        return response;
+    }
+
+    public async Task<Response<IEnumerable<FormFieldDTO>>> GetFormFieldByFormCatIdAsync(int id)
+    {
+        var response = new Response<IEnumerable<FormFieldDTO>>();
+        try
+        {
+            var list = await _unitOfWork.FormFields.GetFormFieldByFormCatIdAsync(id);
+            response.Data = _mapper.Map<IEnumerable<FormFieldDTO>>(list);
+
+            if (response.Data != null)
+            {
+                response.isSuccess = true;
+                response.Message = "FormField encontrado";
+            }
+        }
+        catch (Exception ex)
+        {
+            response.Message = ex.Message;
+            _logger.LogError(ex.Message);
+        }
+
         return response;
     }
 

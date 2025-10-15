@@ -1,3 +1,4 @@
+using Interface.Persistence;
 using Interface.UseCases;
 using Persistence;
 using MesaFacil.API.Modules.Authentication;
@@ -32,6 +33,12 @@ builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
 builder.Services.AddScoped<IPasswordHasher, Pbkdf2PasswordHasher>();
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var initializer = scope.ServiceProvider.GetRequiredService<IDatabaseInitializer>();
+    await initializer.InitializeAsync();
+}
 
 app.UseDeveloperExceptionPage();
 

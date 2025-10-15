@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -11,6 +12,7 @@ public class FormFieldConfiguration : IEntityTypeConfiguration<FormField>
         e.ToTable("FormField");
         e.HasKey(x => x.Id);
 
+        e.Property(x => x.Type).HasConversion<string>(); // guarda como texto
         e.Property(x => x.Type).IsRequired().HasMaxLength(50);
         e.Property(x => x.Name).IsRequired().HasMaxLength(100);
         e.Property(x => x.Label).HasMaxLength(150);
@@ -41,8 +43,21 @@ public class FormFieldConfiguration : IEntityTypeConfiguration<FormField>
             .IsUnique()
             .HasDatabaseName("UX_FormField_Formulario_Name");
 
-        // Si mapeaste Validations/Options a JSON:
-        e.Property(x => x.Validations).HasColumnType("jsonb").HasColumnName("ValidationsJson");
-        e.Property(x => x.Options).HasColumnType("jsonb").HasColumnName("OptionsJson");
+        
+        e.Property(x => x.Validations)
+            .HasColumnType("jsonb")
+            .HasColumnName("ValidationsJson")
+            .HasConversion(
+                v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
+                v => JsonSerializer.Deserialize<List<FormValidation>>(v, (JsonSerializerOptions?)null) ?? new()
+            );
+
+        e.Property(x => x.Options)
+            .HasColumnType("jsonb")
+            .HasColumnName("OptionsJson")
+            .HasConversion(
+                v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
+                v => JsonSerializer.Deserialize<List<SelectFormOption>>(v, (JsonSerializerOptions?)null) ?? new()
+            );
     }
 }
