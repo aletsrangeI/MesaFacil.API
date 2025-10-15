@@ -21,4 +21,10 @@
       <ProjectReference Include="..\Interface\Interface.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Reference Include="Microsoft.Extensions.Hosting.Abstractions">
+        <HintPath>..\..\..\..\..\usr\lib64\dotnet\shared\Microsoft.AspNetCore.App\9.0.9\Microsoft.Extensions.Hosting.Abstractions.dll</HintPath>
+      </Reference>
+    </ItemGroup>
+
 </Project>

@@ -14,6 +14,7 @@ public interface IFormFieldApplication
     Response<IEnumerable<FormFieldDTO>> GetAll();
     ResponsePagination<IEnumerable<FormFieldDTO>> GetAllWithPagination(int page, int pageSize);
     Response<int> Count();
+    Response<IEnumerable<FormFieldDTO>> GetFormFieldByFormCatId(int id);
 
     #endregion
 
@@ -26,6 +27,7 @@ public interface IFormFieldApplication
     Task<Response<IEnumerable<FormFieldDTO>>> GetAllAsync();
     Task<ResponsePagination<IEnumerable<FormFieldDTO>>> GetAllWithPaginationAsync(int page, int pageSize);
     Task<Response<int>> CountAsync();
+    Task<Response<IEnumerable<FormFieldDTO>>> GetFormFieldByFormCatIdAsync(int id);
 
     #endregion
 }

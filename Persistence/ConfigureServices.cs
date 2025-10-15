@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Npgsql;
 using Persistence.Context;
 using Persistence.Interceptors;
 using Persistence.Repositories;
@@ -24,6 +25,12 @@ public static class ConfigureServices
                         )
                 )
         );
+        
+        var connString = configuration.GetConnectionString("mesafacil_db");
+        var dsBuilder  = new NpgsqlDataSourceBuilder(connString);
+        dsBuilder.EnableDynamicJson(); // <== Clave para json/jsonb con List<T>
+        // Opcional: dsBuilder.UseNodaTime();
+        var dataSource = dsBuilder.Build();
 
         services.AddScoped<ICatalogRepository, CatalogRepository>();
         services.AddScoped<ICatalogItemRepository, CatalogItemRepository>();
@@ -59,6 +66,7 @@ public static class ConfigureServices
         services.AddScoped<IUsuarioRolRepository, UsuarioRolRepository>();
         services.AddScoped<IVarianteProductoRepository, VarianteProductoRepository>();
         services.AddScoped<IFormFieldRepository, FormFieldRepository>();
+        services.AddScoped<IDatabaseInitializer, DatabaseInitializer>();
 
 
         services.AddScoped<IUnitOfWork, UnitOfWork>();
