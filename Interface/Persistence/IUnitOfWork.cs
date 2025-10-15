@@ -36,4 +36,6 @@ public interface IUnitOfWork : IDisposable
     IUsuarioRolRepository UsuarioRoles { get; }
     IVarianteProductoRepository VarianteProductos { get; }
     IFormFieldRepository FormFields { get; }
+    IAccesoRutaRepository AccesoRutas { get; }
+    IRolAccesoRutaRepository RolAccesoRutas { get; }
 }

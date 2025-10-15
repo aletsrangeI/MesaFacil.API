@@ -113,9 +113,67 @@ public class UsuarioRepository : IUsuarioRepository
         return await _context.Set<Usuario>()
             .Include(u => u.UsuarioRoles)
             .ThenInclude(ur => ur.Rol)
+            .ThenInclude(r => r.AccesosRuta)
+            .ThenInclude(rar => rar.AccesoRuta)
             .Include(u => u.Credenciales)
-            .ThenInclude(c => c.TipoItem)
+            .ThenInclude(c => c.TipoItem) // CatalogItem (Code/Name)
             .FirstOrDefaultAsync(u => u.Correo != null && u.Correo.ToLower() == correo.ToLower(), ct);
+    }
+    
+    public async Task<Usuario?> GetByUserOrEmailWithAuthGraphAsync(string userOrEmail, CancellationToken ct)
+    {
+        var q = _context.Set<Usuario>()
+            .Include(u => u.UsuarioRoles)
+            .ThenInclude(ur => ur.Rol)
+            .ThenInclude(r => r.AccesosRuta)
+            .ThenInclude(rar => rar.AccesoRuta)
+            .Include(u => u.Credenciales)
+            .ThenInclude(c => c.TipoItem);
+
+        userOrEmail = userOrEmail?.Trim() ?? string.Empty;
+        if (string.IsNullOrEmpty(userOrEmail))
+            return null;
+
+        return await q.FirstOrDefaultAsync(u =>
+                u.Correo != null && u.Correo.ToLower() == userOrEmail.ToLower()
+            // || u.Username != null && u.Username.ToLower() == userOrEmail.ToLower()
+            , ct);
+    }
+    
+    public async Task<IReadOnlyList<string>> GetRoleNamesAsync(int usuarioId, CancellationToken ct)
+    {
+        // Nota: si tu mapping hace que UsuarioRol.Id == Usuario.Id, esta proyección funciona igual
+        return await _context.Set<Usuario>()
+            .Where(u => u.Id == usuarioId)
+            .SelectMany(u => u.UsuarioRoles.Select(ur => ur.Rol.Nombre))
+            .Distinct()
+            .ToListAsync(ct);
+    }
+    
+    public async Task<IReadOnlyList<string>> GetAccesoPathsByUsuarioIdAsync(int usuarioId, CancellationToken ct)
+    {
+        return await _context.Set<Usuario>()
+            .Where(u => u.Id == usuarioId)
+            .SelectMany(u => u.UsuarioRoles.SelectMany(ur => ur.Rol.AccesosRuta.Select(ar => ar.AccesoRuta.Path)))
+            .Distinct()
+            .ToListAsync(ct);
+    }
+    
+    public async Task<Credencial?> GetPasswordCredentialAsync(int usuarioId, CancellationToken ct)
+    {
+        // intento por Code
+        var cred = await _context.Set<Credencial>()
+            .Include(c => c.TipoItem)
+            .Where(c => c.IdUsuario == usuarioId && c.TipoItem != null && c.TipoItem.Code == "PASSWORD")
+            .FirstOrDefaultAsync(ct);
+
+        if (cred != null) return cred;
+
+        // fallback: primera credencial
+        return await _context.Set<Credencial>()
+            .Include(c => c.TipoItem)
+            .Where(c => c.IdUsuario == usuarioId)
+            .FirstOrDefaultAsync(ct);
     }
 
     public async Task<bool> HasOpenTurnoAsync(int idUsuario, CancellationToken ct)

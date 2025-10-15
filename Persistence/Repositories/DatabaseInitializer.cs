@@ -11,30 +11,28 @@ public sealed class DatabaseInitializer : IDatabaseInitializer
 {
     private readonly ApplicationDbContext _db;
     private readonly ILogger<DatabaseInitializer> _logger;
-    private readonly IHostEnvironment _env;
+    
 
     public DatabaseInitializer(
         ApplicationDbContext db,
-        ILogger<DatabaseInitializer> logger,
-        IHostEnvironment env)
+        ILogger<DatabaseInitializer> logger)
     {
         _db = db;
         _logger = logger;
-        _env = env;
     }
 
     public async Task InitializeAsync(CancellationToken ct = default)
     {
         // Política: migrar solo en Dev; en Prod hazlo por CI/CD o job separado
-        if (_env.IsDevelopment())
-        {
-            _logger.LogInformation("Applying EF Core migrations...");
-            await _db.Database.MigrateAsync(ct);
-        }
+        // if (_env.IsDevelopment())
+        // {
+        //     _logger.LogInformation("Applying EF Core migrations...");
+        //     await _db.Database.MigrateAsync(ct);
+        // }
 
         await SeedFormulariosAsync(ct);
         await SeedAdminUserAsync(ct);
-
+        await SeedAccesosRutasAsync(ct);
     }
 
     private async Task SeedFormulariosAsync(CancellationToken ct)
@@ -292,7 +290,7 @@ public sealed class DatabaseInitializer : IDatabaseInitializer
         const string adminNombre = "Administrador";
         const string adminCorreo = "admin@mesafacil.local";
         const string rolAdminCode = "ADMIN";
-        const string rolAdminNombre = "Administrador";
+        const string rolAdminNombre = "Admin";
         const string credCatalogCode = "CRED";
         const string credCatalogName = "Tipos de Credencial";
         const string credItemCode = "PASSWORD";
@@ -560,4 +558,138 @@ public sealed class DatabaseInitializer : IDatabaseInitializer
         var hashBase64 = Convert.ToBase64String(hashBytes);
         return (hashBase64, saltBase64);
     }
+
+    private async Task SeedAccesosRutasAsync(CancellationToken ct)
+    {
+        await using var tx = await _db.Database.BeginTransactionAsync(ct);
+        try
+        {
+            // 1) Asegurar AccesoRuta: Dashboard (path "/")
+            var dashboard = await _db.Set<AccesoRuta>()
+                .FirstOrDefaultAsync(a => a.Path == "/", ct);
+
+            if (dashboard is null)
+            {
+                dashboard = new AccesoRuta
+                {
+                    Nombre = "Dashboard",
+                    Path = "/",
+                    Descripcion = "Pantalla inicial post-login",
+                    IsActive = true,
+                    CreatedAt = DateTime.UtcNow,
+                    CreatedBy = "seed",
+                };
+                _db.Add(dashboard);
+                await _db.SaveChangesAsync(ct);
+                _logger.LogInformation("Seed: creado AccesoRuta Dashboard ('/').");
+            }
+            else
+            {
+                bool changed = false;
+                if (dashboard.Nombre != "Dashboard")
+                {
+                    dashboard.Nombre = "Dashboard";
+                    changed = true;
+                }
+
+                if (!dashboard.IsActive)
+                {
+                    dashboard.IsActive = true;
+                    changed = true;
+                }
+
+                if (changed)
+                {
+                    dashboard.UpdatedAt = DateTime.UtcNow;
+                    dashboard.UpdatedBy = "seed";
+                    await _db.SaveChangesAsync(ct);
+                    _logger.LogInformation("Seed: actualizado AccesoRuta Dashboard ('/').");
+                }
+            }
+
+            // 2) Asegurar que TODOS los roles tengan acceso al Dashboard
+            var roles = await _db.Set<Rol>().ToListAsync(ct);
+            foreach (var rol in roles)
+            {
+                var exists = await _db.Set<RolAccesoRuta>().AnyAsync(
+                    r => r.IdRol == rol.Id && r.IdAccesoRuta == dashboard.Id, ct);
+
+                if (!exists)
+                {
+                    var link = new RolAccesoRuta
+                    {
+                        IdRol = rol.Id,
+                        IdAccesoRuta = dashboard.Id,
+                        IsActive = true,
+                        CreatedAt = DateTime.UtcNow,
+                        CreatedBy = "seed"
+                    };
+                    _db.Add(link);
+                }
+            }
+
+            await _db.SaveChangesAsync(ct);
+
+            // OPCIONAL: si ya quieres sembrar otros accesos base, descomenta y ajusta:
+            // await EnsureAccesoAndBindAsync("Administración", "/admin", new[] { "Admin" }, ct);
+            // await EnsureAccesoAndBindAsync("Vista Mesero", "/mesero", new[] { "Mesero" }, ct);
+
+            await tx.CommitAsync(ct);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error durante el seeding de Accesos/Roles");
+            await tx.RollbackAsync(ct);
+            throw;
+        }
+    }
+    
+    private async Task EnsureAccesoAndBindAsync(
+        string nombre,
+        string path,
+        IEnumerable<string> roleNames,
+        CancellationToken ct)
+    {
+        // Asegura acceso
+        var acceso = await _db.Set<AccesoRuta>().FirstOrDefaultAsync(a => a.Path == path, ct);
+        if (acceso is null)
+        {
+            acceso = new AccesoRuta
+            {
+                Nombre = nombre,
+                Path = path,
+                Descripcion = null,
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow,
+                CreatedBy = "seed"
+            };
+            _db.Add(acceso);
+            await _db.SaveChangesAsync(ct);
+        }
+
+        // Vincula a roles por nombre
+        var roles = await _db.Set<Rol>()
+            .Where(r => roleNames.Contains(r.Nombre))
+            .ToListAsync(ct);
+
+        foreach (var rol in roles)
+        {
+            bool exists = await _db.Set<RolAccesoRuta>()
+                .AnyAsync(x => x.IdRol == rol.Id && x.IdAccesoRuta == acceso.Id, ct);
+            if (!exists)
+            {
+                _db.Add(new RolAccesoRuta
+                {
+                    IdRol = rol.Id,
+                    IdAccesoRuta = acceso.Id,
+                    IsActive = true,
+                    CreatedAt = DateTime.UtcNow,
+                    CreatedBy = "seed"
+                });
+            }
+        }
+
+        await _db.SaveChangesAsync(ct);
+    }
+
 }

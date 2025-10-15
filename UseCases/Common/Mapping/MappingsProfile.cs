@@ -34,6 +34,8 @@ using DTO.Usuario;
 using DTO.UsuarioRol;
 using DTO.VarianteProducto;
 using DTO.FormField;
+using DTO.AccesoRuta;
+using DTO.RolAccesoRuta;
 
 namespace UseCases.Common.Mapping;
 
@@ -41,6 +43,8 @@ public class MappingsProfile : Profile
 {
     public MappingsProfile()
     {
+        CreateMap<Domain.Entities.RolAccesoRuta, DTO.RolAccesoRuta.RolAccesoRutaDTO>().ReverseMap();
+        CreateMap<Domain.Entities.AccesoRuta, DTO.AccesoRuta.AccesoRutaDTO>().ReverseMap();
         CreateMap<Domain.Entities.FormField, DTO.FormField.FormFieldDTO>().ReverseMap();
         CreateMap<Domain.Entities.VarianteProducto, DTO.VarianteProducto.VarianteProductoDTO>().ReverseMap();
         CreateMap<Domain.Entities.UsuarioRol, DTO.UsuarioRol.UsuarioRolDTO>().ReverseMap();

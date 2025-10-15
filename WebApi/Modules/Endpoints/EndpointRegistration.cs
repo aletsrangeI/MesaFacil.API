@@ -39,6 +39,8 @@ public static class EndpointRegistration
         app.MapUsuarioRolEndpoints();
         app.MapVarianteProductoEndpoints();
         app.MapFormFieldEndpoints();
+        app.MapAccesoRutaEndpoints();
+        app.MapRolAccesoRutaEndpoints();
         return app;
     }
 }
