@@ -1,7 +1,6 @@
 using Domain.Entities;
 using Interface.Persistence;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Persistence.Context;
 
