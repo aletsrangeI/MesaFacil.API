@@ -66,6 +66,8 @@ public static class ConfigureServices
         services.AddScoped<IUsuarioRolRepository, UsuarioRolRepository>();
         services.AddScoped<IVarianteProductoRepository, VarianteProductoRepository>();
         services.AddScoped<IFormFieldRepository, FormFieldRepository>();
+        services.AddScoped<IAccesoRutaRepository, AccesoRutaRepository>();
+        services.AddScoped<IRolAccesoRutaRepository, RolAccesoRutaRepository>();
         services.AddScoped<IDatabaseInitializer, DatabaseInitializer>();
 
 

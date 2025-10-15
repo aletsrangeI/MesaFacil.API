@@ -36,6 +36,8 @@ using UseCases.Usuarios;
 using UseCases.UsuarioRoles;
 using UseCases.VarianteProductos;
 using UseCases.FormFields;
+using UseCases.AccesoRutas;
+using UseCases.RolAccesoRutas;
 using Validator;
 // Si registras validadores aquí, mantén solo los que no dependen de WebApi
 
@@ -86,6 +88,8 @@ public static class ConfigureServices
         services.AddScoped<IUsuarioRolApplication, UsuarioRolApplication>();
         services.AddScoped<IVarianteProductoApplication, VarianteProductoApplication>();
         services.AddScoped<IFormFieldApplication, FormFieldApplication>();
+        services.AddScoped<IAccesoRutaApplication, AccesoRutaApplication>();
+        services.AddScoped<IRolAccesoRutaApplication, RolAccesoRutaApplication>();
 
         // Validadores (si quieres mantenerlos aquí está bien; no dependen de WebApi)
         services.AddTransient<CatalogDTOValidator>();
@@ -123,6 +127,8 @@ public static class ConfigureServices
         services.AddTransient<UsuarioRolDTOValidator>();
         services.AddTransient<VarianteProductoDTOValidator>();
         services.AddTransient<FormFieldDTOValidator>();
+        services.AddTransient<AccesoRutaDTOValidator>();
+        services.AddTransient<RolAccesoRutaDTOValidator>();
 
         return services;
     }
