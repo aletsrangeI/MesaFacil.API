@@ -53,4 +53,8 @@ public interface IUsuarioRepository
     /// Útil si quieres validar hash/salt en capa de aplicación.
     /// </summary>
     Task<Credencial?> GetPasswordCredentialAsync(int usuarioId, CancellationToken ct);
+
+    Task<List<string>> GetPermissionKeysByUsuarioIdAsync(int usuarioId, CancellationToken ct);
+    
+    Task<string?> GetPermissionsVersionAsync(int usuarioId, CancellationToken ct);
 }
