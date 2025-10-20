@@ -59,12 +59,12 @@ public class FormFieldRepository : IFormFieldRepository
         return _context.FormFields.Count();
     }
 
-    public IEnumerable<FormField> GetFormFieldByFormCatId(int id)
+    public IEnumerable<FormField> GetFormFieldByFormCatId(string code)
     {
         var result = (from ff in _context.FormFields
             join cc in _context.CatalogItems
                 on ff.FormularioItemId equals cc.Id
-            where ff.FormularioItemId == id
+            where cc.Code == code
             select ff).OrderBy(a => a.Order).ToList();
 
         foreach (var formField in result)

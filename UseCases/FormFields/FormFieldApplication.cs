@@ -182,12 +182,12 @@ public class FormFieldApplication : IFormFieldApplication
         return response;
     }
 
-    public Response<IEnumerable<FormFieldDTO>> GetFormFieldByFormCatId(int id)
+    public Response<IEnumerable<FormFieldDTO>> GetFormFieldByFormCatId(string code)
     {
         var response = new Response<IEnumerable<FormFieldDTO>>();
         try
         {
-            var list = _unitOfWork.FormFields.GetFormFieldByFormCatId(id);
+            var list = _unitOfWork.FormFields.GetFormFieldByFormCatId(code);
             response.Data = _mapper.Map<IEnumerable<FormFieldDTO>>(list);
             if (response.Data != null)
             {
