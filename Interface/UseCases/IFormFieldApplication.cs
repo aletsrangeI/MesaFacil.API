@@ -14,7 +14,7 @@ public interface IFormFieldApplication
     Response<IEnumerable<FormFieldDTO>> GetAll();
     ResponsePagination<IEnumerable<FormFieldDTO>> GetAllWithPagination(int page, int pageSize);
     Response<int> Count();
-    Response<IEnumerable<FormFieldDTO>> GetFormFieldByFormCatId(int id);
+    Response<IEnumerable<FormFieldDTO>> GetFormFieldByFormCatId(string code);
 
     #endregion
 
