@@ -14,7 +14,7 @@ public interface IFormFieldRepository
     IEnumerable<FormField> GetAllWithPagination(int page, int pageSize);
     int Count();
 
-    public IEnumerable<FormField> GetFormFieldByFormCatId(int id);
+    public IEnumerable<FormField> GetFormFieldByFormCatId(string code);
     public Task<IEnumerable<FormField>> GetFormFieldByFormCatIdAsync(int id);
 
     #endregion
