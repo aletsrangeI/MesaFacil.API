@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Common; // Response<T>
 using DTO.Auth;
 using FluentValidation.Results;
+using Interface.Persistence;
 using Interface.UseCases;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -17,10 +18,8 @@ public static class AuthEndpoints
         var group = app.MapGroup("/api/auth")
             .WithTags("Auth")
             .WithOpenApi();
-
-        // ---------------------------
+        
         // POST /api/auth/login
-        // ---------------------------
         group.MapPost(
             "/login",
             async Task<Results<
@@ -33,7 +32,6 @@ public static class AuthEndpoints
                 LoginRequestValidator validator,
                 CancellationToken ct) =>
             {
-                // 1) Validación
                 var val = await validator.ValidateAsync(req, ct);
                 if (!val.IsValid)
                 {
@@ -42,92 +40,92 @@ public static class AuthEndpoints
                         Data = default!,
                         isSuccess = false,
                         Message = "Solicitud inválida",
-                        Errors = val.Errors // FluentValidation errors
+                        Errors = val.Errors
                     };
                     return TypedResults.BadRequest(bad);
                 }
 
-                // 2) Lógica de autenticación
                 var result = await svc.LoginAsync(req, ct);
-
-                // (Tu capa de aplicación ya devuelve Response<AuthResponseDTO>)
                 if (!result.isSuccess || result.Data is null)
-                {
-                    // Puedes devolver 401 vacío (más estándar) o incluir mensaje con 401 JSON.
-                    // Manteniendo tu patrón, devuelvo 401 sin cuerpo:
                     return TypedResults.Unauthorized();
-                }
 
-                // 3) Éxito
                 return TypedResults.Ok(result);
             })
             .WithName("Auth_Login");
 
-        // ---------------------------
         // GET /api/auth/me
-        // ---------------------------
-        // group.MapGet(
-        //     "/me",
-        //     [Authorize] async Task<Results<
-        //         Ok<Response<UserSessionDTO>>,
-        //         UnauthorizedHttpResult
-        //     >>(
-        //         ClaimsPrincipal user,
-        //         IAuthApplication svc,
-        //         CancellationToken ct) =>
-        //     {
-        //         // sub / nameidentifier
-        //         var sub = user.FindFirst(ClaimTypes.NameIdentifier)?.Value
-        //                   ?? user.FindFirst("sub")?.Value;
-        //
-        //         if (!int.TryParse(sub, out var usuarioId))
-        //         {
-        //             return TypedResults.Unauthorized();
-        //         }
-        //
-        //         var session = await svc.GetSessionAsync(usuarioId, ct);
-        //         if (session is null)
-        //         {
-        //             // Si prefieres NotFound, cambia la firma por Results<Ok<...>, Unauthorized, NotFound<...>>
-        //             return TypedResults.Unauthorized();
-        //         }
-        //
-        //         var ok = new Response<UserSessionDTO>
-        //         {
-        //             Data = session,
-        //             isSuccess = true,
-        //             Message = "Perfil de sesión",
-        //             Errors = Array.Empty<ValidationFailure>()
-        //         };
-        //
-        //         return TypedResults.Ok(ok);
-        //     })
-        //     .WithName("Auth_Me");
-
-        // ---------------------------
-        // (Opcional) POST /api/auth/refresh
-        // ---------------------------
-        // Descomenta si ya tienes refresh en IAuthApplication / IJwtTokenService.
-        /*
-        group.MapPost(
-            "/refresh",
-            async Task<Results<
-                Ok<Response<TokenDTO>>,
-                BadRequest<Response<TokenDTO>>,
-                UnauthorizedHttpResult
-            >>(
-                RefreshRequest req,             // define DTO con RefreshToken
-                IAuthApplication svc,
+        group.MapGet(
+            "/me",
+            [Authorize] async Task<Results<Ok<Response<AuthMeDTO>>, UnauthorizedHttpResult>>(
+                ClaimsPrincipal user,
+                IUsuarioRepository usuarios,     // servicio de consultas (lee DB)
                 CancellationToken ct) =>
             {
-                var resp = await svc.RefreshAsync(req, ct); // Response<TokenDTO>
-                if (!resp.isSuccess || resp.Data is null)
+                var uidStr = user.FindFirst("uid")?.Value;
+                if (!int.TryParse(uidStr, out var uid))
                     return TypedResults.Unauthorized();
 
-                return TypedResults.Ok(resp);
+                int.TryParse(user.FindFirst("empresa_id")?.Value, out var empresaId);
+                var tokenPermsVersion = user.FindFirst("perms_version")?.Value ?? "";
+
+                // Claims actuales (rápidos)
+                var rolesFromToken = user.Claims
+                    .Where(c => c.Type == ClaimTypes.Role)
+                    .Select(c => c.Value)
+                    .Distinct()
+                    .ToArray();
+
+                var permsFromToken = user.Claims
+                    .Where(c => c.Type == "perm")
+                    .Select(c => c.Value)
+                    .Distinct()
+                    .ToArray();
+
+                // Versión “oficial” en DB (hash o campo persistido)
+                var currentPermsVersion = await usuarios.GetPermissionsVersionAsync(uid, ct) ?? "";
+
+                var permissionsChanged = !string.Equals(tokenPermsVersion, currentPermsVersion, StringComparison.Ordinal);
+
+                IReadOnlyList<string> permissions;
+                // Recomiendo obtener accesos (paths) siempre de DB para mantenerlos al día
+                var accesos = await usuarios.GetAccesoPathsByUsuarioIdAsync(uid, ct);
+
+                if (permissionsChanged)
+                {
+                    // Recalcula desde DB si hubo cambios
+                    permissions = await usuarios.GetPermissionKeysByUsuarioIdAsync(uid, ct);
+                }
+                else
+                {
+                    // Usa lo del token (rápido)
+                    permissions = permsFromToken;
+                }
+
+                var dto = new AuthMeDTO
+                {
+                    UsuarioId = uid,
+                    IdEmpresa = empresaId,
+                    Correo = user.FindFirst(ClaimTypes.Email)?.Value 
+                             ?? user.FindFirst("email")?.Value,
+                    Nombre = user.FindFirst("nombre")?.Value ?? user.Identity?.Name,
+                    SucursalId = user.FindFirst("sucursal_id")?.Value,
+                    TurnoAbierto = (user.FindFirst("turno_abierto")?.Value ?? "0") == "1",
+
+                    Roles = rolesFromToken,
+                    Permissions = permissions,
+                    Accesos = accesos,
+                    PermsVersion = currentPermsVersion,
+                    PermissionsChanged = permissionsChanged
+                };
+
+                return TypedResults.Ok(new Response<AuthMeDTO>
+                {
+                    Data = dto,
+                    isSuccess = true,
+                    Message = "OK"
+                });
             })
-            .WithName("Auth_Refresh");
-        */
+            .WithName("Auth_Me");
 
         return app;
     }

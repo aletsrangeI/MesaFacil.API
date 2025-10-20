@@ -14,10 +14,10 @@ public class RolAccesoRutaConfiguration : IEntityTypeConfiguration<RolAccesoRuta
         e.Property(x => x.IdRol).IsRequired();
         e.Property(x => x.IdAccesoRuta).IsRequired();
 
-        // Evitar rol-ruta duplicados
+        // Índice único compuesto (solo una definición y con nombre correcto)
         e.HasIndex(x => new { x.IdRol, x.IdAccesoRuta })
             .IsUnique()
-            .HasDatabaseName("UX_RolAccesoRuta_Rol_Path");
+            .HasDatabaseName("UX_RolAccesoRuta_Rol_AccesoRuta");
 
         e.HasOne(x => x.Rol)
             .WithMany(r => r.AccesosRuta)
