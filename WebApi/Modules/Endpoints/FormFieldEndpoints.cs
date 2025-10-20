@@ -196,10 +196,10 @@ public static class FormFieldEndpoints
                 })
             .WithName("FormField_Count_Async");
 
-        group.MapGet("/GetFormFieldByFormCatId/{id:int}",
-                (int id, IFormFieldApplication svc, CancellationToken ct) =>
+        group.MapGet("/GetFormFieldByFormCatId/{code}",
+                (string code, IFormFieldApplication svc, CancellationToken ct) =>
                 {
-                    Response<IEnumerable<FormFieldDTO>> result = svc.GetFormFieldByFormCatId(id);
+                    Response<IEnumerable<FormFieldDTO>> result = svc.GetFormFieldByFormCatId(code);
                     return TypedResults.Ok(result);
                 })
             .WithName("FormField_GetFormFieldByFormCatId");
