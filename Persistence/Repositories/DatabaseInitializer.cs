@@ -10,7 +10,7 @@ public sealed class DatabaseInitializer : IDatabaseInitializer
 {
     private readonly ApplicationDbContext _db;
     private readonly ILogger<DatabaseInitializer> _logger;
-    
+
 
     public DatabaseInitializer(
         ApplicationDbContext db,
@@ -20,18 +20,34 @@ public sealed class DatabaseInitializer : IDatabaseInitializer
         _logger = logger;
     }
 
+    const string adminPlainPassword = "Admin123!";
+
     public async Task InitializeAsync(CancellationToken ct = default)
     {
-        // Política: migrar solo en Dev; en Prod hazlo por CI/CD o job separado
+        // 0) Migraciones (activa si lo haces desde la app)
         // if (_env.IsDevelopment())
         // {
         //     _logger.LogInformation("Applying EF Core migrations...");
         //     await _db.Database.MigrateAsync(ct);
         // }
 
+        // 1) Roles base (deben existir antes de RBAC y antes de asignar UsuarioRol)
+        var adminRole = await EnsureRoleAsync("Admin", isSystem: true, isAssignable: true, ct);
+        var managerRole = await EnsureRoleAsync("Manager", isSystem: false, isAssignable: true, ct);
+        var meseroRole = await EnsureRoleAsync("Mesero", isSystem: false, isAssignable: true, ct);
+
+        // // 2) Usuario admin (y su credencial)
+        // var adminUser = await EnsureAdminUserAsync(ct);
+
+        // 3) Asignar rol Admin al usuario admin (tabla puente UsuarioRol)
+        await SeedAdminUserAsync(ct); // crea empresa, usuario, credencial (Password), etc.
+        var adminUser = await _db.Usuarios.FirstAsync(u => u.Correo == "admin@mesafacil.local", ct);
+
+        // 4) RBAC: permisos (AccesoRuta) + asignación a roles (RolAccesoRuta)
+        await SeedRbacAsync(ct);
+
+        // 5) Otros seeds de tu app (formularios, catálogos, etc.)
         await SeedFormulariosAsync(ct);
-        await SeedAdminUserAsync(ct);
-        await SeedAccesosRutasAsync(ct);
     }
 
     private async Task SeedFormulariosAsync(CancellationToken ct)
@@ -296,7 +312,7 @@ public sealed class DatabaseInitializer : IDatabaseInitializer
         const string credItemName = "Contraseña";
 
         // Password semilla (cámbialo en prod)
-        const string adminPlainPassword = "Admin123!";
+
 
         await using var tx = await _db.Database.BeginTransactionAsync(ct);
         try
@@ -482,15 +498,18 @@ public sealed class DatabaseInitializer : IDatabaseInitializer
             //   - PK: { Id, IdRol }
             //   - FK a Usuario por 'Id' (heredado de BaseAuditableEntity) en UsuarioRol
             // Eso implica que UsuarioRol.Id == Usuario.Id (inusual, pero así está configurado).
+            // var usuarioRolExists = await _db.Set<UsuarioRol>()
+            //     .AnyAsync(ur => ur.Id == admin.Id && ur.IdRol == rolAdmin.Id, ct);
+
             var usuarioRolExists = await _db.Set<UsuarioRol>()
-                .AnyAsync(ur => ur.Id == admin.Id && ur.IdRol == rolAdmin.Id, ct);
+                .AnyAsync(ur => ur.UsuarioId == admin.Id && ur.IdRol == rolAdmin.Id, ct);
 
             if (!usuarioRolExists)
             {
                 var ur = new UsuarioRol
                 {
                     // IMPORTANTE: aquí el Id de UsuarioRol DEBE SER el Id del Usuario (por tu FK)
-                    Id = admin.Id,
+                    UsuarioId = admin.Id,
                     IdRol = rolAdmin.Id,
                     IsActive = true,
                     CreatedAt = DateTime.UtcNow,
@@ -642,7 +661,7 @@ public sealed class DatabaseInitializer : IDatabaseInitializer
             throw;
         }
     }
-    
+
     private async Task EnsureAccesoAndBindAsync(
         string nombre,
         string path,
@@ -691,4 +710,300 @@ public sealed class DatabaseInitializer : IDatabaseInitializer
         await _db.SaveChangesAsync(ct);
     }
 
+    private static AccesoRuta Perm(
+        string key, string nombre, string path, string group, bool isMenu = false, string? descripcion = null)
+        => new()
+        {
+            Key = key,
+            Nombre = nombre,
+            Path = path, // ÚNICO en DB (índice)
+            Group = group,
+            IsMenu = isMenu,
+            Descripcion = descripcion,
+            IsActive = true,
+            CreatedAt = DateTime.UtcNow,
+            CreatedBy = "seed"
+        };
+
+    private async Task SeedRbacAsync(CancellationToken ct)
+    {
+        await using var tx = await _db.Database.BeginTransactionAsync(ct);
+        try
+        {
+            // ------------------------------------------------------------------
+            // 1) Declaración de permisos (AccesoRuta)
+            // - Los que son menú (IsMenu=true) usan rutas reales /admin/*
+            // - Los de acción usan pseudo-paths /perm/* para no duplicar path
+            // - Dashboard se controla con DASHBOARD_VIEW
+            // ------------------------------------------------------------------
+            var permisos = new List<AccesoRuta>
+            {
+                // Core
+                Perm("DASHBOARD_VIEW", "Dashboard", "/", "CORE", isMenu: true,
+                    descripcion: "Pantalla inicial post-login"),
+
+                // Usuarios
+                Perm("USERS_READ", "Ver usuarios", "/admin/users", "USERS", isMenu: true),
+                Perm("USERS_WRITE", "Crear/editar usuarios", "/perm/users:write", "USERS"),
+
+                // Roles y permisos
+                Perm("ROLES_READ", "Ver roles", "/admin/roles", "ROLES", isMenu: true),
+                Perm("ROLES_WRITE", "Crear/editar roles", "/perm/roles:write", "ROLES"),
+                Perm("ROUTES_ADMIN", "Asignar permisos", "/admin/permissions", "ROLES", isMenu: true),
+
+                // Organización
+                Perm("ORG_ADMIN", "Organización", "/admin/org", "ORG", isMenu: true),
+
+                // Catálogo
+                Perm("CATALOG_ADMIN", "Catálogo", "/admin/catalog", "CATALOG", isMenu: true),
+
+                // Formularios dinámicos
+                Perm("FORMS_ADMIN", "Form Builder", "/admin/forms", "FORMS", isMenu: true),
+
+                // Precios / Impuestos / Promos
+                Perm("PRICING_ADMIN", "Precios y Promos", "/admin/pricing", "PRICING", isMenu: true),
+
+                // Inventario
+                Perm("INVENTORY_READ", "Ver inventario", "/admin/inventory", "INVENTORY", isMenu: true),
+                Perm("INVENTORY_WRITE", "Editar inventario", "/perm/inventory:write", "INVENTORY"),
+
+                // Dispositivos
+                Perm("DEVICES_ADMIN", "Dispositivos", "/admin/devices", "DEVICES", isMenu: true),
+
+                // Reportes
+                Perm("REPORTS_VIEW", "Reportes", "/admin/reports", "REPORTS", isMenu: true),
+            };
+
+            // UPSERT por Key (idempotente: si cambias Nombre/Path/Group/IsMenu se actualiza)
+            foreach (var p in permisos)
+            {
+                var existing = await _db.Set<AccesoRuta>().FirstOrDefaultAsync(x => x.Key == p.Key, ct);
+                if (existing is null)
+                {
+                    _db.Add(p);
+                }
+                else
+                {
+                    bool changed = false;
+                    if (existing.Nombre != p.Nombre)
+                    {
+                        existing.Nombre = p.Nombre;
+                        changed = true;
+                    }
+
+                    if (existing.Path != p.Path)
+                    {
+                        existing.Path = p.Path;
+                        changed = true;
+                    }
+
+                    if (existing.Group != p.Group)
+                    {
+                        existing.Group = p.Group;
+                        changed = true;
+                    }
+
+                    if (existing.IsMenu != p.IsMenu)
+                    {
+                        existing.IsMenu = p.IsMenu;
+                        changed = true;
+                    }
+
+                    if (existing.Descripcion != p.Descripcion)
+                    {
+                        existing.Descripcion = p.Descripcion;
+                        changed = true;
+                    }
+
+                    if (!existing.IsActive)
+                    {
+                        existing.IsActive = true;
+                        changed = true;
+                    }
+
+                    if (changed)
+                    {
+                        existing.UpdatedAt = DateTime.UtcNow;
+                        existing.UpdatedBy = "seed";
+                        _db.Update(existing);
+                    }
+                }
+            }
+
+            await _db.SaveChangesAsync(ct);
+
+            // ------------------------------------------------------------------
+            // 2) Roles base
+            // ------------------------------------------------------------------
+            var admin = await _db.Roles.AsNoTracking().FirstAsync(r => r.Nombre == "Admin", ct);
+            var manager = await _db.Roles.AsNoTracking().FirstAsync(r => r.Nombre == "Manager", ct);
+            var mesero = await _db.Roles.AsNoTracking().FirstAsync(r => r.Nombre == "Mesero", ct);
+
+            // ------------------------------------------------------------------
+            // 3) Asignación de permisos por rol
+            // ------------------------------------------------------------------
+            var allPerms = await _db.Set<AccesoRuta>().AsNoTracking().ToListAsync(ct);
+
+            // Admin => todos
+            await EnsureRolePermissionsAsync(admin.Id, allPerms.Select(x => x.Id), ct);
+
+            // Manager => operativo de administración (sin editar roles)
+            var managerKeys = new[]
+            {
+                "DASHBOARD_VIEW",
+                "USERS_READ",
+                "ORG_ADMIN",
+                "CATALOG_ADMIN",
+                "FORMS_ADMIN",
+                "PRICING_ADMIN",
+                "INVENTORY_READ", "INVENTORY_WRITE",
+                "DEVICES_ADMIN",
+                "REPORTS_VIEW"
+            };
+            await EnsureRolePermissionsAsync(
+                manager.Id,
+                allPerms.Where(p => managerKeys.Contains(p.Key)).Select(p => p.Id),
+                ct
+            );
+
+            // Mesero => lo mínimo (ajústalo a tu UX real)
+            var meseroKeys = new[]
+            {
+                "DASHBOARD_VIEW",
+                // si el mesero no debe entrar a admin, quita todos los /admin/*. 
+                // para front de operación crea luego permisos específicos (e.g., ORDER_TAKE)
+            };
+            await EnsureRolePermissionsAsync(
+                mesero.Id,
+                allPerms.Where(p => meseroKeys.Contains(p.Key)).Select(p => p.Id),
+                ct
+            );
+
+            await tx.CommitAsync(ct);
+            _logger.LogInformation("Seed RBAC completado: permisos y roles asignados.");
+        }
+        catch (Exception ex)
+        {
+            await tx.RollbackAsync(ct);
+            _logger.LogError(ex, "Error durante el seeding de RBAC");
+            throw;
+        }
+    }
+
+    private async Task<Rol> EnsureRoleAsync(string nombre, bool isSystem, bool isAssignable, CancellationToken ct)
+    {
+        var r = await _db.Set<Rol>().FirstOrDefaultAsync(x => x.Nombre == nombre, ct);
+        if (r is null)
+        {
+            r = new Rol
+            {
+                Nombre = nombre,
+                IsSystem = isSystem,
+                IsAssignable = isAssignable,
+                ConcurrencyStamp = Guid.NewGuid().ToString(),
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow,
+                CreatedBy = "seed"
+            };
+            _db.Add(r);
+            await _db.SaveChangesAsync(ct);
+        }
+        else
+        {
+            bool changed = false;
+            if (r.IsSystem != isSystem)
+            {
+                r.IsSystem = isSystem;
+                changed = true;
+            }
+
+            if (r.IsAssignable != isAssignable)
+            {
+                r.IsAssignable = isAssignable;
+                changed = true;
+            }
+
+            if (string.IsNullOrWhiteSpace(r.ConcurrencyStamp))
+            {
+                r.ConcurrencyStamp = Guid.NewGuid().ToString();
+                changed = true;
+            }
+
+            if (!r.IsActive)
+            {
+                r.IsActive = true;
+                changed = true;
+            }
+
+            if (changed)
+            {
+                r.UpdatedAt = DateTime.UtcNow;
+                r.UpdatedBy = "seed";
+                _db.Update(r);
+                await _db.SaveChangesAsync(ct);
+            }
+        }
+
+        return r;
+    }
+
+    private async Task EnsureRolePermissionsAsync(int roleId, IEnumerable<int> permisoIds, CancellationToken ct)
+    {
+        // declarativo: reemplaza asignaciones del rol
+        var current = _db.Set<RolAccesoRuta>().Where(x => x.IdRol == roleId);
+        _db.RemoveRange(current);
+
+        foreach (var pid in permisoIds.Distinct())
+        {
+            _db.Add(new RolAccesoRuta
+            {
+                IdRol = roleId,
+                IdAccesoRuta = pid,
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow,
+                CreatedBy = "seed"
+            });
+        }
+
+        await _db.SaveChangesAsync(ct);
+    }
+
+    private async Task<Usuario> EnsureAdminUserAsync(CancellationToken ct)
+    {
+        var admin = await _db.Usuarios.FirstOrDefaultAsync(u => u.Correo == "admin@mesafacil.local", ct);
+        if (admin is null)
+        {
+            admin = new Usuario
+            {
+                Correo = "admin@mesafacil.local",
+                NombreCompleto = "Administrador",
+                IdEmpresa = 1, // ajusta si tu modelo lo requiere
+                IsActive = true
+            };
+            _db.Usuarios.Add(admin);
+            await _db.SaveChangesAsync(ct);
+
+            // Credencial
+            var (hash, salt) = CreatePasswordHash(adminPlainPassword);
+            _db.Credenciales.Add(new Credencial
+            {
+                Id = admin.Id,
+                Hash = hash,
+                Salt = salt
+            });
+            await _db.SaveChangesAsync(ct);
+        }
+
+        return admin;
+    }
+
+    private async Task EnsureUserRoleAsync(int usuarioId, int rolId, CancellationToken ct)
+    {
+        var exists = await _db.UsuarioRoles.AnyAsync(x => x.UsuarioId == usuarioId && x.IdRol == rolId, ct);
+        if (!exists)
+        {
+            _db.UsuarioRoles.Add(new UsuarioRol { UsuarioId = usuarioId, IdRol = rolId });
+            await _db.SaveChangesAsync(ct);
+        }
+    }
 }

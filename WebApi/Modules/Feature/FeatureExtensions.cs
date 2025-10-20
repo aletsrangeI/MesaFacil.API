@@ -8,13 +8,18 @@ public static class FeatureExtensions
     {
         string myPolicy = "policyMesaFacil";
 
-        services.AddCors(options => options.AddPolicy(myPolicy, builder => builder
-            .SetIsOriginAllowed(_ => true) // Permitir cualquier origen
-            .AllowAnyHeader()
-            .AllowAnyMethod()));
-        services.AddControllers().AddJsonOptions(options =>
+        services.AddCors(options =>
         {
-            options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+            options.AddPolicy("policyMesaFacil", p => p
+                    .WithOrigins(
+                        "http://100.110.215.58:8081",
+                        "http://100.110.215.58",
+                        "https://orionsys.net"
+                    )
+                    .AllowAnyHeader()
+                    .AllowAnyMethod()
+                    .AllowCredentials()          // solo si usas cookies/withCredentials
+            );
         });
 
 

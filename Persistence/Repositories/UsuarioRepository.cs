@@ -1,3 +1,5 @@
+using System.Security.Cryptography;
+using System.Text;
 using Domain.Entities;
 using Interface.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -119,7 +121,7 @@ public class UsuarioRepository : IUsuarioRepository
             .ThenInclude(c => c.TipoItem) // CatalogItem (Code/Name)
             .FirstOrDefaultAsync(u => u.Correo != null && u.Correo.ToLower() == correo.ToLower(), ct);
     }
-    
+
     public async Task<Usuario?> GetByUserOrEmailWithAuthGraphAsync(string userOrEmail, CancellationToken ct)
     {
         var q = _context.Set<Usuario>()
@@ -139,7 +141,7 @@ public class UsuarioRepository : IUsuarioRepository
             // || u.Username != null && u.Username.ToLower() == userOrEmail.ToLower()
             , ct);
     }
-    
+
     public async Task<IReadOnlyList<string>> GetRoleNamesAsync(int usuarioId, CancellationToken ct)
     {
         // Nota: si tu mapping hace que UsuarioRol.Id == Usuario.Id, esta proyección funciona igual
@@ -149,7 +151,7 @@ public class UsuarioRepository : IUsuarioRepository
             .Distinct()
             .ToListAsync(ct);
     }
-    
+
     public async Task<IReadOnlyList<string>> GetAccesoPathsByUsuarioIdAsync(int usuarioId, CancellationToken ct)
     {
         return await _context.Set<Usuario>()
@@ -158,7 +160,7 @@ public class UsuarioRepository : IUsuarioRepository
             .Distinct()
             .ToListAsync(ct);
     }
-    
+
     public async Task<Credencial?> GetPasswordCredentialAsync(int usuarioId, CancellationToken ct)
     {
         // intento por Code
@@ -180,5 +182,37 @@ public class UsuarioRepository : IUsuarioRepository
     {
         return await _context.Set<Turno>()
             .AnyAsync(t => t.IdUsuario == idUsuario && t.Cierre == null, ct);
+    }
+
+    public async Task<List<string>> GetPermissionKeysByUsuarioIdAsync(int usuarioId, CancellationToken ct)
+    {
+        var query =
+            from ur in _context.UsuarioRoles.AsNoTracking()
+            where ur.UsuarioId == usuarioId
+            join rr in _context.RolAccesoRutas.AsNoTracking()
+                on ur.IdRol equals rr.IdRol
+            join ar in _context.AccesoRutas.AsNoTracking()
+                on rr.IdAccesoRuta equals ar.Id
+            select ar.Key;
+
+        return await query.Distinct().ToListAsync(ct);
+    }
+
+    public async Task<string?> GetPermissionsVersionAsync(int usuarioId, CancellationToken ct)
+    {
+        // 1) Obtén las keys de permiso actuales (ya tienes este método)
+        var keys = await GetPermissionKeysByUsuarioIdAsync(usuarioId, ct);
+
+        // 2) Canonicaliza el conjunto para que el hash sea estable
+        //    (mismo orden => mismo hash)
+        var canonical = string.Join("\n", keys.OrderBy(k => k, StringComparer.Ordinal));
+
+        // 3) Hashea (SHA-1/256; cualquiera funciona, es solo una etiqueta/ETag)
+        using var sha1 = SHA1.Create();
+        var bytes = Encoding.UTF8.GetBytes(canonical);
+        var hash = sha1.ComputeHash(bytes);
+
+        // 4) Devuelve una string corta y estable (Hex o Base64)
+        return Convert.ToHexString(hash); // e.g. "A1B2C3..."
     }
 }

@@ -9,13 +9,23 @@ public class UsuarioRolConfiguration : IEntityTypeConfiguration<UsuarioRol>
     public void Configure(EntityTypeBuilder<UsuarioRol> e)
     {
         e.ToTable("UsuarioRol");
-        e.HasKey(x => new { x.Id, x.IdRol });
+        e.HasKey(x => x.Id);
+
+        e.Property(x => x.UsuarioId).IsRequired();
+        e.Property(x => x.IdRol).IsRequired();
+
+        // Evitar duplicados usuario-rol
+        e.HasIndex(x => new { x.UsuarioId, x.IdRol })
+            .IsUnique()
+            .HasDatabaseName("UX_UsuarioRol_Usuario_Rol");
+
         e.HasOne(x => x.Usuario)
-            .WithMany(x => x.UsuarioRoles)
-            .HasForeignKey(x => x.Id)
+            .WithMany(u => u.UsuarioRoles)
+            .HasForeignKey(x => x.UsuarioId)
             .OnDelete(DeleteBehavior.Cascade);
+
         e.HasOne(x => x.Rol)
-            .WithMany(x => x.UsuarioRoles)
+            .WithMany(r => r.UsuarioRoles)
             .HasForeignKey(x => x.IdRol)
             .OnDelete(DeleteBehavior.Cascade);
     }
