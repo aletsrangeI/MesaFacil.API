@@ -16,7 +16,7 @@ public class PedidoConfiguration : IEntityTypeConfiguration<Pedido>
         // [CORREGIDO] Ajustado a SQL Server (datetime2) y valor por defecto consistente con DBML
         e.Property(x => x.AbiertoEn)
             .IsRequired()
-            .HasDefaultValueSql("sysutcdatetime()"); 
+            .HasDefaultValueSql("now()");
             
         e.Property(x => x.CerradoEn);
         
@@ -33,13 +33,8 @@ public class PedidoConfiguration : IEntityTypeConfiguration<Pedido>
 
         // Relaciones Base
         e.HasOne(x => x.Empresa)
-            .WithMany() // Ajustar si Empresa tiene ICollection<Pedido>
+            .WithMany(x => x.Pedidos) // <-- IMPORTANTE: Indicar la colección de regreso
             .HasForeignKey(x => x.IdEmpresa)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        e.HasOne(x => x.Sucursal)
-            .WithMany() // Ajustar si Sucursal tiene ICollection<Pedido>
-            .HasForeignKey(x => x.IdSucursal)
             .OnDelete(DeleteBehavior.Restrict);
 
         e.HasOne(x => x.Mesa)
@@ -47,19 +42,24 @@ public class PedidoConfiguration : IEntityTypeConfiguration<Pedido>
             .HasForeignKey(x => x.IdMesa)
             .OnDelete(DeleteBehavior.SetNull);
 
+        e.HasOne(x => x.Mesa)
+            .WithMany(x => x.Pedidos)
+            .HasForeignKey(x => x.IdMesa)
+            .OnDelete(DeleteBehavior.SetNull);
+
         e.HasOne(x => x.Cliente)
-            .WithMany() // Ajustar si Cliente tiene ICollection<Pedido>
+            .WithMany(x => x.Pedidos) // <-- IMPORTANTE
             .HasForeignKey(x => x.IdCliente)
             .OnDelete(DeleteBehavior.SetNull);
 
         // Relaciones con Usuarios (Staff)
         e.HasOne(x => x.AbiertoPorUsuario)
-            .WithMany() 
+            .WithMany(x => x.PedidosAbiertos) // Asegúrate que Usuario tenga esta colección
             .HasForeignKey(x => x.AbiertoPor)
             .OnDelete(DeleteBehavior.SetNull);
 
         e.HasOne(x => x.CerradoPorUsuario)
-            .WithMany()
+            .WithMany(x => x.PedidosCerrados) // Asegúrate que Usuario tenga esta colección
             .HasForeignKey(x => x.CerradoPor)
             .OnDelete(DeleteBehavior.SetNull);
 

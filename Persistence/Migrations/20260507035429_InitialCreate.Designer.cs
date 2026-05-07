@@ -12,8 +12,8 @@ using Persistence.Context;
 namespace Persistence.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20251009164624_CargaDeEntidadesRelacionales")]
-    partial class CargaDeEntidadesRelacionales
+    [Migration("20260507035429_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -24,6 +24,72 @@ namespace Persistence.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
+
+            modelBuilder.Entity("Domain.Entities.AccesoRuta", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Descripcion")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<string>("Group")
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsMenu")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
+                    b.Property<string>("Key")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Path")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Key")
+                        .IsUnique()
+                        .HasDatabaseName("UX_AccesoRuta_Key");
+
+                    b.HasIndex("Path")
+                        .IsUnique()
+                        .HasDatabaseName("UX_AccesoRuta_Path");
+
+                    b.ToTable("AccesoRuta", (string)null);
+                });
 
             modelBuilder.Entity("Domain.Entities.Area", b =>
                 {
@@ -69,7 +135,7 @@ namespace Persistence.Migrations
                     b.ToTable("Areas", (string)null);
                 });
 
-            modelBuilder.Entity("Domain.Entities.Catalog", b =>
+            modelBuilder.Entity("Domain.Entities.CatCredencial", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -77,53 +143,40 @@ namespace Persistence.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("Code")
-                        .IsRequired()
-                        .HasColumnType("text");
-
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("CreatedBy")
                         .IsRequired()
-                        .HasMaxLength(128)
-                        .HasColumnType("character varying(128)");
+                        .HasColumnType("text");
+
+                    b.Property<string>("Descripcion")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text");
-
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("UpdatedBy")
                         .IsRequired()
-                        .HasMaxLength(128)
-                        .HasColumnType("character varying(128)");
+                        .HasColumnType("text");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Code")
-                        .IsUnique();
-
-                    b.ToTable("Catalogs", (string)null);
+                    b.ToTable("CatCredencial", (string)null);
                 });
 
-            modelBuilder.Entity("Domain.Entities.CatalogItem", b =>
+            modelBuilder.Entity("Domain.Entities.CatEstacionesCocina", b =>
                 {
-                    b.Property<int>("CatalogId")
-                        .HasColumnType("integer");
-
                     b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("integer");
 
-                    b.Property<string>("Code")
-                        .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)");
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp without time zone");
@@ -132,23 +185,12 @@ namespace Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("ExtraJson")
+                    b.Property<string>("Descripcion")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<bool>("IsActive")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(true);
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(256)
-                        .HasColumnType("character varying(256)");
-
-                    b.Property<int>("SortOrder")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasDefaultValue(0);
+                        .HasColumnType("boolean");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp without time zone");
@@ -157,20 +199,383 @@ namespace Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<DateTime?>("ValidFrom")
-                        .HasColumnType("date");
+                    b.HasKey("Id");
 
-                    b.Property<DateTime?>("ValidTo")
-                        .HasColumnType("date");
+                    b.ToTable("CatEstacionesCocina");
+                });
 
-                    b.HasKey("CatalogId", "Id");
+            modelBuilder.Entity("Domain.Entities.CatEstadoCuenta", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
 
-                    b.HasIndex("CatalogId", "Code")
-                        .IsUnique();
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.HasIndex("CatalogId", "IsActive", "SortOrder");
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp without time zone");
 
-                    b.ToTable("CatalogItem", (string)null);
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Descripcion")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("CatEstadoCuenta");
+                });
+
+            modelBuilder.Entity("Domain.Entities.CatEstadoItemKDS", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Descripcion")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("CatEstadoItemKDS");
+                });
+
+            modelBuilder.Entity("Domain.Entities.CatEstadoMesa", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Descripcion")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("CatEstadoMesa");
+                });
+
+            modelBuilder.Entity("Domain.Entities.CatEstadoPedido", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Descripcion")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("CatEstadoPedido");
+                });
+
+            modelBuilder.Entity("Domain.Entities.CatEstadoPedidoDetalle", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Descripcion")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("CatEstadoPedidoDetalle");
+                });
+
+            modelBuilder.Entity("Domain.Entities.CatEstadoTicketCocina", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Descripcion")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("CatEstadoTicketCocina");
+                });
+
+            modelBuilder.Entity("Domain.Entities.CatImpuesto", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Descripcion")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("CatImpuesto");
+                });
+
+            modelBuilder.Entity("Domain.Entities.CatMetodoDePago", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Descripcion")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("CatMetodoDePago");
+                });
+
+            modelBuilder.Entity("Domain.Entities.CatMoneda", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Descripcion")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("CatMoneda");
+                });
+
+            modelBuilder.Entity("Domain.Entities.CatTipoDescuento", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Descripcion")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("CatTipoDescuento");
+                });
+
+            modelBuilder.Entity("Domain.Entities.CatTipoPedido", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Descripcion")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("CatTipoPedido");
                 });
 
             modelBuilder.Entity("Domain.Entities.CategoriaMenu", b =>
@@ -365,10 +770,7 @@ namespace Persistence.Migrations
                     b.Property<int>("IdUsuario")
                         .HasColumnType("integer");
 
-                    b.Property<int>("TipoCatalogId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("TipoItemId")
+                    b.Property<int>("IdCredencial")
                         .HasColumnType("integer");
 
                     b.Property<DateTime>("CreatedAt")
@@ -400,9 +802,9 @@ namespace Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.HasKey("IdUsuario", "TipoCatalogId", "TipoItemId");
+                    b.HasKey("IdUsuario", "IdCredencial");
 
-                    b.HasIndex("TipoCatalogId", "TipoItemId");
+                    b.HasIndex("IdCredencial");
 
                     b.ToTable("Credencial", (string)null);
                 });
@@ -432,10 +834,7 @@ namespace Persistence.Migrations
                         .HasColumnType("numeric(12,2)")
                         .HasDefaultValue(0m);
 
-                    b.Property<int>("EstadoCatalogId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("EstadoItemId")
+                    b.Property<int>("IdEstadoCuenta")
                         .HasColumnType("integer");
 
                     b.Property<int>("IdPedido")
@@ -468,9 +867,9 @@ namespace Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("IdPedido");
+                    b.HasIndex("IdEstadoCuenta");
 
-                    b.HasIndex("EstadoCatalogId", "EstadoItemId");
+                    b.HasIndex("IdPedido");
 
                     b.ToTable("Cuenta", (string)null);
                 });
@@ -500,14 +899,11 @@ namespace Persistence.Migrations
                     b.Property<int>("IdCuenta")
                         .HasColumnType("integer");
 
+                    b.Property<int>("IdTipoDescuento")
+                        .HasColumnType("integer");
+
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
-
-                    b.Property<int>("TipoCatalogId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("TipoItemId")
-                        .HasColumnType("integer");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp without time zone");
@@ -523,7 +919,7 @@ namespace Persistence.Migrations
 
                     b.HasIndex("IdCuenta");
 
-                    b.HasIndex("TipoCatalogId", "TipoItemId");
+                    b.HasIndex("IdTipoDescuento");
 
                     b.ToTable("DescuentoAplicado", (string)null);
                 });
@@ -702,6 +1098,132 @@ namespace Persistence.Migrations
                     b.ToTable("EventoPedido", (string)null);
                 });
 
+            modelBuilder.Entity("Domain.Entities.FormField", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("DataSource")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<int>("IdFormulario")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Label")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("OptionsJson")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("OptionsJson");
+
+                    b.Property<int>("Orden")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
+
+                    b.Property<string>("Placeholder")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("ValidationsJson")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("ValidationsJson");
+
+                    b.Property<string>("Value")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("IdFormulario")
+                        .HasDatabaseName("IX_FormField_IdFormulario");
+
+                    b.HasIndex("IdFormulario", "Name")
+                        .IsUnique()
+                        .HasDatabaseName("UX_FormField_Formulario_Name");
+
+                    b.ToTable("FormField", (string)null);
+                });
+
+            modelBuilder.Entity("Domain.Entities.Formulario", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Codigo")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Descripcion")
+                        .HasMaxLength(400)
+                        .HasColumnType("character varying(400)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Codigo")
+                        .IsUnique();
+
+                    b.ToTable("Formulario", (string)null);
+                });
+
             modelBuilder.Entity("Domain.Entities.GrupoModificador", b =>
                 {
                     b.Property<int>("Id")
@@ -820,13 +1342,10 @@ namespace Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<int>("EstadoCatalogId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("EstadoItemId")
-                        .HasColumnType("integer");
-
                     b.Property<int?>("IdArea")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("IdEstadoMesa")
                         .HasColumnType("integer");
 
                     b.Property<int>("IdSucursal")
@@ -846,7 +1365,7 @@ namespace Persistence.Migrations
 
                     b.HasIndex("IdArea");
 
-                    b.HasIndex("EstadoCatalogId", "EstadoItemId");
+                    b.HasIndex("IdEstadoMesa");
 
                     b.HasIndex("IdSucursal", "Codigo")
                         .IsUnique();
@@ -968,14 +1487,11 @@ namespace Persistence.Migrations
                     b.Property<int>("IdCuenta")
                         .HasColumnType("integer");
 
+                    b.Property<int>("IdMetodoDePago")
+                        .HasColumnType("integer");
+
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
-
-                    b.Property<int>("MetodoCatalogId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("MetodoItemId")
-                        .HasColumnType("integer");
 
                     b.Property<string>("Moneda")
                         .IsRequired()
@@ -989,7 +1505,7 @@ namespace Persistence.Migrations
 
                     b.Property<DateTime>("PagadoEn")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamptz")
+                        .HasColumnType("timestamp without time zone")
                         .HasDefaultValueSql("now()");
 
                     b.Property<decimal>("Propina")
@@ -1011,13 +1527,18 @@ namespace Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<int?>("UsuarioId")
+                        .HasColumnType("integer");
+
                     b.HasKey("Id");
 
                     b.HasIndex("IdCuenta");
 
+                    b.HasIndex("IdMetodoDePago");
+
                     b.HasIndex("RecibidoPor");
 
-                    b.HasIndex("MetodoCatalogId", "MetodoItemId");
+                    b.HasIndex("UsuarioId");
 
                     b.ToTable("Pago", (string)null);
                 });
@@ -1032,7 +1553,7 @@ namespace Persistence.Migrations
 
                     b.Property<DateTime>("AbiertoEn")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamptz")
+                        .HasColumnType("timestamp without time zone")
                         .HasDefaultValueSql("now()");
 
                     b.Property<int?>("AbiertoPor")
@@ -1040,11 +1561,11 @@ namespace Persistence.Migrations
 
                     b.Property<decimal>("CargoServicioPct")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("numeric(5,2)")
+                        .HasColumnType("decimal(5,2)")
                         .HasDefaultValue(0m);
 
                     b.Property<DateTime?>("CerradoEn")
-                        .HasColumnType("timestamptz");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<int?>("CerradoPor")
                         .HasColumnType("integer");
@@ -1056,22 +1577,22 @@ namespace Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<int>("EstadoCatalogId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("EstadoItemId")
-                        .HasColumnType("integer");
-
                     b.Property<int?>("IdCliente")
                         .HasColumnType("integer");
 
                     b.Property<int>("IdEmpresa")
                         .HasColumnType("integer");
 
+                    b.Property<int>("IdEstadoPedido")
+                        .HasColumnType("integer");
+
                     b.Property<int?>("IdMesa")
                         .HasColumnType("integer");
 
                     b.Property<int>("IdSucursal")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("IdTipoPedido")
                         .HasColumnType("integer");
 
                     b.Property<bool>("IsActive")
@@ -1081,10 +1602,12 @@ namespace Persistence.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
 
-                    b.Property<int>("TipoCatalogId")
-                        .HasColumnType("integer");
+                    b.Property<int>("Personas")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(1);
 
-                    b.Property<int>("TipoItemId")
+                    b.Property<int>("SucursalId")
                         .HasColumnType("integer");
 
                     b.Property<DateTime?>("UpdatedAt")
@@ -1104,13 +1627,13 @@ namespace Persistence.Migrations
 
                     b.HasIndex("IdEmpresa");
 
+                    b.HasIndex("IdEstadoPedido");
+
                     b.HasIndex("IdMesa");
 
-                    b.HasIndex("IdSucursal");
+                    b.HasIndex("IdTipoPedido");
 
-                    b.HasIndex("EstadoCatalogId", "EstadoItemId");
-
-                    b.HasIndex("TipoCatalogId", "TipoItemId");
+                    b.HasIndex("SucursalId");
 
                     b.ToTable("Pedido", (string)null);
                 });
@@ -1162,9 +1685,20 @@ namespace Persistence.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<bool>("Cancelado")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
+                    b.Property<DateTime?>("CanceladoEn")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<int?>("CanceladoPor")
+                        .HasColumnType("integer");
+
                     b.Property<decimal>("Cantidad")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("numeric(9,2)")
+                        .HasColumnType("decimal(9,2)")
                         .HasDefaultValue(1m);
 
                     b.Property<DateTime>("CreatedAt")
@@ -1174,13 +1708,13 @@ namespace Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<int>("EstadoCatalogId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("EstadoItemId")
-                        .HasColumnType("integer");
-
                     b.Property<int?>("IdAsiento")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("IdEstadoPedidoDetalle")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("IdImpuesto")
                         .HasColumnType("integer");
 
                     b.Property<int>("IdPedido")
@@ -1189,24 +1723,33 @@ namespace Persistence.Migrations
                     b.Property<int>("IdProducto")
                         .HasColumnType("integer");
 
-                    b.Property<int?>("IdVariante")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("ImpuestoCatalogId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("ImpuestoItemId")
+                    b.Property<int>("IdVariante")
                         .HasColumnType("integer");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
+
+                    b.Property<decimal>("MontoImpuesto")
+                        .HasColumnType("decimal(12,2)");
+
+                    b.Property<string>("MotivoCancelacion")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
 
                     b.Property<string>("Notas")
                         .HasMaxLength(300)
                         .HasColumnType("character varying(300)");
 
                     b.Property<decimal>("PrecioUnitario")
-                        .HasColumnType("numeric(12,2)");
+                        .HasColumnType("decimal(12,2)");
+
+                    b.Property<string>("ProductoNombre")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<decimal>("TasaImpuesto")
+                        .HasColumnType("decimal(5,2)");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp without time zone");
@@ -1215,19 +1758,26 @@ namespace Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("VarianteNombre")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)");
+
                     b.HasKey("Id");
 
+                    b.HasIndex("CanceladoPor");
+
                     b.HasIndex("IdAsiento");
+
+                    b.HasIndex("IdEstadoPedidoDetalle");
+
+                    b.HasIndex("IdImpuesto");
 
                     b.HasIndex("IdPedido");
 
                     b.HasIndex("IdProducto");
 
                     b.HasIndex("IdVariante");
-
-                    b.HasIndex("EstadoCatalogId", "EstadoItemId");
-
-                    b.HasIndex("ImpuestoCatalogId", "ImpuestoItemId");
 
                     b.ToTable("PedidoDetalle", (string)null);
                 });
@@ -1255,6 +1805,10 @@ namespace Persistence.Migrations
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
+
+                    b.Property<string>("OpcionNombre")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<decimal>("PrecioExtra")
                         .ValueGeneratedOnAdd()
@@ -1294,19 +1848,21 @@ namespace Persistence.Migrations
 
                     b.Property<string>("Dias")
                         .HasMaxLength(14)
-                        .HasColumnType("character varying(14)");
+                        .HasColumnType("character varying(14)")
+                        .HasComment("Ej: L-M-M-J-V-S-D");
 
                     b.Property<string>("Horario")
                         .HasMaxLength(32)
-                        .HasColumnType("character varying(32)");
+                        .HasColumnType("character varying(32)")
+                        .HasComment("Ej: 12:00-16:00");
+
+                    b.Property<int>("IdImpuesto")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("IdMoneda")
+                        .HasColumnType("integer");
 
                     b.Property<int>("IdVariante")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("ImpuestoCatalogId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("ImpuestoItemId")
                         .HasColumnType("integer");
 
                     b.Property<bool>("IsActive")
@@ -1320,7 +1876,7 @@ namespace Persistence.Migrations
                         .HasDefaultValue("MXN");
 
                     b.Property<decimal>("Monto")
-                        .HasColumnType("numeric(12,2)");
+                        .HasColumnType("decimal(12,2)");
 
                     b.Property<int?>("ProductoId")
                         .HasColumnType("integer");
@@ -1340,11 +1896,13 @@ namespace Persistence.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("IdImpuesto");
+
+                    b.HasIndex("IdMoneda");
+
                     b.HasIndex("IdVariante");
 
                     b.HasIndex("ProductoId");
-
-                    b.HasIndex("ImpuestoCatalogId", "ImpuestoItemId");
 
                     b.ToTable("Precio", (string)null);
                 });
@@ -1377,13 +1935,10 @@ namespace Persistence.Migrations
                         .HasMaxLength(400)
                         .HasColumnType("character varying(400)");
 
-                    b.Property<int?>("EstacionCatalogId")
-                        .HasColumnType("integer");
-
-                    b.Property<int?>("EstacionItemId")
-                        .HasColumnType("integer");
-
                     b.Property<int>("IdCategoria")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("IdEstacionCocina")
                         .HasColumnType("integer");
 
                     b.Property<int>("IdMenu")
@@ -1393,6 +1948,7 @@ namespace Persistence.Migrations
                         .HasColumnType("boolean");
 
                     b.Property<string>("Nombre")
+                        .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
@@ -1407,9 +1963,9 @@ namespace Persistence.Migrations
 
                     b.HasIndex("IdCategoria");
 
-                    b.HasIndex("IdMenu");
+                    b.HasIndex("IdEstacionCocina");
 
-                    b.HasIndex("EstacionCatalogId", "EstacionItemId");
+                    b.HasIndex("IdMenu");
 
                     b.ToTable("Producto", (string)null);
                 });
@@ -1423,6 +1979,7 @@ namespace Persistence.Migrations
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
                         .HasMaxLength(64)
                         .HasColumnType("character varying(64)");
 
@@ -1464,6 +2021,48 @@ namespace Persistence.Migrations
                         .IsUnique();
 
                     b.ToTable("Rol", (string)null);
+                });
+
+            modelBuilder.Entity("Domain.Entities.RolAccesoRuta", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("IdAccesoRuta")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("IdRol")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("IdAccesoRuta");
+
+                    b.HasIndex("IdRol", "IdAccesoRuta")
+                        .IsUnique()
+                        .HasDatabaseName("UX_RolAccesoRuta_Rol_AccesoRuta");
+
+                    b.ToTable("RolAccesoRuta", (string)null);
                 });
 
             modelBuilder.Entity("Domain.Entities.Sucursal", b =>
@@ -1522,7 +2121,7 @@ namespace Persistence.Migrations
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime?>("CompletadoEn")
-                        .HasColumnType("timestamptz");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp without time zone");
@@ -1531,13 +2130,10 @@ namespace Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<int>("EstadoCatalogId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("EstadoItemId")
-                        .HasColumnType("integer");
-
                     b.Property<int>("IdEstacion")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("IdEstadoTicketCocina")
                         .HasColumnType("integer");
 
                     b.Property<int>("IdPedido")
@@ -1557,9 +2153,9 @@ namespace Persistence.Migrations
 
                     b.HasIndex("IdEstacion");
 
-                    b.HasIndex("IdPedido");
+                    b.HasIndex("IdEstadoTicketCocina");
 
-                    b.HasIndex("EstadoCatalogId", "EstadoItemId");
+                    b.HasIndex("IdPedido");
 
                     b.ToTable("TicketCocina", (string)null);
                 });
@@ -1579,13 +2175,10 @@ namespace Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<int>("EstadoCatalogId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("EstadoItemId")
-                        .HasColumnType("integer");
-
                     b.Property<int>("IdDetalle")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("IdEstadoItemKDS")
                         .HasColumnType("integer");
 
                     b.Property<int>("IdTicket")
@@ -1605,9 +2198,9 @@ namespace Persistence.Migrations
 
                     b.HasIndex("IdDetalle");
 
-                    b.HasIndex("IdTicket");
+                    b.HasIndex("IdEstadoItemKDS");
 
-                    b.HasIndex("EstadoCatalogId", "EstadoItemId");
+                    b.HasIndex("IdTicket");
 
                     b.ToTable("TicketDetalle", (string)null);
                 });
@@ -1712,10 +2305,10 @@ namespace Persistence.Migrations
             modelBuilder.Entity("Domain.Entities.UsuarioRol", b =>
                 {
                     b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("integer");
 
-                    b.Property<int>("IdRol")
-                        .HasColumnType("integer");
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp without time zone");
@@ -1723,6 +2316,9 @@ namespace Persistence.Migrations
                     b.Property<string>("CreatedBy")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<int>("IdRol")
+                        .HasColumnType("integer");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
@@ -1734,9 +2330,16 @@ namespace Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.HasKey("Id", "IdRol");
+                    b.Property<int>("UsuarioId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
 
                     b.HasIndex("IdRol");
+
+                    b.HasIndex("UsuarioId", "IdRol")
+                        .IsUnique()
+                        .HasDatabaseName("UX_UsuarioRol_Usuario_Rol");
 
                     b.ToTable("UsuarioRol", (string)null);
                 });
@@ -1800,17 +2403,6 @@ namespace Persistence.Migrations
                     b.Navigation("Sucursal");
                 });
 
-            modelBuilder.Entity("Domain.Entities.CatalogItem", b =>
-                {
-                    b.HasOne("Domain.Entities.Catalog", "Catalog")
-                        .WithMany("Items")
-                        .HasForeignKey("CatalogId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Catalog");
-                });
-
             modelBuilder.Entity("Domain.Entities.CategoriaMenu", b =>
                 {
                     b.HasOne("Domain.Entities.Menu", "Menu")
@@ -1859,38 +2451,38 @@ namespace Persistence.Migrations
 
             modelBuilder.Entity("Domain.Entities.Credencial", b =>
                 {
+                    b.HasOne("Domain.Entities.CatCredencial", "CatCredencial")
+                        .WithMany()
+                        .HasForeignKey("IdCredencial")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("Domain.Entities.Usuario", "Usuario")
                         .WithMany("Credenciales")
                         .HasForeignKey("IdUsuario")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Domain.Entities.CatalogItem", "TipoItem")
-                        .WithMany()
-                        .HasForeignKey("TipoCatalogId", "TipoItemId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("TipoItem");
+                    b.Navigation("CatCredencial");
 
                     b.Navigation("Usuario");
                 });
 
             modelBuilder.Entity("Domain.Entities.Cuenta", b =>
                 {
+                    b.HasOne("Domain.Entities.CatEstadoCuenta", "EstadoCuenta")
+                        .WithMany()
+                        .HasForeignKey("IdEstadoCuenta")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("Domain.Entities.Pedido", "Pedido")
                         .WithMany("Cuentas")
                         .HasForeignKey("IdPedido")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Domain.Entities.CatalogItem", "EstadoItem")
-                        .WithMany()
-                        .HasForeignKey("EstadoCatalogId", "EstadoItemId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("EstadoItem");
+                    b.Navigation("EstadoCuenta");
 
                     b.Navigation("Pedido");
                 });
@@ -1903,15 +2495,15 @@ namespace Persistence.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Domain.Entities.CatalogItem", "TipoItem")
+                    b.HasOne("Domain.Entities.CatTipoDescuento", "TipoDescuento")
                         .WithMany()
-                        .HasForeignKey("TipoCatalogId", "TipoItemId")
+                        .HasForeignKey("IdTipoDescuento")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Cuenta");
 
-                    b.Navigation("TipoItem");
+                    b.Navigation("TipoDescuento");
                 });
 
             modelBuilder.Entity("Domain.Entities.DetalleCuenta", b =>
@@ -1954,6 +2546,17 @@ namespace Persistence.Migrations
                     b.Navigation("Usuario");
                 });
 
+            modelBuilder.Entity("Domain.Entities.FormField", b =>
+                {
+                    b.HasOne("Domain.Entities.Formulario", "Formulario")
+                        .WithMany("Campos")
+                        .HasForeignKey("IdFormulario")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Formulario");
+                });
+
             modelBuilder.Entity("Domain.Entities.GrupoModificador", b =>
                 {
                     b.HasOne("Domain.Entities.Producto", "Producto")
@@ -1983,21 +2586,21 @@ namespace Persistence.Migrations
                         .HasForeignKey("IdArea")
                         .OnDelete(DeleteBehavior.SetNull);
 
+                    b.HasOne("Domain.Entities.CatEstadoMesa", "EstadoMesa")
+                        .WithMany()
+                        .HasForeignKey("IdEstadoMesa")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("Domain.Entities.Sucursal", "Sucursal")
                         .WithMany("Mesas")
                         .HasForeignKey("IdSucursal")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Domain.Entities.CatalogItem", "EstadoItem")
-                        .WithMany()
-                        .HasForeignKey("EstadoCatalogId", "EstadoItemId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.Navigation("Area");
 
-                    b.Navigation("EstadoItem");
+                    b.Navigation("EstadoMesa");
 
                     b.Navigation("Sucursal");
                 });
@@ -2032,20 +2635,24 @@ namespace Persistence.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Domain.Entities.Usuario", "RecibidoPorUsuario")
-                        .WithMany("PagosRecibidos")
-                        .HasForeignKey("RecibidoPor")
-                        .OnDelete(DeleteBehavior.SetNull);
-
-                    b.HasOne("Domain.Entities.CatalogItem", "MetodoItem")
+                    b.HasOne("Domain.Entities.CatMetodoDePago", "MetodoDePago")
                         .WithMany()
-                        .HasForeignKey("MetodoCatalogId", "MetodoItemId")
+                        .HasForeignKey("IdMetodoDePago")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("Domain.Entities.Usuario", "RecibidoPorUsuario")
+                        .WithMany()
+                        .HasForeignKey("RecibidoPor")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Domain.Entities.Usuario", null)
+                        .WithMany("PagosRecibidos")
+                        .HasForeignKey("UsuarioId");
+
                     b.Navigation("Cuenta");
 
-                    b.Navigation("MetodoItem");
+                    b.Navigation("MetodoDePago");
 
                     b.Navigation("RecibidoPorUsuario");
                 });
@@ -2073,27 +2680,27 @@ namespace Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("Domain.Entities.CatEstadoPedido", "EstadoPedido")
+                        .WithMany()
+                        .HasForeignKey("IdEstadoPedido")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("Domain.Entities.Mesa", "Mesa")
                         .WithMany("Pedidos")
                         .HasForeignKey("IdMesa")
                         .OnDelete(DeleteBehavior.SetNull);
 
+                    b.HasOne("Domain.Entities.CatTipoPedido", "TipoPedido")
+                        .WithMany()
+                        .HasForeignKey("IdTipoPedido")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("Domain.Entities.Sucursal", "Sucursal")
                         .WithMany("Pedidos")
-                        .HasForeignKey("IdSucursal")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("Domain.Entities.CatalogItem", "EstadoItem")
-                        .WithMany()
-                        .HasForeignKey("EstadoCatalogId", "EstadoItemId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("Domain.Entities.CatalogItem", "TipoItem")
-                        .WithMany()
-                        .HasForeignKey("TipoCatalogId", "TipoItemId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasForeignKey("SucursalId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("AbiertoPorUsuario");
@@ -2104,13 +2711,13 @@ namespace Persistence.Migrations
 
                     b.Navigation("Empresa");
 
-                    b.Navigation("EstadoItem");
+                    b.Navigation("EstadoPedido");
 
                     b.Navigation("Mesa");
 
                     b.Navigation("Sucursal");
 
-                    b.Navigation("TipoItem");
+                    b.Navigation("TipoPedido");
                 });
 
             modelBuilder.Entity("Domain.Entities.PedidoAsiento", b =>
@@ -2126,10 +2733,27 @@ namespace Persistence.Migrations
 
             modelBuilder.Entity("Domain.Entities.PedidoDetalle", b =>
                 {
+                    b.HasOne("Domain.Entities.Usuario", "UsuarioCancela")
+                        .WithMany()
+                        .HasForeignKey("CanceladoPor")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("Domain.Entities.PedidoAsiento", "Asiento")
                         .WithMany("Detalles")
                         .HasForeignKey("IdAsiento")
                         .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Domain.Entities.CatEstadoPedidoDetalle", "EstadoPedidoDetalle")
+                        .WithMany()
+                        .HasForeignKey("IdEstadoPedidoDetalle")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.CatImpuesto", "Impuesto")
+                        .WithMany()
+                        .HasForeignKey("IdImpuesto")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.HasOne("Domain.Entities.Pedido", "Pedido")
                         .WithMany("Detalles")
@@ -2146,29 +2770,20 @@ namespace Persistence.Migrations
                     b.HasOne("Domain.Entities.VarianteProducto", "Variante")
                         .WithMany("PedidoDetalles")
                         .HasForeignKey("IdVariante")
-                        .OnDelete(DeleteBehavior.SetNull);
-
-                    b.HasOne("Domain.Entities.CatalogItem", "EstadoItem")
-                        .WithMany()
-                        .HasForeignKey("EstadoCatalogId", "EstadoItemId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("Domain.Entities.CatalogItem", "ImpuestoItem")
-                        .WithMany()
-                        .HasForeignKey("ImpuestoCatalogId", "ImpuestoItemId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Asiento");
 
-                    b.Navigation("EstadoItem");
+                    b.Navigation("EstadoPedidoDetalle");
 
-                    b.Navigation("ImpuestoItem");
+                    b.Navigation("Impuesto");
 
                     b.Navigation("Pedido");
 
                     b.Navigation("Producto");
+
+                    b.Navigation("UsuarioCancela");
 
                     b.Navigation("Variante");
                 });
@@ -2194,6 +2809,18 @@ namespace Persistence.Migrations
 
             modelBuilder.Entity("Domain.Entities.Precio", b =>
                 {
+                    b.HasOne("Domain.Entities.CatImpuesto", "Impuesto")
+                        .WithMany()
+                        .HasForeignKey("IdImpuesto")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.CatMoneda", "CatMoneda")
+                        .WithMany()
+                        .HasForeignKey("IdMoneda")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("Domain.Entities.VarianteProducto", "Variante")
                         .WithMany("Precios")
                         .HasForeignKey("IdVariante")
@@ -2204,13 +2831,9 @@ namespace Persistence.Migrations
                         .WithMany("PreciosDeprecatedIgnore")
                         .HasForeignKey("ProductoId");
 
-                    b.HasOne("Domain.Entities.CatalogItem", "ImpuestoItem")
-                        .WithMany()
-                        .HasForeignKey("ImpuestoCatalogId", "ImpuestoItemId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                    b.Navigation("CatMoneda");
 
-                    b.Navigation("ImpuestoItem");
+                    b.Navigation("Impuesto");
 
                     b.Navigation("Variante");
                 });
@@ -2223,22 +2846,41 @@ namespace Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("Domain.Entities.CatEstacionesCocina", "EstacionCocina")
+                        .WithMany()
+                        .HasForeignKey("IdEstacionCocina")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("Domain.Entities.Menu", "Menu")
                         .WithMany("Productos")
                         .HasForeignKey("IdMenu")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Domain.Entities.CatalogItem", "EstacionItem")
-                        .WithMany()
-                        .HasForeignKey("EstacionCatalogId", "EstacionItemId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
                     b.Navigation("Categoria");
 
-                    b.Navigation("EstacionItem");
+                    b.Navigation("EstacionCocina");
 
                     b.Navigation("Menu");
+                });
+
+            modelBuilder.Entity("Domain.Entities.RolAccesoRuta", b =>
+                {
+                    b.HasOne("Domain.Entities.AccesoRuta", "AccesoRuta")
+                        .WithMany("RolesConAcceso")
+                        .HasForeignKey("IdAccesoRuta")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.Rol", "Rol")
+                        .WithMany("AccesosRuta")
+                        .HasForeignKey("IdRol")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("AccesoRuta");
+
+                    b.Navigation("Rol");
                 });
 
             modelBuilder.Entity("Domain.Entities.Sucursal", b =>
@@ -2260,21 +2902,21 @@ namespace Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("Domain.Entities.CatEstadoTicketCocina", "EstadoTicketCocina")
+                        .WithMany()
+                        .HasForeignKey("IdEstadoTicketCocina")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("Domain.Entities.Pedido", "Pedido")
                         .WithMany("TicketsCocina")
                         .HasForeignKey("IdPedido")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Domain.Entities.CatalogItem", "EstadoItem")
-                        .WithMany()
-                        .HasForeignKey("EstadoCatalogId", "EstadoItemId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.Navigation("Estacion");
 
-                    b.Navigation("EstadoItem");
+                    b.Navigation("EstadoTicketCocina");
 
                     b.Navigation("Pedido");
                 });
@@ -2287,21 +2929,21 @@ namespace Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("Domain.Entities.CatEstadoItemKDS", "EstadoItemKDS")
+                        .WithMany()
+                        .HasForeignKey("IdEstadoItemKDS")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("Domain.Entities.TicketCocina", "Ticket")
                         .WithMany("Detalles")
                         .HasForeignKey("IdTicket")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Domain.Entities.CatalogItem", "EstadoItem")
-                        .WithMany()
-                        .HasForeignKey("EstadoCatalogId", "EstadoItemId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.Navigation("DetallePedido");
 
-                    b.Navigation("EstadoItem");
+                    b.Navigation("EstadoItemKDS");
 
                     b.Navigation("Ticket");
                 });
@@ -2338,15 +2980,15 @@ namespace Persistence.Migrations
 
             modelBuilder.Entity("Domain.Entities.UsuarioRol", b =>
                 {
-                    b.HasOne("Domain.Entities.Usuario", "Usuario")
-                        .WithMany("UsuarioRoles")
-                        .HasForeignKey("Id")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("Domain.Entities.Rol", "Rol")
                         .WithMany("UsuarioRoles")
                         .HasForeignKey("IdRol")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.Usuario", "Usuario")
+                        .WithMany("UsuarioRoles")
+                        .HasForeignKey("UsuarioId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -2366,14 +3008,14 @@ namespace Persistence.Migrations
                     b.Navigation("Producto");
                 });
 
+            modelBuilder.Entity("Domain.Entities.AccesoRuta", b =>
+                {
+                    b.Navigation("RolesConAcceso");
+                });
+
             modelBuilder.Entity("Domain.Entities.Area", b =>
                 {
                     b.Navigation("Mesas");
-                });
-
-            modelBuilder.Entity("Domain.Entities.Catalog", b =>
-                {
-                    b.Navigation("Items");
                 });
 
             modelBuilder.Entity("Domain.Entities.CategoriaMenu", b =>
@@ -2409,6 +3051,11 @@ namespace Persistence.Migrations
             modelBuilder.Entity("Domain.Entities.EstacionCocina", b =>
                 {
                     b.Navigation("Tickets");
+                });
+
+            modelBuilder.Entity("Domain.Entities.Formulario", b =>
+                {
+                    b.Navigation("Campos");
                 });
 
             modelBuilder.Entity("Domain.Entities.GrupoModificador", b =>
@@ -2471,6 +3118,8 @@ namespace Persistence.Migrations
 
             modelBuilder.Entity("Domain.Entities.Rol", b =>
                 {
+                    b.Navigation("AccesosRuta");
+
                     b.Navigation("UsuarioRoles");
                 });
 

@@ -18,7 +18,6 @@ public class FormFieldConfiguration : IEntityTypeConfiguration<FormField>
         e.Property(x => x.Name).IsRequired().HasMaxLength(100);
         e.Property(x => x.Label).IsRequired().HasMaxLength(200);
         e.Property(x => x.Placeholder).HasMaxLength(200);
-        e.Property(x => x.Value).HasColumnType("nvarchar(max)");
         e.Property(x => x.Orden).HasDefaultValue(0);
         
         // [CORREGIDO] - El reemplazo de CatalogId
@@ -50,10 +49,10 @@ public class FormFieldConfiguration : IEntityTypeConfiguration<FormField>
         
         e.Property(x => x.ValidationsJson)
             .HasColumnName("ValidationsJson")
-            .HasColumnType("nvarchar(max)");
+            .HasColumnType("jsonb");
 
         e.Property(x => x.OptionsJson)
             .HasColumnName("OptionsJson")
-            .HasColumnType("nvarchar(max)");
+            .HasColumnType("jsonb");
     }
 }

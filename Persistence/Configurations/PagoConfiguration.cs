@@ -24,7 +24,7 @@ public class PagoConfiguration : IEntityTypeConfiguration<Pago>
             .HasDefaultValue(0m);
             
         e.Property(x => x.PagadoEn)
-            .HasDefaultValueSql("sysutcdatetime()"); // Ajustado a SQL Server como en el resto del modelo
+            .HasDefaultValueSql("now()"); // Cambiar 'sysutcdatetime()' por 'now()'
             
         e.Property(x => x.Referencia)
             .HasMaxLength(100);
