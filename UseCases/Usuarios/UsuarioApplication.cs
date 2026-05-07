@@ -37,22 +37,24 @@ public class UsuarioApplication : IUsuarioApplication
             var validation = _validationRules.Validate(dto);
             if (!validation.IsValid)
             {
+                response.isSuccess = false;
                 response.Message = "Errores de validación";
                 response.Errors = validation.Errors;
                 return response;
             }
 
             var entity = _mapper.Map<Usuario>(dto);
-            response.Data = true;
+            response.Data = _unitOfWork.Usuarios.Insert(entity);
 
             if (response.Data)
             {
                 response.isSuccess = true;
-                response.Message = "Usuario creado correctamente revisar esto despues";
+                response.Message = "Usuario creado correctamente";
             }
         }
         catch (Exception ex)
         {
+            response.isSuccess = false;
             response.Message = ex.Message;
             _logger.LogError(ex.Message);
         }
@@ -67,22 +69,24 @@ public class UsuarioApplication : IUsuarioApplication
             var validation = _validationRules.Validate(dto);
             if (!validation.IsValid)
             {
+                response.isSuccess = false;
                 response.Message = "Errores de validación";
                 response.Errors = validation.Errors;
                 return response;
             }
 
             var entity = _mapper.Map<Usuario>(dto);
-            response.Data = true;
+            response.Data = _unitOfWork.Usuarios.Update(entity);
 
             if (response.Data)
             {
                 response.isSuccess = true;
-                response.Message = "Usuario modificado correctamente revisar esto despues";
+                response.Message = "Usuario modificado correctamente";
             }
         }
         catch (Exception ex)
         {
+            response.isSuccess = false;
             response.Message = ex.Message;
             _logger.LogError(ex.Message);
         }
@@ -94,16 +98,22 @@ public class UsuarioApplication : IUsuarioApplication
         var response = new Response<bool>();
         try
         {
-            response.Data = true;
+            response.Data = _unitOfWork.Usuarios.Delete(id);
 
             if (response.Data)
             {
                 response.isSuccess = true;
-                response.Message = "Usuario eliminado correctamente revisar esto despues";
+                response.Message = "Usuario eliminado correctamente";
+            }
+            else
+            {
+                response.isSuccess = false;
+                response.Message = "No se pudo eliminar, el usuario no existe";
             }
         }
         catch (Exception ex)
         {
+            response.isSuccess = false;
             response.Message = ex.Message;
             _logger.LogError(ex.Message);
         }
@@ -115,17 +125,23 @@ public class UsuarioApplication : IUsuarioApplication
         var response = new Response<UsuarioDTO>();
         try
         {
-            var entity = new Usuario();
-            response.Data = _mapper.Map<UsuarioDTO>(entity);
-
-            if (response.Data != null)
+            var entity = _unitOfWork.Usuarios.Get(id);
+            
+            if (entity != null)
             {
+                response.Data = _mapper.Map<UsuarioDTO>(entity);
                 response.isSuccess = true;
-                response.Message = "Usuario encontrado revisar esto despues";
+                response.Message = "Usuario encontrado";
+            }
+            else
+            {
+                response.isSuccess = false;
+                response.Message = "Usuario no encontrado";
             }
         }
         catch (Exception ex)
         {
+            response.isSuccess = false;
             response.Message = ex.Message;
             _logger.LogError(ex.Message);
         }
@@ -137,16 +153,14 @@ public class UsuarioApplication : IUsuarioApplication
         var response = new Response<IEnumerable<UsuarioDTO>>();
         try
         {
-            var list = new List<Usuario>();
+            var list = _unitOfWork.Usuarios.GetAll();
             response.Data = _mapper.Map<IEnumerable<UsuarioDTO>>(list);
-            if (response.Data != null)
-            {
-                response.isSuccess = true;
-                response.Message = "Usuarios obtenidos correctamente revisar esto despues";
-            }
+            response.isSuccess = true;
+            response.Message = "Usuarios obtenidos correctamente";
         }
         catch (Exception ex)
         {
+            response.isSuccess = false;
             response.Message = ex.Message;
             _logger.LogError(ex.Message);
         }
@@ -158,17 +172,19 @@ public class UsuarioApplication : IUsuarioApplication
         var response = new ResponsePagination<IEnumerable<UsuarioDTO>>();
         try
         {
-            var count = -1;
+            var count = _unitOfWork.Usuarios.Count();
+            var list = _unitOfWork.Usuarios.GetAllWithPagination(page, pageSize);
 
-            response.Data = null;
+            response.Data = _mapper.Map<IEnumerable<UsuarioDTO>>(list);
             response.PageNumber = page;
             response.TotalCount = count;
             response.TotalPages = (int)Math.Ceiling(count / (double)pageSize);
             response.isSuccess = true;
-            response.Message = "Revisar esto";
+            response.Message = "Usuarios paginados obtenidos correctamente";
         }
         catch (Exception ex)
         {
+            response.isSuccess = false;
             response.Message = ex.Message;
             _logger.LogError(ex.Message);
         }
@@ -180,12 +196,13 @@ public class UsuarioApplication : IUsuarioApplication
         var response = new Response<int>();
         try
         {
-            response.Data = -1;
+            response.Data = _unitOfWork.Usuarios.Count();
             response.isSuccess = true;
-            response.Message = "Revisar esto";
+            response.Message = "Conteo obtenido correctamente";
         }
         catch (Exception ex)
         {
+            response.isSuccess = false;
             response.Message = ex.Message;
             _logger.LogError(ex.Message);
         }
@@ -204,6 +221,7 @@ public class UsuarioApplication : IUsuarioApplication
             var validation = await _validationRules.ValidateAsync(dto);
             if (!validation.IsValid)
             {
+                response.isSuccess = false;
                 response.Message = "Errores de validación";
                 response.Errors = validation.Errors;
                 return response;
@@ -220,6 +238,7 @@ public class UsuarioApplication : IUsuarioApplication
         }
         catch (Exception ex)
         {
+            response.isSuccess = false;
             response.Message = ex.Message;
             _logger.LogError(ex.Message);
         }
@@ -234,6 +253,7 @@ public class UsuarioApplication : IUsuarioApplication
             var validation = await _validationRules.ValidateAsync(dto);
             if (!validation.IsValid)
             {
+                response.isSuccess = false;
                 response.Message = "Errores de validación";
                 response.Errors = validation.Errors;
                 return response;
@@ -250,6 +270,7 @@ public class UsuarioApplication : IUsuarioApplication
         }
         catch (Exception ex)
         {
+            response.isSuccess = false;
             response.Message = ex.Message;
             _logger.LogError(ex.Message);
         }
@@ -268,9 +289,15 @@ public class UsuarioApplication : IUsuarioApplication
                 response.isSuccess = true;
                 response.Message = "Usuario eliminado correctamente";
             }
+            else
+            {
+                response.isSuccess = false;
+                response.Message = "No se pudo eliminar, el usuario no existe";
+            }
         }
         catch (Exception ex)
         {
+            response.isSuccess = false;
             response.Message = ex.Message;
             _logger.LogError(ex.Message);
         }
@@ -283,16 +310,22 @@ public class UsuarioApplication : IUsuarioApplication
         try
         {
             var entity = await _unitOfWork.Usuarios.GetAsync(id);
-            response.Data = _mapper.Map<UsuarioDTO>(entity);
-
-            if (response.Data != null)
+            
+            if (entity != null)
             {
+                response.Data = _mapper.Map<UsuarioDTO>(entity);
                 response.isSuccess = true;
                 response.Message = "Usuario encontrado";
+            }
+            else
+            {
+                response.isSuccess = false;
+                response.Message = "Usuario no encontrado";
             }
         }
         catch (Exception ex)
         {
+            response.isSuccess = false;
             response.Message = ex.Message;
             _logger.LogError(ex.Message);
         }
@@ -306,12 +339,72 @@ public class UsuarioApplication : IUsuarioApplication
         {
             var list = await _unitOfWork.Usuarios.GetAllAsync();
             response.Data = _mapper.Map<IEnumerable<UsuarioDTO>>(list);
-            
-            if (response.Data != null)
-            {
-                response.isSuccess = true;
-                response.Message = "Usuarios obtenidos correctamente";
-            }
+            response.isSuccess = true;
+            response.Message = "Usuarios obtenidos correctamente";
+        }
+        catch (Exception ex)
+        {
+            response.isSuccess = false;
+            response.Message = ex.Message;
+            _logger.LogError(ex.Message);
+        }
+        return response;
+    }
+
+    public async Task<ResponsePagination<IEnumerable<UsuarioDTO>>> GetAllWithPaginationAsync(int page, int pageSize)
+    {
+        var response = new ResponsePagination<IEnumerable<UsuarioDTO>>();
+        try
+        {
+            var count = await _unitOfWork.Usuarios.CountAsync();
+            var list = await _unitOfWork.Usuarios.GetAllWithPaginationAsync(page, pageSize);
+
+            response.Data = _mapper.Map<IEnumerable<UsuarioDTO>>(list);
+            response.PageNumber = page;
+            response.TotalCount = count;
+            response.TotalPages = (int)Math.Ceiling(count / (double)pageSize);
+            response.isSuccess = true;
+            response.Message = "Usuarios paginados obtenidos correctamente";
+        }
+        catch (Exception ex)
+        {
+            response.isSuccess = false;
+            response.Message = ex.Message;
+            _logger.LogError(ex.Message);
+        }
+        return response;
+    }
+
+    public async Task<Response<int>> CountAsync()
+    {
+        var response = new Response<int>();
+        try
+        {
+            response.Data = await _unitOfWork.Usuarios.CountAsync();
+            response.isSuccess = true;
+            response.Message = "Conteo obtenido correctamente";
+        }
+        catch (Exception ex)
+        {
+            response.isSuccess = false;
+            response.Message = ex.Message;
+            _logger.LogError(ex.Message);
+        }
+        return response;
+    }
+
+    #endregion
+    
+    #region Metodos de Seguridad y Operativos
+
+    public async Task<Response<UsuarioDTO?>> GetByCorreoWithRolesAndCredentialsAsync(string correo, CancellationToken ct)
+    {
+        var response = new Response<UsuarioDTO?>();
+        try
+        {
+            var entity = await _unitOfWork.Usuarios.GetByCorreoWithRolesAndCredentialsAsync(correo, ct);
+            response.Data = _mapper.Map<UsuarioDTO?>(entity);
+            response.isSuccess = true;
         }
         catch (Exception ex)
         {
@@ -321,14 +414,118 @@ public class UsuarioApplication : IUsuarioApplication
         return response;
     }
 
-    public Task<ResponsePagination<IEnumerable<UsuarioDTO>>> GetAllWithPaginationAsync(int page, int pageSize)
+    public async Task<Response<UsuarioDTO?>> GetByUserOrEmailWithAuthGraphAsync(string userOrEmail, CancellationToken ct)
     {
-        throw new NotImplementedException();
+        var response = new Response<UsuarioDTO?>();
+        try
+        {
+            var entity = await _unitOfWork.Usuarios.GetByUserOrEmailWithAuthGraphAsync(userOrEmail, ct);
+            response.Data = _mapper.Map<UsuarioDTO?>(entity);
+            response.isSuccess = true;
+        }
+        catch (Exception ex)
+        {
+            response.Message = ex.Message;
+            _logger.LogError(ex.Message);
+        }
+        return response;
     }
 
-    public Task<Response<int>> CountAsync()
+    public async Task<Response<IReadOnlyList<string>>> GetRoleNamesAsync(int usuarioId, CancellationToken ct)
     {
-        throw new NotImplementedException();
+        var response = new Response<IReadOnlyList<string>>();
+        try
+        {
+            response.Data = await _unitOfWork.Usuarios.GetRoleNamesAsync(usuarioId, ct);
+            response.isSuccess = true;
+        }
+        catch (Exception ex)
+        {
+            response.Message = ex.Message;
+            _logger.LogError(ex.Message);
+        }
+        return response;
+    }
+
+    public async Task<Response<IReadOnlyList<string>>> GetAccesoPathsByUsuarioIdAsync(int usuarioId, CancellationToken ct)
+    {
+        var response = new Response<IReadOnlyList<string>>();
+        try
+        {
+            response.Data = await _unitOfWork.Usuarios.GetAccesoPathsByUsuarioIdAsync(usuarioId, ct);
+            response.isSuccess = true;
+        }
+        catch (Exception ex)
+        {
+            response.Message = ex.Message;
+            _logger.LogError(ex.Message);
+        }
+        return response;
+    }
+
+    public async Task<Response<object?>> GetPasswordCredentialAsync(int usuarioId, CancellationToken ct)
+    {
+        var response = new Response<object?>();
+        try
+        {
+            var entity = await _unitOfWork.Usuarios.GetPasswordCredentialAsync(usuarioId, ct);
+            response.Data = _mapper.Map<object?>(entity); // Mapear a CredencialDTO si existe
+            response.isSuccess = true;
+        }
+        catch (Exception ex)
+        {
+            response.Message = ex.Message;
+            _logger.LogError(ex.Message);
+        }
+        return response;
+    }
+
+    public async Task<Response<bool>> HasOpenTurnoAsync(int idUsuario, CancellationToken ct)
+    {
+        var response = new Response<bool>();
+        try
+        {
+            response.Data = await _unitOfWork.Usuarios.HasOpenTurnoAsync(idUsuario, ct);
+            response.isSuccess = true;
+        }
+        catch (Exception ex)
+        {
+            response.Message = ex.Message;
+            _logger.LogError(ex.Message);
+        }
+        return response;
+    }
+
+    public async Task<Response<List<string>>> GetPermissionKeysByUsuarioIdAsync(int usuarioId, CancellationToken ct)
+    {
+        var response = new Response<List<string>>();
+        try
+        {
+            response.Data = await _unitOfWork.Usuarios.GetPermissionKeysByUsuarioIdAsync(usuarioId, ct);
+            response.isSuccess = true;
+        }
+        catch (Exception ex)
+        {
+            response.Message = ex.Message;
+            _logger.LogError(ex.Message);
+        }
+        return response;
+    }
+
+    public async Task<Response<string?>> GetPermissionsVersionAsync(int usuarioId, CancellationToken ct)
+    {
+        var response = new Response<string?>();
+        try
+        {
+            response.Data = await _unitOfWork.Usuarios.GetPermissionsVersionAsync(usuarioId, ct);
+            response.isSuccess = true;
+        }
+        catch (Exception ex)
+        {
+            response.Message = ex.Message;
+            _logger.LogError(ex.Message);
+        }
+        return response;
     }
 
     #endregion

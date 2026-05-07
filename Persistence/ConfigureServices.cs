@@ -44,6 +44,8 @@ public static class ConfigureServices
         
         // En Persistence/ConfigureServices.cs
         services.AddScoped<IUnitOfWork, UnitOfWork>();
+        
+        services.AddScoped<IDatabaseInitializer, DatabaseInitializer>();
 
         return services;
     }
