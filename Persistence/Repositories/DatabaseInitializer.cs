@@ -24,255 +24,85 @@ public sealed class DatabaseInitializer : IDatabaseInitializer
 
     public async Task InitializeAsync(CancellationToken ct = default)
     {
-        // 0) Migraciones (activa si lo haces desde la app)
-        // if (_env.IsDevelopment())
-        // {
-        //     _logger.LogInformation("Applying EF Core migrations...");
-        //     await _db.Database.MigrateAsync(ct);
-        // }
+        _logger.LogInformation("Iniciando inicialización de base de datos...");
 
-        // 1) Roles base (deben existir antes de RBAC y antes de asignar UsuarioRol)
+        // 1) Asegurar Roles Base
         var adminRole = await EnsureRoleAsync("Admin", isSystem: true, isAssignable: true, ct);
-        var managerRole = await EnsureRoleAsync("Manager", isSystem: false, isAssignable: true, ct);
-        var meseroRole = await EnsureRoleAsync("Mesero", isSystem: false, isAssignable: true, ct);
+        await EnsureRoleAsync("Manager", isSystem: false, isAssignable: true, ct);
+        await EnsureRoleAsync("Mesero", isSystem: false, isAssignable: true, ct);
 
-        // // 2) Usuario admin (y su credencial)
-        // var adminUser = await EnsureAdminUserAsync(ct);
+        // 2) Seed Operativo (Empresa, Usuario Admin, Credencial y Vínculo de Rol)
+        await SeedAdminUserAsync(ct);
 
-        // 3) Asignar rol Admin al usuario admin (tabla puente UsuarioRol)
-        await SeedAdminUserAsync(ct); // crea empresa, usuario, credencial (Password), etc.
-        var adminUser = await _db.Usuarios.FirstAsync(u => u.Correo == "admin@mesafacil.local", ct);
-
-        // 4) RBAC: permisos (AccesoRuta) + asignación a roles (RolAccesoRuta)
+        // 3) RBAC: Permisos y asignación a roles
         await SeedRbacAsync(ct);
 
-        // 5) Otros seeds de tu app (formularios, catálogos, etc.)
+        // 4) UI: Formularios y Campos
         await SeedFormulariosAsync(ct);
+        
+        _logger.LogInformation("Inicialización completada con éxito.");
     }
 
-    private async Task SeedFormulariosAsync(CancellationToken ct)
+private async Task SeedFormulariosAsync(CancellationToken ct)
     {
-        const string catalogCode = "FORM";
-        const string catalogName = "Formularios";
-        const string loginCode = "LOGIN";
-        const string loginName = "Formulario de Login";
+        const string formLoginCode = "LOGIN";
 
-        await using var tx = await _db.Database.BeginTransactionAsync(ct);
-        try
+        // 1. Formulario (Entidad directa, no Catálogo)
+        var form = await _db.Set<Formulario>().FirstOrDefaultAsync(f => f.Codigo == formLoginCode, ct);
+        if (form is null)
         {
-            // ================================
-            // 1) Catálogo: FORM
-            // ================================
-            var catalog = await _db.Set<Catalog>()
-                .FirstOrDefaultAsync(c => c.Code == catalogCode, ct);
-
-            if (catalog == null)
-            {
-                catalog = new Catalog
-                {
-                    Code = catalogCode,
-                    Name = catalogName,
-                    IsActive = true,
-                    CreatedAt = DateTime.UtcNow,
-                    CreatedBy = "seed"
-                };
-                _db.Add(catalog);
-                await _db.SaveChangesAsync(ct);
-                _logger.LogInformation("Seed: creado catálogo {Code}", catalogCode);
-            }
-            else
-            {
-                // Si quieres mantener el nombre actualizado sin duplicar migraciones:
-                if (catalog.Name != catalogName)
-                {
-                    catalog.Name = catalogName;
-                    catalog.UpdatedAt = DateTime.UtcNow;
-                    catalog.UpdatedBy = "seed";
-                    await _db.SaveChangesAsync(ct);
-                    _logger.LogInformation("Seed: actualizado nombre catálogo {Code}", catalogCode);
-                }
-            }
-
-            // ================================
-            // 2) CatalogItem: LOGIN
-            // ================================
-            var loginItem = await _db.Set<CatalogItem>()
-                .FirstOrDefaultAsync(ci => ci.CatalogId == catalog.Id && ci.Code == loginCode, ct);
-
-            if (loginItem == null)
-            {
-                loginItem = new CatalogItem
-                {
-                    CatalogId = catalog.Id,
-                    Code = loginCode,
-                    Name = loginName,
-                    SortOrder = 0,
-                    IsActive = true,
-                    CreatedAt = DateTime.UtcNow,
-                    CreatedBy = "seed"
-                };
-                _db.Add(loginItem);
-                await _db.SaveChangesAsync(ct);
-                _logger.LogInformation("Seed: creado item {ItemCode} en catálogo {CatalogCode}", loginCode,
-                    catalogCode);
-            }
-            else
-            {
-                // Mantener nombre y estado alineados
-                bool changed = false;
-                if (loginItem.Name != loginName)
-                {
-                    loginItem.Name = loginName;
-                    changed = true;
-                }
-
-                if (!loginItem.IsActive)
-                {
-                    loginItem.IsActive = true;
-                    changed = true;
-                }
-
-                if (changed)
-                {
-                    loginItem.UpdatedAt = DateTime.UtcNow;
-                    loginItem.UpdatedBy = "seed";
-                    await _db.SaveChangesAsync(ct);
-                    _logger.LogInformation("Seed: actualizado item {ItemCode}", loginCode);
-                }
-            }
-
-            var formCatalogId = loginItem.CatalogId;
-            var formItemId = loginItem.Id;
-
-            // ================================
-            // 3) FormFields: username
-            // ================================
-            await EnsureFormFieldAsync(
-                formCatalogId, formItemId,
-                name: "username",
-                type: "text",
-                label: "Usuario",
-                placeholder: "Ingresa tu usuario o email",
-                order: 1,
-                validations: new()
-                {
-                    new FormValidation { Type = "required", Value = 1 },
-                    // Si deseas aplicar email:
-                    // new FormValidation { Type = "email", Value = 1 }
-                },
-                ct);
-
-            // ================================
-            // 4) FormFields: password
-            // ================================
-            await EnsureFormFieldAsync(
-                formCatalogId, formItemId,
-                name: "password",
-                type: "password",
-                label: "Contraseña",
-                placeholder: "Ingresa tu contraseña",
-                order: 2,
-                validations: new()
-                {
-                    new FormValidation { Type = "required", Value = 1 },
-                    new FormValidation { Type = "minLength", Value = 8 }
-                },
-                ct);
-
-            await tx.CommitAsync(ct);
+            form = new Formulario 
+            { 
+                Codigo = formLoginCode, 
+                Nombre = "Formulario de Login", 
+                Descripcion = "Acceso principal al sistema", 
+                IsActive = true, 
+                CreatedBy = "seed" 
+            };
+            _db.Add(form);
+            await _db.SaveChangesAsync(ct);
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error durante el seeding de formularios");
-            await tx.RollbackAsync(ct);
-            throw;
-        }
+
+        // 2. FormFields
+        await EnsureFormFieldAsync(form.Id, "username", "text", "Usuario", "Ingresa tu usuario", 1, 
+            new() { new FormValidation { Type = "required", Value = 1 } }, ct);
+
+        await EnsureFormFieldAsync(form.Id, "password", "password", "Contraseña", "Ingresa tu contraseña", 2, 
+            new() { new FormValidation { Type = "required", Value = 1 }, new FormValidation { Type = "minLength", Value = 8 } }, ct);
     }
 
-    private async Task EnsureFormFieldAsync(
-        int formularioCatalogId,
-        int formularioItemId,
-        string name,
-        string type,
-        string label,
-        string placeholder,
-        int order,
-        List<FormValidation> validations,
-        CancellationToken ct)
+    private async Task EnsureFormFieldAsync(int idFormulario, string name, string type, string label, string placeholder, int order, List<FormValidation> validations, CancellationToken ct)
     {
-        var exists = await _db.Set<FormField>().AnyAsync(f =>
-            f.FormularioCatalogId == formularioCatalogId &&
-            f.FormularioItemId == formularioItemId &&
-            f.Name == name, ct);
+        var field = await _db.Set<FormField>().FirstOrDefaultAsync(f => f.IdFormulario == idFormulario && f.Name == name, ct);
 
-        if (!exists)
+        if (field is null)
         {
-            var field = new FormField
+            field = new FormField
             {
-                Type = type,
+                IdFormulario = idFormulario,
                 Name = name,
+                Type = type,
                 Label = label,
                 Placeholder = placeholder,
-                Value = string.Empty,
-                Order = order,
-
-                FormularioCatalogId = formularioCatalogId,
-                FormularioItemId = formularioItemId,
-
-                CatalogId = null, // sin relación a otro catálogo
-
+                Orden = order,
+                IsActive = true,
                 Validations = validations,
-                Options = new()
+                CreatedBy = "seed"
             };
-
             _db.Add(field);
-            await _db.SaveChangesAsync(ct);
         }
         else
         {
-            // Opcional: mantener metadatos alineados si cambian
-            var field = await _db.Set<FormField>().FirstAsync(f =>
-                f.FormularioCatalogId == formularioCatalogId &&
-                f.FormularioItemId == formularioItemId &&
-                f.Name == name, ct);
-
-            bool changed = false;
-
-            if (field.Type != type)
-            {
-                field.Type = type;
-                changed = true;
-            }
-
-            if (field.Label != label)
-            {
-                field.Label = label;
-                changed = true;
-            }
-
-            if (field.Placeholder != placeholder)
-            {
-                field.Placeholder = placeholder;
-                changed = true;
-            }
-
-            if (field.Order != order)
-            {
-                field.Order = order;
-                changed = true;
-            }
-
-            // Si quieres sobreescribir reglas cuando difieren:
-            // (esto reemplaza completamente la lista)
-            if (!AreValidationsEqual(field.Validations, validations))
-            {
-                field.Validations = validations;
-                changed = true;
-            }
-
-            if (changed)
-                await _db.SaveChangesAsync(ct);
+            // Update si es necesario para mantener seed sincronizado
+            field.Type = type;
+            field.Label = label;
+            field.Placeholder = placeholder;
+            field.Orden = order;
+            field.Validations = validations;
+            field.UpdatedAt = DateTime.UtcNow;
+            _db.Update(field);
         }
+        await _db.SaveChangesAsync(ct);
     }
 
     private static bool AreValidationsEqual(
@@ -297,262 +127,70 @@ public sealed class DatabaseInitializer : IDatabaseInitializer
     // en Persistence/DatabaseInitializer.cs
     private async Task SeedAdminUserAsync(CancellationToken ct)
     {
-        // ================================
-        // 0) Constantes
-        // ================================
-        const string empresaNombre = "Empresa Demo";
-        const string empresaRazon = "Empresa Demo S.A. de C.V."; // ajusta a tu modelo de Empresa
-        const string adminNombre = "Administrador";
         const string adminCorreo = "admin@mesafacil.local";
-        const string rolAdminCode = "ADMIN";
-        const string rolAdminNombre = "Admin";
-        const string credCatalogCode = "CRED";
-        const string credCatalogName = "Tipos de Credencial";
-        const string credItemCode = "PASSWORD";
-        const string credItemName = "Contraseña";
-
-        // Password semilla (cámbialo en prod)
-
+        const string empresaNombre = "Empresa Demo";
 
         await using var tx = await _db.Database.BeginTransactionAsync(ct);
         try
         {
-            // ================================
-            // 1) Empresa (necesaria para Usuario.IdEmpresa)
-            // ================================
-            // Asumo que Empresa tiene Code/Name; ajusta según tu entidad real.
-            var empresa = await _db.Set<Empresa>()
-                .FirstOrDefaultAsync(e => e.Nombre == empresaNombre, ct);
-
+            // 1. Empresa
+            var empresa = await _db.Empresas.FirstOrDefaultAsync(e => e.Nombre == empresaNombre, ct);
             if (empresa is null)
             {
-                empresa = new Empresa
-                {
-                    Nombre = empresaNombre,
-                    IsActive = true,
-                    CreatedAt = DateTime.UtcNow,
-                    CreatedBy = "seed"
-                };
+                empresa = new Empresa { Nombre = empresaNombre, IsActive = true, CreatedBy = "seed" };
                 _db.Add(empresa);
                 await _db.SaveChangesAsync(ct);
             }
 
-            // ================================
-            // 2) Rol ADMIN
-            // ================================
-            var rolAdmin = await _db.Set<Rol>()
-                .FirstOrDefaultAsync(r => r.Nombre == rolAdminNombre, ct);
-
-            if (rolAdmin is null)
+            // 2. Catálogo de Credencial (CatCredencial) - Reemplaza a CatalogItem
+            var catCred = await _db.Set<CatCredencial>().FirstOrDefaultAsync(c => c.Descripcion == "PASSWORD", ct);
+            if (catCred is null)
             {
-                rolAdmin = new Rol
-                {
-                    Nombre = rolAdminNombre,
-                    IsSystem = true, // los system roles suelen marcarse así
-                    IsAssignable = true, // el admin se puede asignar
-                    ConcurrencyStamp = Guid.NewGuid().ToString(),
-                    IsActive = true, // si tu BaseAuditableEntity lo tiene
-                    CreatedAt = DateTime.UtcNow,
-                    CreatedBy = "seed"
-                };
-
-                _db.Add(rolAdmin);
-                await _db.SaveChangesAsync(ct);
-            }
-            else
-            {
-                bool changed = false;
-
-                if (!rolAdmin.IsSystem)
-                {
-                    rolAdmin.IsSystem = true;
-                    changed = true;
-                }
-
-                if (!rolAdmin.IsAssignable)
-                {
-                    rolAdmin.IsAssignable = true;
-                    changed = true;
-                }
-
-                if (string.IsNullOrWhiteSpace(rolAdmin.ConcurrencyStamp))
-                {
-                    rolAdmin.ConcurrencyStamp = Guid.NewGuid().ToString();
-                    changed = true;
-                }
-
-                if (!rolAdmin.IsActive)
-                {
-                    rolAdmin.IsActive = true;
-                    changed = true;
-                }
-
-                // Si quieres asegurar nombre exacto (por si alguien lo modificó):
-                if (rolAdmin.Nombre != rolAdminNombre)
-                {
-                    rolAdmin.Nombre = rolAdminNombre;
-                    changed = true;
-                }
-
-                if (changed)
-                {
-                    rolAdmin.UpdatedAt = DateTime.UtcNow;
-                    rolAdmin.UpdatedBy = "seed";
-                    await _db.SaveChangesAsync(ct);
-                }
-            }
-
-
-            // ================================
-            // 3) Catálogo/Ítem para tipo de credencial (CRED → PASSWORD)
-            // ================================
-            var credCatalog = await _db.Set<Catalog>()
-                .FirstOrDefaultAsync(c => c.Code == credCatalogCode, ct);
-
-            if (credCatalog is null)
-            {
-                credCatalog = new Catalog
-                {
-                    Code = credCatalogCode,
-                    Name = credCatalogName,
-                    IsActive = true,
-                    CreatedAt = DateTime.UtcNow,
-                    CreatedBy = "seed"
-                };
-                _db.Add(credCatalog);
+                catCred = new CatCredencial { Descripcion = "PASSWORD", IsActive = true, CreatedBy = "seed" };
+                _db.Add(catCred);
                 await _db.SaveChangesAsync(ct);
             }
 
-            var credPasswordItem = await _db.Set<CatalogItem>().FirstOrDefaultAsync(ci =>
-                ci.CatalogId == credCatalog.Id && ci.Code == credItemCode, ct);
-
-            if (credPasswordItem is null)
-            {
-                credPasswordItem = new CatalogItem
-                {
-                    CatalogId = credCatalog.Id,
-                    Code = credItemCode,
-                    Name = credItemName,
-                    IsActive = true,
-                    SortOrder = 0,
-                    CreatedAt = DateTime.UtcNow,
-                    CreatedBy = "seed"
-                };
-                _db.Add(credPasswordItem);
-                await _db.SaveChangesAsync(ct);
-            }
-
-            // ================================
-            // 4) Usuario admin
-            // ================================
-            var admin = await _db.Set<Usuario>()
-                .FirstOrDefaultAsync(u => u.Correo == adminCorreo, ct);
-
+            // 3. Usuario Admin
+            var admin = await _db.Usuarios.FirstOrDefaultAsync(u => u.Correo == adminCorreo, ct);
             if (admin is null)
             {
-                admin = new Usuario
-                {
-                    IdEmpresa = empresa.Id,
-                    NombreCompleto = adminNombre,
-                    Correo = adminCorreo,
-                    IsActive = true,
-                    CreatedAt = DateTime.UtcNow,
-                    CreatedBy = "seed"
-                };
+                admin = new Usuario { IdEmpresa = empresa.Id, Correo = adminCorreo, NombreCompleto = "Administrador", IsActive = true, CreatedBy = "seed" };
                 _db.Add(admin);
                 await _db.SaveChangesAsync(ct);
             }
-            else
+
+            // 4. UsuarioRol (Vincular Admin)
+            var role = await _db.Roles.FirstAsync(r => r.Nombre == "Admin", ct);
+            var hasRole = await _db.UsuarioRoles.AnyAsync(ur => ur.UsuarioId == admin.Id && ur.IdRol == role.Id, ct);
+            if (!hasRole)
             {
-                bool changed = false;
-                if (admin.IdEmpresa != empresa.Id)
-                {
-                    admin.IdEmpresa = empresa.Id;
-                    changed = true;
-                }
-
-                if (admin.NombreCompleto != adminNombre)
-                {
-                    admin.NombreCompleto = adminNombre;
-                    changed = true;
-                }
-
-                if (!admin.IsActive)
-                {
-                    admin.IsActive = true;
-                    changed = true;
-                }
-
-                if (changed)
-                {
-                    admin.UpdatedAt = DateTime.UtcNow;
-                    admin.UpdatedBy = "seed";
-                    await _db.SaveChangesAsync(ct);
-                }
+                _db.Add(new UsuarioRol { UsuarioId = admin.Id, IdRol = role.Id, IsActive = true, CreatedBy = "seed" });
             }
 
-            // ================================
-            // 5) UsuarioRol (vincular ADMIN)
-            // ================================
-            // OJO: tu mapping define:
-            //   - PK: { Id, IdRol }
-            //   - FK a Usuario por 'Id' (heredado de BaseAuditableEntity) en UsuarioRol
-            // Eso implica que UsuarioRol.Id == Usuario.Id (inusual, pero así está configurado).
-            // var usuarioRolExists = await _db.Set<UsuarioRol>()
-            //     .AnyAsync(ur => ur.Id == admin.Id && ur.IdRol == rolAdmin.Id, ct);
-
-            var usuarioRolExists = await _db.Set<UsuarioRol>()
-                .AnyAsync(ur => ur.UsuarioId == admin.Id && ur.IdRol == rolAdmin.Id, ct);
-
-            if (!usuarioRolExists)
+            // 5. Credencial (Password)
+            var hasCred = await _db.Credenciales.AnyAsync(c => c.IdUsuario == admin.Id && c.IdCredencial == catCred.Id, ct);
+            if (!hasCred)
             {
-                var ur = new UsuarioRol
-                {
-                    // IMPORTANTE: aquí el Id de UsuarioRol DEBE SER el Id del Usuario (por tu FK)
-                    UsuarioId = admin.Id,
-                    IdRol = rolAdmin.Id,
-                    IsActive = true,
-                    CreatedAt = DateTime.UtcNow,
-                    CreatedBy = "seed"
-                };
-                _db.Add(ur);
-                await _db.SaveChangesAsync(ct);
-            }
-
-            // ================================
-            // 6) Credencial (Password) para admin
-            //     PK: (IdUsuario, TipoCatalogId, TipoItemId)
-            // ================================
-            var credExists = await _db.Set<Credencial>().AnyAsync(c =>
-                c.IdUsuario == admin.Id &&
-                c.TipoCatalogId == credPasswordItem.CatalogId &&
-                c.TipoItemId == credPasswordItem.Id, ct);
-
-            if (!credExists)
-            {
-                // Hash PBKDF2 con salt aleatorio
                 var (hash, salt) = CreatePasswordHash(adminPlainPassword);
-
-                var cred = new Credencial
-                {
-                    IdUsuario = admin.Id,
-                    TipoCatalogId = credPasswordItem.CatalogId,
-                    TipoItemId = credPasswordItem.Id,
-                    Hash = hash,
-                    Salt = salt,
-                    IsActive = true,
-                    CreatedAt = DateTime.UtcNow,
-                    CreatedBy = "seed"
-                };
-                _db.Add(cred);
-                await _db.SaveChangesAsync(ct);
+                _db.Add(new Credencial 
+                { 
+                    IdUsuario = admin.Id, 
+                    IdCredencial = catCred.Id, 
+                    Hash = hash, 
+                    Salt = salt, 
+                    IsActive = true, 
+                    CreatedBy = "seed" 
+                });
             }
 
+            await _db.SaveChangesAsync(ct);
             await tx.CommitAsync(ct);
         }
-        catch
+        catch (Exception ex)
         {
             await tx.RollbackAsync(ct);
+            _logger.LogError(ex, "Error en SeedAdminUserAsync");
             throw;
         }
     }

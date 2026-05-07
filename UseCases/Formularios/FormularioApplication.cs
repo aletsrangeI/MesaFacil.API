@@ -1,25 +1,25 @@
 using AutoMapper;
 using Common;
 using Domain.Entities;
-using DTO.CatalogItem;
+using DTO.Formulario;
 using Interface.Persistence;
 using Interface.UseCases;
 using Validator;
 
-namespace UseCases.CatalogItems;
+namespace UseCases.Formularios;
 
-public class CatalogItemApplication : ICatalogItemApplication
+public class FormularioApplication : IFormularioApplication
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
-    private readonly CatalogItemDTOValidator _validationRules;
-    private readonly IAppLogger<CatalogItemApplication> _logger;
+    private readonly FormularioDTOValidator _validationRules;
+    private readonly IAppLogger<FormularioApplication> _logger;
 
-    public CatalogItemApplication(
+    public FormularioApplication(
         IUnitOfWork unitOfWork,
         IMapper mapper,
-        CatalogItemDTOValidator validationRules,
-        IAppLogger<CatalogItemApplication> logger)
+        FormularioDTOValidator validationRules,
+        IAppLogger<FormularioApplication> logger)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
@@ -29,18 +29,18 @@ public class CatalogItemApplication : ICatalogItemApplication
 
     #region Metodos sincronos
 
-    public Response<bool> Insert(CatalogItemDTO dto)
+    public Response<bool> Insert(FormularioDTO dto)
     {
         var response = new Response<bool>();
         try
         {
-            var entity = _mapper.Map<CatalogItem>(dto);
-            response.Data = _unitOfWork.CatalogItems.Insert(entity);
+            var entity = _mapper.Map<Formulario>(dto);
+            response.Data = _unitOfWork.Formularios.Insert(entity);
 
             if (response.Data)
             {
                 response.isSuccess = true;
-                response.Message = "CatalogItem creado correctamente";
+                response.Message = "Formulario creado correctamente";
             }
         }
         catch (Exception ex)
@@ -51,18 +51,18 @@ public class CatalogItemApplication : ICatalogItemApplication
         return response;
     }
 
-    public Response<bool> Update(CatalogItemDTO dto)
+    public Response<bool> Update(FormularioDTO dto)
     {
         var response = new Response<bool>();
         try
         {
-            var entity = _mapper.Map<CatalogItem>(dto);
-            response.Data = _unitOfWork.CatalogItems.Update(entity);
+            var entity = _mapper.Map<Formulario>(dto);
+            response.Data = _unitOfWork.Formularios.Update(entity);
 
             if (response.Data)
             {
                 response.isSuccess = true;
-                response.Message = "CatalogItem modificado correctamente";
+                response.Message = "Formulario modificado correctamente";
             }
         }
         catch (Exception ex)
@@ -78,12 +78,12 @@ public class CatalogItemApplication : ICatalogItemApplication
         var response = new Response<bool>();
         try
         {
-            response.Data = _unitOfWork.CatalogItems.Delete(id);
+            response.Data = _unitOfWork.Formularios.Delete(id);
 
             if (response.Data)
             {
                 response.isSuccess = true;
-                response.Message = "CatalogItem eliminado correctamente";
+                response.Message = "Formulario eliminado correctamente";
             }
         }
         catch (Exception ex)
@@ -94,18 +94,18 @@ public class CatalogItemApplication : ICatalogItemApplication
         return response;
     }
 
-    public Response<CatalogItemDTO> Get(int id)
+    public Response<FormularioDTO> Get(int id)
     {
-        var response = new Response<CatalogItemDTO>();
+        var response = new Response<FormularioDTO>();
         try
         {
-            var entity = _unitOfWork.CatalogItems.Get(id);
-            response.Data = _mapper.Map<CatalogItemDTO>(entity);
+            var entity = _unitOfWork.Formularios.Get(id);
+            response.Data = _mapper.Map<FormularioDTO>(entity);
 
             if (response.Data != null)
             {
                 response.isSuccess = true;
-                response.Message = "CatalogItem encontrado";
+                response.Message = "Formulario encontrado";
             }
         }
         catch (Exception ex)
@@ -116,14 +116,19 @@ public class CatalogItemApplication : ICatalogItemApplication
         return response;
     }
 
-    public Response<IEnumerable<CatalogItemDTO>> GetAll()
+    public Response<IEnumerable<FormularioDTO>> GetAll()
     {
-        var response = new Response<IEnumerable<CatalogItemDTO>>();
+        var response = new Response<IEnumerable<FormularioDTO>>();
         try
         {
-            var list = _unitOfWork.CatalogItems.GetAll();
-            response.Data = _mapper.Map<IEnumerable<CatalogItemDTO>>(list);
-            response.isSuccess = true;
+            var list = _unitOfWork.Formularios.GetAll();
+            response.Data = _mapper.Map<IEnumerable<FormularioDTO>>(list);
+            
+            if (response.Data != null)
+            {
+                response.isSuccess = true;
+                response.Message = "Formulario encontrados";
+            }
         }
         catch (Exception ex)
         {
@@ -133,15 +138,19 @@ public class CatalogItemApplication : ICatalogItemApplication
         return response;
     }
 
-    public ResponsePagination<IEnumerable<CatalogItemDTO>> GetAllWithPagination(int page, int pageSize)
+    public ResponsePagination<IEnumerable<FormularioDTO>> GetAllWithPagination(int page, int pageSize)
     {
-        var response = new ResponsePagination<IEnumerable<CatalogItemDTO>>();
+        var response = new ResponsePagination<IEnumerable<FormularioDTO>>();
         try
         {
-            var list = _unitOfWork.CatalogItems.GetAllWithPagination(page, pageSize);
-            response.Data = _mapper.Map<IEnumerable<CatalogItemDTO>>(list);
-            response.isSuccess = true;
-            response.PageNumber = page;
+            var list = _unitOfWork.Formularios.GetAllWithPagination(page, pageSize);
+            
+            if (list != null)
+            {
+                response.Data = _mapper.Map<IEnumerable<FormularioDTO>>(list);
+                response.isSuccess = true;
+                response.Message = "Formulario encontrados";
+            }
         }
         catch (Exception ex)
         {
@@ -156,7 +165,7 @@ public class CatalogItemApplication : ICatalogItemApplication
         var response = new Response<int>();
         try
         {
-            response.Data = _unitOfWork.CatalogItems.Count();
+            response.Data = _unitOfWork.Formularios.Count();
             response.isSuccess = true;
         }
         catch (Exception ex)
@@ -171,18 +180,18 @@ public class CatalogItemApplication : ICatalogItemApplication
 
     #region Metodos asincronos
 
-    public async Task<Response<bool>> InsertAsync(CatalogItemDTO dto)
+    public async Task<Response<bool>> InsertAsync(FormularioDTO dto)
     {
         var response = new Response<bool>();
         try
         {
-            var entity = _mapper.Map<CatalogItem>(dto);
-            response.Data = await _unitOfWork.CatalogItems.InsertAsync(entity);
+            var entity = _mapper.Map<Formulario>(dto);
+            response.Data = await _unitOfWork.Formularios.InsertAsync(entity);
 
             if (response.Data)
             {
                 response.isSuccess = true;
-                response.Message = "CatalogItem creado correctamente";
+                response.Message = "Formulario creado correctamente";
             }
         }
         catch (Exception ex)
@@ -193,18 +202,18 @@ public class CatalogItemApplication : ICatalogItemApplication
         return response;
     }
 
-    public async Task<Response<bool>> UpdateAsync(CatalogItemDTO dto)
+    public async Task<Response<bool>> UpdateAsync(FormularioDTO dto)
     {
         var response = new Response<bool>();
         try
         {
-            var entity = _mapper.Map<CatalogItem>(dto);
-            response.Data = await _unitOfWork.CatalogItems.UpdateAsync(entity);
+            var entity = _mapper.Map<Formulario>(dto);
+            response.Data = await _unitOfWork.Formularios.UpdateAsync(entity);
 
             if (response.Data)
             {
                 response.isSuccess = true;
-                response.Message = "CatalogItem modificado correctamente";
+                response.Message = "Formulario modificado correctamente";
             }
         }
         catch (Exception ex)
@@ -220,12 +229,12 @@ public class CatalogItemApplication : ICatalogItemApplication
         var response = new Response<bool>();
         try
         {
-            response.Data = await _unitOfWork.CatalogItems.DeleteAsync(id);
+            response.Data = await _unitOfWork.Formularios.DeleteAsync(id);
 
             if (response.Data)
             {
                 response.isSuccess = true;
-                response.Message = "CatalogItem eliminado correctamente";
+                response.Message = "Formulario eliminado correctamente";
             }
         }
         catch (Exception ex)
@@ -236,18 +245,18 @@ public class CatalogItemApplication : ICatalogItemApplication
         return response;
     }
 
-    public async Task<Response<CatalogItemDTO>> GetAsync(int id)
+    public async Task<Response<FormularioDTO>> GetAsync(int id)
     {
-        var response = new Response<CatalogItemDTO>();
+        var response = new Response<FormularioDTO>();
         try
         {
-            var entity = await _unitOfWork.CatalogItems.GetAsync(id);
-            response.Data = _mapper.Map<CatalogItemDTO>(entity);
+            var entity = await _unitOfWork.Formularios.GetAsync(id);
+            response.Data = _mapper.Map<FormularioDTO>(entity);
 
             if (response.Data != null)
             {
                 response.isSuccess = true;
-                response.Message = "CatalogItem encontrado";
+                response.Message = "Formulario encontrado";
             }
         }
         catch (Exception ex)
@@ -258,14 +267,19 @@ public class CatalogItemApplication : ICatalogItemApplication
         return response;
     }
 
-    public async Task<Response<IEnumerable<CatalogItemDTO>>> GetAllAsync()
+    public async Task<Response<IEnumerable<FormularioDTO>>> GetAllAsync()
     {
-        var response = new Response<IEnumerable<CatalogItemDTO>>();
+        var response = new Response<IEnumerable<FormularioDTO>>();
         try
         {
-            var list = await _unitOfWork.CatalogItems.GetAllAsync();
-            response.Data = _mapper.Map<IEnumerable<CatalogItemDTO>>(list);
-            response.isSuccess = true;
+            var list = await _unitOfWork.Formularios.GetAllAsync();
+            response.Data = _mapper.Map<IEnumerable<FormularioDTO>>(list);
+            
+            if (response.Data != null)
+            {
+                response.isSuccess = true;
+                response.Message = "Formulario encontrados";
+            }
         }
         catch (Exception ex)
         {
@@ -275,14 +289,19 @@ public class CatalogItemApplication : ICatalogItemApplication
         return response;
     }
 
-    public async Task<ResponsePagination<IEnumerable<CatalogItemDTO>>> GetAllWithPaginationAsync(int page, int pageSize)
+    public async Task<ResponsePagination<IEnumerable<FormularioDTO>>> GetAllWithPaginationAsync(int page, int pageSize)
     {
-        var response = new ResponsePagination<IEnumerable<CatalogItemDTO>>();
+        var response = new ResponsePagination<IEnumerable<FormularioDTO>>();
         try
         {
-            var list = await _unitOfWork.CatalogItems.GetAllWithPaginationAsync(page, pageSize);
-            response.Data = _mapper.Map<IEnumerable<CatalogItemDTO>>(list);
-            response.isSuccess = true;
+            var list = await _unitOfWork.Formularios.GetAllWithPaginationAsync(page, pageSize);
+            
+            if (list != null)
+            {
+                response.Data = _mapper.Map<IEnumerable<FormularioDTO>>(list);
+                response.isSuccess = true;
+                response.Message = "Formulario encontrados";
+            }
         }
         catch (Exception ex)
         {
@@ -297,7 +316,7 @@ public class CatalogItemApplication : ICatalogItemApplication
         var response = new Response<int>();
         try
         {
-            response.Data = await _unitOfWork.CatalogItems.CountAsync();
+            response.Data = await _unitOfWork.Formularios.CountAsync();
             response.isSuccess = true;
         }
         catch (Exception ex)

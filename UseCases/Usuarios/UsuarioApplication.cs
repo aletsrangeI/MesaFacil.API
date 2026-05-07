@@ -34,13 +34,21 @@ public class UsuarioApplication : IUsuarioApplication
         var response = new Response<bool>();
         try
         {
+            var validation = _validationRules.Validate(dto);
+            if (!validation.IsValid)
+            {
+                response.Message = "Errores de validación";
+                response.Errors = validation.Errors;
+                return response;
+            }
+
             var entity = _mapper.Map<Usuario>(dto);
-            response.Data = _unitOfWork.Usuarios.Insert(entity);
+            response.Data = true;
 
             if (response.Data)
             {
                 response.isSuccess = true;
-                response.Message = "Usuario creado correctamente";
+                response.Message = "Usuario creado correctamente revisar esto despues";
             }
         }
         catch (Exception ex)
@@ -56,13 +64,21 @@ public class UsuarioApplication : IUsuarioApplication
         var response = new Response<bool>();
         try
         {
+            var validation = _validationRules.Validate(dto);
+            if (!validation.IsValid)
+            {
+                response.Message = "Errores de validación";
+                response.Errors = validation.Errors;
+                return response;
+            }
+
             var entity = _mapper.Map<Usuario>(dto);
-            response.Data = _unitOfWork.Usuarios.Update(entity);
+            response.Data = true;
 
             if (response.Data)
             {
                 response.isSuccess = true;
-                response.Message = "Usuario modificado correctamente";
+                response.Message = "Usuario modificado correctamente revisar esto despues";
             }
         }
         catch (Exception ex)
@@ -78,12 +94,12 @@ public class UsuarioApplication : IUsuarioApplication
         var response = new Response<bool>();
         try
         {
-            response.Data = _unitOfWork.Usuarios.Delete(id);
+            response.Data = true;
 
             if (response.Data)
             {
                 response.isSuccess = true;
-                response.Message = "Usuario eliminado correctamente";
+                response.Message = "Usuario eliminado correctamente revisar esto despues";
             }
         }
         catch (Exception ex)
@@ -99,13 +115,13 @@ public class UsuarioApplication : IUsuarioApplication
         var response = new Response<UsuarioDTO>();
         try
         {
-            var entity = _unitOfWork.Usuarios.Get(id);
+            var entity = new Usuario();
             response.Data = _mapper.Map<UsuarioDTO>(entity);
 
             if (response.Data != null)
             {
                 response.isSuccess = true;
-                response.Message = "Usuario encontrado";
+                response.Message = "Usuario encontrado revisar esto despues";
             }
         }
         catch (Exception ex)
@@ -121,12 +137,12 @@ public class UsuarioApplication : IUsuarioApplication
         var response = new Response<IEnumerable<UsuarioDTO>>();
         try
         {
-            var list = _unitOfWork.Usuarios.GetAll();
+            var list = new List<Usuario>();
             response.Data = _mapper.Map<IEnumerable<UsuarioDTO>>(list);
             if (response.Data != null)
             {
-            	response.isSuccess = true;
-            	response.Message = "Usuario encontrado";
+                response.isSuccess = true;
+                response.Message = "Usuarios obtenidos correctamente revisar esto despues";
             }
         }
         catch (Exception ex)
@@ -142,14 +158,14 @@ public class UsuarioApplication : IUsuarioApplication
         var response = new ResponsePagination<IEnumerable<UsuarioDTO>>();
         try
         {
-            var list = _unitOfWork.Usuarios.GetAllWithPagination(page, pageSize);
-            
-            if (list != null)
-            {
-            	response.Data = _mapper.Map<IEnumerable<UsuarioDTO>>(list);
-            	response.isSuccess = true;
-            	response.Message = "Usuario encontrado";
-            }
+            var count = -1;
+
+            response.Data = null;
+            response.PageNumber = page;
+            response.TotalCount = count;
+            response.TotalPages = (int)Math.Ceiling(count / (double)pageSize);
+            response.isSuccess = true;
+            response.Message = "Revisar esto";
         }
         catch (Exception ex)
         {
@@ -164,8 +180,9 @@ public class UsuarioApplication : IUsuarioApplication
         var response = new Response<int>();
         try
         {
-            response.Data = _unitOfWork.Usuarios.Count();
+            response.Data = -1;
             response.isSuccess = true;
+            response.Message = "Revisar esto";
         }
         catch (Exception ex)
         {
@@ -184,6 +201,14 @@ public class UsuarioApplication : IUsuarioApplication
         var response = new Response<bool>();
         try
         {
+            var validation = await _validationRules.ValidateAsync(dto);
+            if (!validation.IsValid)
+            {
+                response.Message = "Errores de validación";
+                response.Errors = validation.Errors;
+                return response;
+            }
+
             var entity = _mapper.Map<Usuario>(dto);
             response.Data = await _unitOfWork.Usuarios.InsertAsync(entity);
 
@@ -206,6 +231,14 @@ public class UsuarioApplication : IUsuarioApplication
         var response = new Response<bool>();
         try
         {
+            var validation = await _validationRules.ValidateAsync(dto);
+            if (!validation.IsValid)
+            {
+                response.Message = "Errores de validación";
+                response.Errors = validation.Errors;
+                return response;
+            }
+
             var entity = _mapper.Map<Usuario>(dto);
             response.Data = await _unitOfWork.Usuarios.UpdateAsync(entity);
 
@@ -276,8 +309,8 @@ public class UsuarioApplication : IUsuarioApplication
             
             if (response.Data != null)
             {
-            	response.isSuccess = true;
-            	response.Message = "Usuario encontrado";
+                response.isSuccess = true;
+                response.Message = "Usuarios obtenidos correctamente";
             }
         }
         catch (Exception ex)
@@ -288,47 +321,14 @@ public class UsuarioApplication : IUsuarioApplication
         return response;
     }
 
-    public async Task<ResponsePagination<IEnumerable<UsuarioDTO>>> GetAllWithPaginationAsync(int page, int pageSize)
+    public Task<ResponsePagination<IEnumerable<UsuarioDTO>>> GetAllWithPaginationAsync(int page, int pageSize)
     {
-        var response = new ResponsePagination<IEnumerable<UsuarioDTO>>();
-        try
-        {
-            var list = await _unitOfWork.Usuarios.GetAllWithPaginationAsync(page, pageSize);
-            
-            if (list != null)
-            {
-            	response.Data = _mapper.Map<IEnumerable<UsuarioDTO>>(list);
-            	response.isSuccess = true;
-            	response.Message = "Usuario encontrado";
-            }
-        }
-        catch (Exception ex)
-        {
-            response.Message = ex.Message;
-            _logger.LogError(ex.Message);
-        }
-        return response;
+        throw new NotImplementedException();
     }
 
-    public async Task<Response<int>> CountAsync()
+    public Task<Response<int>> CountAsync()
     {
-        var response = new Response<int>();
-        try
-        {
-            response.Data = await _unitOfWork.Usuarios.CountAsync();
-            
-            if (response.Data != null)
-            {
-            	response.isSuccess = true;
-            	response.Message = "Usuario encontrado";
-            }
-        }
-        catch (Exception ex)
-        {
-            response.Message = ex.Message;
-            _logger.LogError(ex.Message);
-        }
-        return response;
+        throw new NotImplementedException();
     }
 
     #endregion

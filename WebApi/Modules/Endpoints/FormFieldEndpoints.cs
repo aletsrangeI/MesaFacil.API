@@ -196,37 +196,37 @@ public static class FormFieldEndpoints
                 })
             .WithName("FormField_Count_Async");
 
-        group.MapGet("/GetFormFieldByFormCatId/{code}",
-                (string code, IFormFieldApplication svc, CancellationToken ct) =>
-                {
-                    Response<IEnumerable<FormFieldDTO>> result = svc.GetFormFieldByFormCatId(code);
-                    return TypedResults.Ok(result);
-                })
-            .WithName("FormField_GetFormFieldByFormCatId");
+        // group.MapGet("/GetFormFieldByFormCatId/{code}",
+        //         (string code, IFormFieldApplication svc, CancellationToken ct) =>
+        //         {
+        //             Response<IEnumerable<FormFieldDTO>> result = svc.GetFormFieldByFormCatIdAsync(code);
+        //             return TypedResults.Ok(result);
+        //         })
+        //     .WithName("FormField_GetFormFieldByFormCatId");
 
         //GetFormFieldByFormCatIdAsync
 
-        group.MapGet("/GetFormFieldByFormCatIdAsync/{id:int}",
-                async Task<Results<Ok<Response<IEnumerable<FormFieldDTO>>>,
-                        NotFound<Response<IEnumerable<FormFieldDTO>>>>>
-                    (int id, IFormFieldApplication svc, CancellationToken ct) =>
-                {
-                    Response<IEnumerable<FormFieldDTO>>? result = await svc.GetFormFieldByFormCatIdAsync(id);
-                    if (result is null || result.Data is null)
-                    {
-                        var notFound = new Response<IEnumerable<FormFieldDTO>>
-                        {
-                            Data = default!,
-                            isSuccess = false,
-                            Message = "FormField con id ${id} no encontrada",
-                            Errors = Array.Empty<FluentValidation.Results.ValidationFailure>()
-                        };
-                        return TypedResults.NotFound(notFound);
-                    }
-
-                    return TypedResults.Ok(result);
-                })
-            .WithName("FormField_GetFormFieldByFormCatIdAsync_Async");
+        // group.MapGet("/GetFormFieldByFormCatIdAsync/{id:int}",
+        //         async Task<Results<Ok<Response<IEnumerable<FormFieldDTO>>>,
+        //                 NotFound<Response<IEnumerable<FormFieldDTO>>>>>
+        //             (int id, IFormFieldApplication svc, CancellationToken ct) =>
+        //         {
+        //             Response<IEnumerable<FormFieldDTO>>? result = await svc.GetFormFieldByFormCatIdAsync(id);
+        //             if (result is null || result.Data is null)
+        //             {
+        //                 var notFound = new Response<IEnumerable<FormFieldDTO>>
+        //                 {
+        //                     Data = default!,
+        //                     isSuccess = false,
+        //                     Message = "FormField con id ${id} no encontrada",
+        //                     Errors = Array.Empty<FluentValidation.Results.ValidationFailure>()
+        //                 };
+        //                 return TypedResults.NotFound(notFound);
+        //             }
+        //
+        //             return TypedResults.Ok(result);
+        //         })
+        //     .WithName("FormField_GetFormFieldByFormCatIdAsync_Async");
 
         return endpoints;
     }
