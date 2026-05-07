@@ -35,6 +35,7 @@ using DTO.UsuarioRol;
 using DTO.VarianteProducto;
 using DTO.FormField;
 using DTO.AccesoRuta;
+using DTO.CatCredencial;
 using DTO.RolAccesoRuta;
 
 namespace UseCases.Common.Mapping;
@@ -86,7 +87,6 @@ public class MappingsProfile : Profile
         CreateMap<Cliente, ClienteDTO>().ReverseMap();
         CreateMap<CategoriaMenu, CategoriaMenuDTO>().ReverseMap();
         CreateMap<Area, AreaDTO>().ReverseMap();
-        CreateMap<CatalogItem, CatalogItemDTO>().ReverseMap();
-        CreateMap<Catalog, CatalogDTO>().ReverseMap();
+        CreateMap<CatCredencial, CatCredencialDTO>().ReverseMap();
     }
 }

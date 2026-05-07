@@ -10,54 +10,50 @@ public class FormFieldConfiguration : IEntityTypeConfiguration<FormField>
     public void Configure(EntityTypeBuilder<FormField> e)
     {
         e.ToTable("FormField");
-        e.HasKey(x => x.Id);
+        
+        // Asumiendo que BaseAuditableEntity tiene la propiedad 'Id'
+        e.HasKey(x => x.Id); 
 
-        e.Property(x => x.Type).HasConversion<string>(); // guarda como texto
         e.Property(x => x.Type).IsRequired().HasMaxLength(50);
         e.Property(x => x.Name).IsRequired().HasMaxLength(100);
-        e.Property(x => x.Label).HasMaxLength(150);
-        e.Property(x => x.Placeholder).HasMaxLength(150);
-        e.Property(x => x.Value).HasMaxLength(500);
-        e.Property(x => x.Order).HasDefaultValue(0);
+        e.Property(x => x.Label).IsRequired().HasMaxLength(200);
+        e.Property(x => x.Placeholder).HasMaxLength(200);
+        e.Property(x => x.Value).HasColumnType("nvarchar(max)");
+        e.Property(x => x.Orden).HasDefaultValue(0);
+        
+        // [CORREGIDO] - El reemplazo de CatalogId
+        e.Property(x => x.DataSource).HasMaxLength(100);
 
-        // FK compuesta hacia CatalogItem (Formulario)
+        // ==========================================
+        // [CORREGIDO] - Relación directa con Formulario
+        // ==========================================
         e.HasOne(x => x.Formulario)
-            .WithMany() // o .WithMany(ci => ci.FormFields) si existe
-            .HasForeignKey(x => new { x.FormularioCatalogId, x.FormularioItemId })
-            .HasPrincipalKey(nameof(CatalogItem.CatalogId), nameof(CatalogItem.Id))
-            .OnDelete(DeleteBehavior.Restrict);
+            .WithMany(f => f.Campos) // Asegúrate de que Formulario tenga ICollection<FormField> Campos
+            .HasForeignKey(x => x.IdFormulario)
+            .OnDelete(DeleteBehavior.Cascade);
 
-        // Relación opcional a Catalog
-        e.HasOne(x => x.Catalog)
-            .WithMany()
-            .HasForeignKey(x => x.CatalogId)
-            .OnDelete(DeleteBehavior.SetNull);
+        // Index para búsquedas rápidas por formulario
+        e.HasIndex(x => x.IdFormulario)
+            .HasDatabaseName("IX_FormField_IdFormulario");
 
-        e.HasIndex(x => new { x.FormularioCatalogId, x.FormularioItemId })
-            .HasDatabaseName("IX_FormField_Formulario");
-
-        e.HasIndex(x => x.CatalogId)
-            .HasDatabaseName("IX_FormField_CatalogId");
-
-        e.HasIndex(x => new { x.FormularioCatalogId, x.FormularioItemId, x.Name })
+        // Índice único: No puede haber dos campos con el mismo nombre en el mismo formulario
+        e.HasIndex(x => new { x.IdFormulario, x.Name })
             .IsUnique()
             .HasDatabaseName("UX_FormField_Formulario_Name");
 
+        // ==========================================
+        // CONFIGURACIÓN DE JSON
+        // ==========================================
+        // Nota: Si prefieres que EF se encargue de la serialización automática 
+        // podrías quitar el [NotMapped] de la entidad y usar HasConversion aquí.
+        // De lo contrario, configuramos las columnas de texto:
         
-        e.Property(x => x.Validations)
-            .HasColumnType("jsonb")
+        e.Property(x => x.ValidationsJson)
             .HasColumnName("ValidationsJson")
-            .HasConversion(
-                v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
-                v => JsonSerializer.Deserialize<List<FormValidation>>(v, (JsonSerializerOptions?)null) ?? new()
-            );
+            .HasColumnType("nvarchar(max)");
 
-        e.Property(x => x.Options)
-            .HasColumnType("jsonb")
+        e.Property(x => x.OptionsJson)
             .HasColumnName("OptionsJson")
-            .HasConversion(
-                v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
-                v => JsonSerializer.Deserialize<List<SelectFormOption>>(v, (JsonSerializerOptions?)null) ?? new()
-            );
+            .HasColumnType("nvarchar(max)");
     }
 }

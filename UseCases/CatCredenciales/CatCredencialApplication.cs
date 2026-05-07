@@ -1,22 +1,25 @@
 using AutoMapper;
 using Common;
 using Domain.Entities;
-using DTO.Catalog;
+using DTO.CatCredencial;
 using Interface.Persistence;
 using Interface.UseCases;
 using Validator;
 
-namespace UseCases.Catalogs;
+namespace UseCases.CatCredenciales;
 
-public class CatalogApplication : ICatalogApplication
+public class CatCredencialApplication : ICatCredencialApplication
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
-    private readonly CatalogDTOValidator _validationRules;
-    private readonly IAppLogger<CatalogApplication> _logger;
+    private readonly CatCredencialDTOValidator _validationRules;
+    private readonly IAppLogger<CatCredencialApplication> _logger;
 
-    public CatalogApplication(IUnitOfWork unitOfWork, IMapper mapper, CatalogDTOValidator validationRules,
-        IAppLogger<CatalogApplication> logger)
+    public CatCredencialApplication(
+        IUnitOfWork unitOfWork,
+        IMapper mapper,
+        CatCredencialDTOValidator validationRules,
+        IAppLogger<CatCredencialApplication> logger)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
@@ -24,20 +27,20 @@ public class CatalogApplication : ICatalogApplication
         _logger = logger;
     }
 
-    #region Metodos Sincronos
+    #region Metodos sincronos
 
-    public Response<bool> Insert(CatalogDTO catalogDTO)
+    public Response<bool> Insert(CatCredencialDTO dto)
     {
         var response = new Response<bool>();
         try
         {
-            var catalog = _mapper.Map<Catalog>(catalogDTO);
-            response.Data = _unitOfWork.Catalogs.Insert(catalog);
+            var entity = _mapper.Map<CatCredencial>(dto);
+            response.Data = _unitOfWork.CatCredenciales.Insert(entity);
 
             if (response.Data)
             {
                 response.isSuccess = true;
-                response.Message = "El catalogo ha sido creado correctamente";
+                response.Message = "CatCredencial creado correctamente";
             }
         }
         catch (Exception ex)
@@ -45,23 +48,21 @@ public class CatalogApplication : ICatalogApplication
             response.Message = ex.Message;
             _logger.LogError(ex.Message);
         }
-
         return response;
     }
 
-    public Response<bool> Update(CatalogDTO catalogDTO)
+    public Response<bool> Update(CatCredencialDTO dto)
     {
         var response = new Response<bool>();
-
         try
         {
-            var catalog = _mapper.Map<Catalog>(catalogDTO);
-            response.Data = _unitOfWork.Catalogs.Update(catalog);
+            var entity = _mapper.Map<CatCredencial>(dto);
+            response.Data = _unitOfWork.CatCredenciales.Update(entity);
 
             if (response.Data)
             {
                 response.isSuccess = true;
-                response.Message = "El catalogo ha sido modificado correctamente";
+                response.Message = "CatCredencial modificado correctamente";
             }
         }
         catch (Exception ex)
@@ -69,22 +70,20 @@ public class CatalogApplication : ICatalogApplication
             response.Message = ex.Message;
             _logger.LogError(ex.Message);
         }
-
         return response;
     }
 
-    public Response<bool> Delete(int catalogId)
+    public Response<bool> Delete(int id)
     {
         var response = new Response<bool>();
-
         try
         {
-            response.Data = _unitOfWork.Catalogs.Delete(catalogId);
+            response.Data = _unitOfWork.CatCredenciales.Delete(id);
 
             if (response.Data)
             {
                 response.isSuccess = true;
-                response.Message = "El catalogo ha sido eliminado correctamente";
+                response.Message = "CatCredencial eliminado correctamente";
             }
         }
         catch (Exception ex)
@@ -92,23 +91,21 @@ public class CatalogApplication : ICatalogApplication
             response.Message = ex.Message;
             _logger.LogError(ex.Message);
         }
-
         return response;
     }
 
-    public Response<CatalogDTO> Get(int catalogId)
+    public Response<CatCredencialDTO> Get(int id)
     {
-        var response = new Response<CatalogDTO>();
-
+        var response = new Response<CatCredencialDTO>();
         try
         {
-            var catalog = _unitOfWork.Catalogs.Get(catalogId);
-            response.Data = _mapper.Map<CatalogDTO>(catalog);
+            var entity = _unitOfWork.CatCredenciales.Get(id);
+            response.Data = _mapper.Map<CatCredencialDTO>(entity);
 
             if (response.Data != null)
             {
                 response.isSuccess = true;
-                response.Message = "Catalogo encontrado";
+                response.Message = "CatCredencial encontrado";
             }
         }
         catch (Exception ex)
@@ -116,23 +113,21 @@ public class CatalogApplication : ICatalogApplication
             response.Message = ex.Message;
             _logger.LogError(ex.Message);
         }
-
         return response;
     }
 
-    public Response<IEnumerable<CatalogDTO>> GetAll()
+    public Response<IEnumerable<CatCredencialDTO>> GetAll()
     {
-        var response = new Response<IEnumerable<CatalogDTO>>();
-
+        var response = new Response<IEnumerable<CatCredencialDTO>>();
         try
         {
-            var catalogs = _unitOfWork.Catalogs.GetAll();
-            response.Data = _mapper.Map<IEnumerable<CatalogDTO>>(catalogs);
-
+            var list = _unitOfWork.CatCredenciales.GetAll();
+            response.Data = _mapper.Map<IEnumerable<CatCredencialDTO>>(list);
+            
             if (response.Data != null)
             {
                 response.isSuccess = true;
-                response.Message = "Catalogos encontrados";
+                response.Message = "CatCredencial encontrados";
             }
         }
         catch (Exception ex)
@@ -140,23 +135,21 @@ public class CatalogApplication : ICatalogApplication
             response.Message = ex.Message;
             _logger.LogError(ex.Message);
         }
-
         return response;
     }
 
-    public ResponsePagination<IEnumerable<CatalogDTO>> GetAllWithPagination(int pageNumber, int pageSize)
+    public ResponsePagination<IEnumerable<CatCredencialDTO>> GetAllWithPagination(int page, int pageSize)
     {
-        var response = new ResponsePagination<IEnumerable<CatalogDTO>>();
-
+        var response = new ResponsePagination<IEnumerable<CatCredencialDTO>>();
         try
         {
-            var catalogs = _unitOfWork.Catalogs.GetAllWithPagination(pageNumber, pageSize);
-            response.Data = _mapper.Map<IEnumerable<CatalogDTO>>(catalogs);
-
-            if (response.Data != null)
+            var list = _unitOfWork.CatCredenciales.GetAllWithPagination(page, pageSize);
+            
+            if (list != null)
             {
+                response.Data = _mapper.Map<IEnumerable<CatCredencialDTO>>(list);
                 response.isSuccess = true;
-                response.Message = "Catalogos encontrados";
+                response.Message = "CatCredencial encontrados";
             }
         }
         catch (Exception ex)
@@ -164,30 +157,22 @@ public class CatalogApplication : ICatalogApplication
             response.Message = ex.Message;
             _logger.LogError(ex.Message);
         }
-
         return response;
     }
 
     public Response<int> Count()
     {
         var response = new Response<int>();
-
         try
         {
-            response.Data = _unitOfWork.Catalogs.Count();
-
-            if (response.Data > 0)
-            {
-                response.isSuccess = true;
-                response.Message = "Numero de catalogos encontrados";
-            }
+            response.Data = _unitOfWork.CatCredenciales.Count();
+            response.isSuccess = true;
         }
-        catch (Exception e)
+        catch (Exception ex)
         {
-            response.Message = e.Message;
-            _logger.LogError(e.Message);
+            response.Message = ex.Message;
+            _logger.LogError(ex.Message);
         }
-
         return response;
     }
 
@@ -195,19 +180,18 @@ public class CatalogApplication : ICatalogApplication
 
     #region Metodos asincronos
 
-    public async Task<Response<bool>> InsertAsync(CatalogDTO catalogDTO)
+    public async Task<Response<bool>> InsertAsync(CatCredencialDTO dto)
     {
         var response = new Response<bool>();
-
         try
         {
-            var catalog = _mapper.Map<Catalog>(catalogDTO);
-            response.Data = await _unitOfWork.Catalogs.InsertAsync(catalog);
+            var entity = _mapper.Map<CatCredencial>(dto);
+            response.Data = await _unitOfWork.CatCredenciales.InsertAsync(entity);
 
             if (response.Data)
             {
                 response.isSuccess = true;
-                response.Message = "El catalogo ha sido creado correctamente";
+                response.Message = "CatCredencial creado correctamente";
             }
         }
         catch (Exception ex)
@@ -215,46 +199,42 @@ public class CatalogApplication : ICatalogApplication
             response.Message = ex.Message;
             _logger.LogError(ex.Message);
         }
-
         return response;
     }
 
-    public async Task<Response<bool>> UpdateAsync(CatalogDTO catalogDTO)
+    public async Task<Response<bool>> UpdateAsync(CatCredencialDTO dto)
     {
         var response = new Response<bool>();
-
         try
         {
-            var catalog = _mapper.Map<Catalog>(catalogDTO);
-            response.Data = await _unitOfWork.Catalogs.UpdateAsync(catalog);
+            var entity = _mapper.Map<CatCredencial>(dto);
+            response.Data = await _unitOfWork.CatCredenciales.UpdateAsync(entity);
 
             if (response.Data)
             {
                 response.isSuccess = true;
-                response.Message = "El catalogo ha sido modificado correctamente";
+                response.Message = "CatCredencial modificado correctamente";
             }
         }
-        catch (Exception e)
+        catch (Exception ex)
         {
-            response.Message = e.Message;
-            _logger.LogError(e.Message);
+            response.Message = ex.Message;
+            _logger.LogError(ex.Message);
         }
-
         return response;
     }
 
     public async Task<Response<bool>> DeleteAsync(int id)
     {
         var response = new Response<bool>();
-
         try
         {
-            response.Data = await _unitOfWork.Catalogs.DeleteAsync(id);
+            response.Data = await _unitOfWork.CatCredenciales.DeleteAsync(id);
 
             if (response.Data)
             {
                 response.isSuccess = true;
-                response.Message = "El catalogo ha sido eliminado correctamente";
+                response.Message = "CatCredencial eliminado correctamente";
             }
         }
         catch (Exception ex)
@@ -262,23 +242,21 @@ public class CatalogApplication : ICatalogApplication
             response.Message = ex.Message;
             _logger.LogError(ex.Message);
         }
-
         return response;
     }
 
-    public async Task<Response<CatalogDTO>> GetAsync(int id)
+    public async Task<Response<CatCredencialDTO>> GetAsync(int id)
     {
-        var response = new Response<CatalogDTO>();
-
+        var response = new Response<CatCredencialDTO>();
         try
         {
-            var catalog = await _unitOfWork.Catalogs.GetAsync(id);
-            response.Data = _mapper.Map<CatalogDTO>(catalog);
+            var entity = await _unitOfWork.CatCredenciales.GetAsync(id);
+            response.Data = _mapper.Map<CatCredencialDTO>(entity);
 
             if (response.Data != null)
             {
                 response.isSuccess = true;
-                response.Message = "Catalogo encontrado";
+                response.Message = "CatCredencial encontrado";
             }
         }
         catch (Exception ex)
@@ -286,23 +264,21 @@ public class CatalogApplication : ICatalogApplication
             response.Message = ex.Message;
             _logger.LogError(ex.Message);
         }
-
         return response;
     }
 
-    public async Task<Response<IEnumerable<CatalogDTO>>> GetAllAsync()
+    public async Task<Response<IEnumerable<CatCredencialDTO>>> GetAllAsync()
     {
-        var response = new Response<IEnumerable<CatalogDTO>>();
-
+        var response = new Response<IEnumerable<CatCredencialDTO>>();
         try
         {
-            var catalogs = await _unitOfWork.Catalogs.GetAllAsync();
-            response.Data = _mapper.Map<IEnumerable<CatalogDTO>>(catalogs);
-
+            var list = await _unitOfWork.CatCredenciales.GetAllAsync();
+            response.Data = _mapper.Map<IEnumerable<CatCredencialDTO>>(list);
+            
             if (response.Data != null)
             {
                 response.isSuccess = true;
-                response.Message = "Catalogos encontrados";
+                response.Message = "CatCredencial encontrados";
             }
         }
         catch (Exception ex)
@@ -310,23 +286,21 @@ public class CatalogApplication : ICatalogApplication
             response.Message = ex.Message;
             _logger.LogError(ex.Message);
         }
-
         return response;
     }
 
-    public async Task<ResponsePagination<IEnumerable<CatalogDTO>>> GetAllWithPaginationAsync(int page, int pageSize)
+    public async Task<ResponsePagination<IEnumerable<CatCredencialDTO>>> GetAllWithPaginationAsync(int page, int pageSize)
     {
-        var response = new ResponsePagination<IEnumerable<CatalogDTO>>();
-
+        var response = new ResponsePagination<IEnumerable<CatCredencialDTO>>();
         try
         {
-            var catalogs = await _unitOfWork.Catalogs.GetAllWithPaginationAsync(page, pageSize);
-            response.Data = _mapper.Map<IEnumerable<CatalogDTO>>(catalogs);
-
-            if (response.Data != null)
+            var list = await _unitOfWork.CatCredenciales.GetAllWithPaginationAsync(page, pageSize);
+            
+            if (list != null)
             {
+                response.Data = _mapper.Map<IEnumerable<CatCredencialDTO>>(list);
                 response.isSuccess = true;
-                response.Message = "Catalogos encontrados";
+                response.Message = "CatCredencial encontrados";
             }
         }
         catch (Exception ex)
@@ -334,29 +308,22 @@ public class CatalogApplication : ICatalogApplication
             response.Message = ex.Message;
             _logger.LogError(ex.Message);
         }
-
         return response;
     }
 
     public async Task<Response<int>> CountAsync()
     {
         var response = new Response<int>();
-
         try
         {
-            response.Data = await _unitOfWork.Catalogs.CountAsync();
-            if (response.Data > 0)
-            {
-                response.isSuccess = true;
-                response.Message = "Numero de catalogos encontrados";
-            }
+            response.Data = await _unitOfWork.CatCredenciales.CountAsync();
+            response.isSuccess = true;
         }
         catch (Exception ex)
         {
             response.Message = ex.Message;
             _logger.LogError(ex.Message);
         }
-
         return response;
     }
 

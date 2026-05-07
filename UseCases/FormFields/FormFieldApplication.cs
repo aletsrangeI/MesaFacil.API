@@ -34,6 +34,14 @@ public class FormFieldApplication : IFormFieldApplication
         var response = new Response<bool>();
         try
         {
+            var validation = _validationRules.Validate(dto);
+            if (!validation.IsValid)
+            {
+                response.Message = "Errores de validación";
+                response.Errors = validation.Errors;
+                return response;
+            }
+
             var entity = _mapper.Map<FormField>(dto);
             response.Data = _unitOfWork.FormFields.Insert(entity);
 
@@ -57,6 +65,14 @@ public class FormFieldApplication : IFormFieldApplication
         var response = new Response<bool>();
         try
         {
+            var validation = _validationRules.Validate(dto);
+            if (!validation.IsValid)
+            {
+                response.Message = "Errores de validación";
+                response.Errors = validation.Errors;
+                return response;
+            }
+
             var entity = _mapper.Map<FormField>(dto);
             response.Data = _unitOfWork.FormFields.Update(entity);
 
@@ -130,7 +146,7 @@ public class FormFieldApplication : IFormFieldApplication
             if (response.Data != null)
             {
                 response.isSuccess = true;
-                response.Message = "FormField encontrado";
+                response.Message = "FormFields encontrados";
             }
         }
         catch (Exception ex)
@@ -148,12 +164,16 @@ public class FormFieldApplication : IFormFieldApplication
         try
         {
             var list = _unitOfWork.FormFields.GetAllWithPagination(page, pageSize);
+            var count = _unitOfWork.FormFields.Count();
 
             if (list != null)
             {
                 response.Data = _mapper.Map<IEnumerable<FormFieldDTO>>(list);
+                response.PageNumber = page;
+                response.TotalPages = (int)Math.Ceiling(count / (double)pageSize);
+                response.TotalCount = count;
                 response.isSuccess = true;
-                response.Message = "FormField encontrado";
+                response.Message = "Consulta paginada exitosa";
             }
         }
         catch (Exception ex)
@@ -182,17 +202,17 @@ public class FormFieldApplication : IFormFieldApplication
         return response;
     }
 
-    public Response<IEnumerable<FormFieldDTO>> GetFormFieldByFormCatId(string code)
+    public Response<IEnumerable<FormFieldDTO>> GetFormFieldByFormCode(string code)
     {
         var response = new Response<IEnumerable<FormFieldDTO>>();
         try
         {
-            var list = _unitOfWork.FormFields.GetFormFieldByFormCatId(code);
+            var list = _unitOfWork.FormFields.GetFormFieldByFormCode(code);
             response.Data = _mapper.Map<IEnumerable<FormFieldDTO>>(list);
             if (response.Data != null)
             {
                 response.isSuccess = true;
-                response.Message = "FormField encontrado";
+                response.Message = "Campos del formulario obtenidos correctamente";
             }
         }
         catch (Exception ex)
@@ -213,6 +233,14 @@ public class FormFieldApplication : IFormFieldApplication
         var response = new Response<bool>();
         try
         {
+            var validation = await _validationRules.ValidateAsync(dto);
+            if (!validation.IsValid)
+            {
+                response.Message = "Errores de validación";
+                response.Errors = validation.Errors;
+                return response;
+            }
+
             var entity = _mapper.Map<FormField>(dto);
             response.Data = await _unitOfWork.FormFields.InsertAsync(entity);
 
@@ -236,6 +264,14 @@ public class FormFieldApplication : IFormFieldApplication
         var response = new Response<bool>();
         try
         {
+            var validation = await _validationRules.ValidateAsync(dto);
+            if (!validation.IsValid)
+            {
+                response.Message = "Errores de validación";
+                response.Errors = validation.Errors;
+                return response;
+            }
+
             var entity = _mapper.Map<FormField>(dto);
             response.Data = await _unitOfWork.FormFields.UpdateAsync(entity);
 
@@ -310,7 +346,7 @@ public class FormFieldApplication : IFormFieldApplication
             if (response.Data != null)
             {
                 response.isSuccess = true;
-                response.Message = "FormField encontrado";
+                response.Message = "FormFields encontrados";
             }
         }
         catch (Exception ex)
@@ -328,12 +364,16 @@ public class FormFieldApplication : IFormFieldApplication
         try
         {
             var list = await _unitOfWork.FormFields.GetAllWithPaginationAsync(page, pageSize);
+            var count = await _unitOfWork.FormFields.CountAsync();
 
             if (list != null)
             {
                 response.Data = _mapper.Map<IEnumerable<FormFieldDTO>>(list);
+                response.PageNumber = page;
+                response.TotalPages = (int)Math.Ceiling(count / (double)pageSize);
+                response.TotalCount = count;
                 response.isSuccess = true;
-                response.Message = "FormField encontrado";
+                response.Message = "Consulta paginada exitosa";
             }
         }
         catch (Exception ex)
@@ -351,12 +391,7 @@ public class FormFieldApplication : IFormFieldApplication
         try
         {
             response.Data = await _unitOfWork.FormFields.CountAsync();
-
-            if (response.Data != null)
-            {
-                response.isSuccess = true;
-                response.Message = "FormField encontrado";
-            }
+            response.isSuccess = true;
         }
         catch (Exception ex)
         {
@@ -367,18 +402,18 @@ public class FormFieldApplication : IFormFieldApplication
         return response;
     }
 
-    public async Task<Response<IEnumerable<FormFieldDTO>>> GetFormFieldByFormCatIdAsync(int id)
+    public async Task<Response<IEnumerable<FormFieldDTO>>> GetFormFieldByFormIdAsync(int formularioId)
     {
         var response = new Response<IEnumerable<FormFieldDTO>>();
         try
         {
-            var list = await _unitOfWork.FormFields.GetFormFieldByFormCatIdAsync(id);
+            var list = await _unitOfWork.FormFields.GetFormFieldByFormIdAsync(formularioId);
             response.Data = _mapper.Map<IEnumerable<FormFieldDTO>>(list);
 
             if (response.Data != null)
             {
                 response.isSuccess = true;
-                response.Message = "FormField encontrado";
+                response.Message = "Campos del formulario obtenidos correctamente";
             }
         }
         catch (Exception ex)

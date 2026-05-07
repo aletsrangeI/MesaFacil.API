@@ -786,6 +786,9 @@ namespace Persistence.Migrations
                     b.Property<int>("FormularioCatalogId")
                         .HasColumnType("integer");
 
+                    b.Property<int?>("FormularioId")
+                        .HasColumnType("integer");
+
                     b.Property<int>("FormularioItemId")
                         .HasColumnType("integer");
 
@@ -843,6 +846,8 @@ namespace Persistence.Migrations
                     b.HasIndex("CatalogId")
                         .HasDatabaseName("IX_FormField_CatalogId");
 
+                    b.HasIndex("FormularioId");
+
                     b.HasIndex("FormularioCatalogId", "FormularioItemId")
                         .HasDatabaseName("IX_FormField_Formulario");
 
@@ -851,6 +856,47 @@ namespace Persistence.Migrations
                         .HasDatabaseName("UX_FormField_Formulario_Name");
 
                     b.ToTable("FormField", (string)null);
+                });
+
+            modelBuilder.Entity("Domain.Entities.Formulario", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Codigo")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Descripcion")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Formulario", (string)null);
                 });
 
             modelBuilder.Entity("Domain.Entities.GrupoModificador", b =>
@@ -2165,6 +2211,10 @@ namespace Persistence.Migrations
                         .HasForeignKey("CatalogId")
                         .OnDelete(DeleteBehavior.SetNull);
 
+                    b.HasOne("Domain.Entities.Formulario", null)
+                        .WithMany("Campos")
+                        .HasForeignKey("FormularioId");
+
                     b.HasOne("Domain.Entities.CatalogItem", "Formulario")
                         .WithMany()
                         .HasForeignKey("FormularioCatalogId", "FormularioItemId")
@@ -2655,6 +2705,11 @@ namespace Persistence.Migrations
             modelBuilder.Entity("Domain.Entities.EstacionCocina", b =>
                 {
                     b.Navigation("Tickets");
+                });
+
+            modelBuilder.Entity("Domain.Entities.Formulario", b =>
+                {
+                    b.Navigation("Campos");
                 });
 
             modelBuilder.Entity("Domain.Entities.GrupoModificador", b =>

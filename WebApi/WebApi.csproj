@@ -44,4 +44,8 @@
       <ProjectReference Include="..\Validator\Validator.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Compile Remove="Modules\Endpoints\FormularioEndpoints.cs" />
+    </ItemGroup>
+
 </Project>

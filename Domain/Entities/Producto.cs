@@ -1,6 +1,8 @@
+using System.Collections.Generic;
+
 namespace Domain.Entities;
 
-public class Producto : BaseAuditableEntity
+public class Producto : BaseAuditableEntity // Asume que hereda IdProducto
 {
     public int IdMenu { get; set; }
     public int IdCategoria { get; set; }
@@ -9,17 +11,22 @@ public class Producto : BaseAuditableEntity
     public string? Descripcion { get; set; }
     public bool Activo { get; set; } = true;
 
-    public int? EstacionCatalogId { get; set; }
-    public int? EstacionItemId { get; set; }
+    // [CORREGIDO] - Fuera catálogos genéricos, entra llave foránea específica (es nullable según tu DBML)
+    public int? IdEstacionCocina { get; set; }
 
+    // ==========================================
+    // PROPIEDADES DE NAVEGACIÓN
+    // ==========================================
     public Menu Menu { get; set; } = null!;
     public CategoriaMenu Categoria { get; set; } = null!;
-    public CatalogItem? EstacionItem { get; set; }
+    
+    // [CORREGIDO] - Navegación a la entidad fuertemente tipada
+    public CatEstacionesCocina? EstacionCocina { get; set; }
 
+    // Colecciones hijas
     public ICollection<VarianteProducto> Variantes { get; set; } = new List<VarianteProducto>();
 
-    public ICollection<Precio> PreciosDeprecatedIgnore { get; set; } =
-        new List<Precio>(); // (solo para claridad; precios reales van en Variante)
+    public ICollection<Precio> PreciosDeprecatedIgnore { get; set; } = new List<Precio>(); // (solo para claridad; precios reales van en Variante)
 
     public ICollection<GrupoModificador> GruposModificador { get; set; } = new List<GrupoModificador>();
     public ICollection<PedidoDetalle> PedidoDetalles { get; set; } = new List<PedidoDetalle>();

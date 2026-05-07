@@ -2,6 +2,9 @@ using Domain.Entities;
 using Interface.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Persistence.Context;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace Persistence.Repositories;
 
@@ -43,12 +46,13 @@ public class FormFieldRepository : IFormFieldRepository
 
     public IEnumerable<FormField> GetAll()
     {
-        return _context.FormFields;
+        return _context.FormFields.AsNoTracking().ToList();
     }
 
     public IEnumerable<FormField> GetAllWithPagination(int page, int pageSize)
     {
         return _context.FormFields
+            .AsNoTracking()
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToList();
@@ -59,21 +63,14 @@ public class FormFieldRepository : IFormFieldRepository
         return _context.FormFields.Count();
     }
 
-    public IEnumerable<FormField> GetFormFieldByFormCatId(string code)
+    // [CORREGIDO] Ahora busca por el Código del Formulario directamente
+    public IEnumerable<FormField> GetFormFieldByFormCode(string code)
     {
-        var result = (from ff in _context.FormFields
-            join cc in _context.CatalogItems
-                on ff.FormularioItemId equals cc.Id
-            where cc.Code == code
-            select ff).OrderBy(a => a.Order).ToList();
-
-        foreach (var formField in result)
-        {
-            if (formField.Type == "select" && formField.CatalogId.HasValue)
-            {
-                formField.Options = FillOptions(formField.Id, formField.CatalogId.Value);
-            }
-        }
+        var result = _context.FormFields
+            .Include(ff => ff.Formulario)
+            .Where(ff => ff.Formulario.Codigo == code && ff.IsActive)
+            .OrderBy(a => a.Orden)
+            .ToList();
 
         return result;
     }
@@ -109,12 +106,13 @@ public class FormFieldRepository : IFormFieldRepository
 
     public async Task<IEnumerable<FormField>> GetAllAsync()
     {
-        return await _context.FormFields.ToListAsync();
+        return await _context.FormFields.AsNoTracking().ToListAsync();
     }
 
     public async Task<IEnumerable<FormField>> GetAllWithPaginationAsync(int page, int pageSize)
     {
         return await _context.FormFields
+            .AsNoTracking()
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync();
@@ -125,47 +123,13 @@ public class FormFieldRepository : IFormFieldRepository
         return await _context.FormFields.CountAsync();
     }
 
-    public async Task<IEnumerable<FormField>> GetFormFieldByFormCatIdAsync(int id)
+    // [CORREGIDO] Búsqueda asíncrona por ID de Formulario (o Código)
+    public async Task<IEnumerable<FormField>> GetFormFieldByFormIdAsync(int formularioId)
     {
-        var result = await (from ff in _context.FormFields
-            join cc in _context.CatalogItems
-                on ff.FormularioCatalogId equals cc.Id
-            where ff.FormularioCatalogId == id
-            select ff).OrderBy(a => a.Order).ToListAsync();
-
-        foreach (var formField in result)
-        {
-            if (formField.Type == "select" && formField.CatalogId.HasValue)
-            {
-                formField.Options = await FillOptionsAsync(formField.Id, formField.CatalogId.Value);
-            }
-        }
-
-        return result;
-    }
-
-    private List<SelectFormOption> FillOptions(int formFieldId, int catalogoId)
-    {
-        List<SelectFormOption> options = _context.CatalogItems
-            .Where(cc => cc.CatalogId == catalogoId)
-            .Select(cc => new SelectFormOption
-            {
-                Id = cc.Id,
-                Nombre = cc.Name
-            }).ToList();
-        return options;
-    }
-
-    private async Task<List<SelectFormOption>> FillOptionsAsync(int formFieldId, int catalogoId)
-    {
-        List<SelectFormOption> options = await _context.CatalogItems
-            .Where(cc => cc.CatalogId == catalogoId)
-            .Select(cc => new SelectFormOption
-            {
-                Id = cc.Id,
-                Nombre = cc.Name
-            }).ToListAsync();
-        return options;
+        return await _context.FormFields
+            .Where(ff => ff.IdFormulario == formularioId && ff.IsActive)
+            .OrderBy(a => a.Orden)
+            .ToListAsync();
     }
 
     #endregion

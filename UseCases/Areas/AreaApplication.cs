@@ -143,7 +143,7 @@ public class AreaApplication : IAreaApplication
         var response = new ResponsePagination<IEnumerable<AreaDTO>>();
         try
         {
-            var catalogs = _unitOfWork.Catalogs.GetAllWithPagination(page, pageSize);
+            var catalogs = _unitOfWork.Areas.GetAllWithPagination(page, pageSize);
             response.Data = _mapper.Map<IEnumerable<AreaDTO>>(catalogs);
 
             if (response.Data != null)

@@ -6,7 +6,6 @@ namespace Validator;
 
 public class FormFieldDTOValidator : AbstractValidator<FormFieldDTO>
 {
-    // Ajusta/expande la lista según tu UI kit
     private static readonly HashSet<string> TiposPermitidos = new(StringComparer.OrdinalIgnoreCase)
     {
         "text", "email", "password", "number", "tel",
@@ -17,73 +16,60 @@ public class FormFieldDTOValidator : AbstractValidator<FormFieldDTO>
 
     public FormFieldDTOValidator()
     {
-        // Type requerido y dentro del set permitido
+        // Type: Requerido y dentro del set permitido
         RuleFor(x => x.Type)
             .NotEmpty().WithMessage("El campo Type es requerido.")
             .Must(t => TiposPermitidos.Contains(t!))
             .WithMessage("El campo Type no es válido. Usa uno de: " + string.Join(", ", TiposPermitidos))
             .MaximumLength(50).WithMessage("Type no debe exceder 50 caracteres.");
 
-        // Name requerido, patrón tipo identificador y longitud
+        // Name: Identificador válido para el frontend (ej: nombreAtributo)
         RuleFor(x => x.Name)
             .NotEmpty().WithMessage("El campo Name es requerido.")
             .MaximumLength(100).WithMessage("Name no debe exceder 100 caracteres.")
             .Matches(new Regex(@"^[A-Za-z_][A-Za-z0-9_]*$"))
-            .WithMessage("Name solo puede contener letras, números y _, y no puede iniciar con número.");
+            .WithMessage("Name solo puede contener letras, números y '_', y no puede iniciar con número.");
 
-        // Label / Placeholder / Value (opcionales con límites)
+        // Label: Requerido según el nuevo esquema de UI
         RuleFor(x => x.Label)
-            .MaximumLength(150)
-            .When(x => !string.IsNullOrWhiteSpace(x.Label))
-            .WithMessage("Label no debe exceder 150 caracteres.");
+            .NotEmpty().WithMessage("El campo Label es requerido.")
+            .MaximumLength(200).WithMessage("Label no debe exceder 200 caracteres.");
 
+        // Placeholder y Value (opcionales)
         RuleFor(x => x.Placeholder)
-            .MaximumLength(150)
-            .When(x => !string.IsNullOrWhiteSpace(x.Placeholder))
-            .WithMessage("Placeholder no debe exceder 150 caracteres.");
+            .MaximumLength(200).WithMessage("Placeholder no debe exceder 200 caracteres.");
 
         RuleFor(x => x.Value)
-            .MaximumLength(500)
-            .When(x => !string.IsNullOrWhiteSpace(x.Value))
-            .WithMessage("Value no debe exceder 500 caracteres.");
+            .MaximumLength(500).WithMessage("Value no debe exceder 500 caracteres.");
 
-        // Formulario (en tu DTO viene el objeto en lugar del Id): que exista
-        RuleFor(x => x.Formulario)
-            .NotNull().WithMessage("El campo Formulario es requerido.");
+        // [CORREGIDO] IdFormulario: Debe ser una referencia válida
+        RuleFor(x => x.IdFormulario)
+            .GreaterThan(0).WithMessage("Debe especificar un Id de Formulario válido.");
 
-        // CatalogId opcional pero válido si viene
-        RuleFor(x => x.CatalogId)
-            .GreaterThan(0)
-            .When(x => x.CatalogId.HasValue)
-            .WithMessage("CatalogId debe ser mayor a 0 cuando se especifique.");
+        // [CORREGIDO] DataSource: Opcional, pero con límite de longitud
+        RuleFor(x => x.DataSource)
+            .MaximumLength(100).WithMessage("DataSource no debe exceder 100 caracteres.");
 
-        // Order >= 0
-        RuleFor(x => x.Order)
-            .GreaterThanOrEqualTo(0)
-            .WithMessage("Order no puede ser negativo.");
+        // [CORREGIDO] Orden: Alineado con la entidad (no puede ser negativo)
+        RuleFor(x => x.Orden)
+            .GreaterThanOrEqualTo(0).WithMessage("El orden no puede ser un número negativo.");
 
-        // Si es un campo de selección, debe tener Options o bien estar ligado a un catálogo
-        // (permitimos cualquiera de las dos fuentes de datos)
+        // [CORREGIDO] Lógica para campos de selección (Select, Radio, Checkbox)
         RuleFor(x => x)
             .Must(x =>
             {
-                if (!string.Equals(x.Type, "select", StringComparison.OrdinalIgnoreCase) &&
-                    !string.Equals(x.Type, "radio", StringComparison.OrdinalIgnoreCase) &&
-                    !string.Equals(x.Type, "checkbox", StringComparison.OrdinalIgnoreCase))
-                {
-                    return true; // no aplica
-                }
+                bool esSeleccion = string.Equals(x.Type, "select", StringComparison.OrdinalIgnoreCase) ||
+                                   string.Equals(x.Type, "radio", StringComparison.OrdinalIgnoreCase) ||
+                                   string.Equals(x.Type, "checkbox", StringComparison.OrdinalIgnoreCase);
 
-                bool tieneCatalogo = x.CatalogId.HasValue && x.CatalogId > 0;
+                if (!esSeleccion) return true;
+
+                // Debe tener opciones estáticas (JSON) o un origen de datos dinámico (DataSource)
+                bool tieneDataSource = !string.IsNullOrWhiteSpace(x.DataSource);
                 bool tieneOptions = x.Options is { Count: > 0 };
-                return tieneCatalogo || tieneOptions;
-            })
-            .WithMessage("Para Type select/radio/checkbox debes proporcionar Options o un CatalogId válido.");
 
-        // (Opcional) Si es input de email, valida que el Name o Type sugiera email => placeholder/value no necesarios, solo ejemplo
-        // if necesitas reglas por tipo específico, puedes agregar bloques When(...) por Type:
-        // When(x => string.Equals(x.Type, "email", StringComparison.OrdinalIgnoreCase), () => {
-        //     RuleFor(x => x.Value).EmailAddress().When(x => !string.IsNullOrWhiteSpace(x.Value));
-        // });
+                return tieneDataSource || tieneOptions;
+            })
+            .WithMessage("Para campos de selección (select/radio/checkbox) debe definir un DataSource o proporcionar Options.");
     }
 }
