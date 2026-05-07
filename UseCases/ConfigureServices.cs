@@ -1,8 +1,7 @@
 using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
 using UseCases.Menus;
-
-// Si registras validadores aquí, mantén solo los que no dependen de WebApi
+using Validator; // <-- Asegúrate de agregar este using
 
 namespace UseCases;
 
@@ -15,19 +14,19 @@ public static class ConfigureServices
             /* opcional: config extra */
         }, Assembly.GetExecutingAssembly());
 
-        // Magia de Scrutor: Auto-descubrimiento de Casos de Uso (Applications)
+        // 1. Auto-descubrimiento de Casos de Uso (Busca en el proyecto UseCases)
         services.Scan(scan => scan
-            .FromAssembliesOf(typeof(MenuApplication)) // Busca en este proyecto
+            .FromAssembliesOf(typeof(MenuApplication)) // Apunta al .dll de UseCases
             .AddClasses(classes => classes.Where(type => type.Name.EndsWith("Application")))
             .AsImplementedInterfaces()
             .WithScopedLifetime());
 
-        // Auto-descubrimiento de Validadores de FluentValidation
+        // 2. Auto-descubrimiento de Validadores (Busca en el proyecto Validator)
         services.Scan(scan => scan
-            .FromAssembliesOf(typeof(MenuApplication))
-            .AddClasses(classes => classes.Where(type => type.Name.EndsWith("DTOValidator")))
-            .AsSelf() // Los validadores suelen registrarse por su propio tipo, no por interfaz
-            .WithTransientLifetime()); // Los validadores suelen ser Transient
+            .FromAssembliesOf(typeof(MenuDTOValidator)) // <-- CAMBIO AQUÍ: Apunta al .dll de Validator
+            .AddClasses(classes => classes.Where(type => type.Name.EndsWith("Validator")))
+            .AsSelf() 
+            .WithTransientLifetime()); 
 
         return services;
     }
