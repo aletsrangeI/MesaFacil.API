@@ -13,17 +13,20 @@ public class UsuarioApplication : IUsuarioApplication
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
     private readonly UsuarioDTOValidator _validationRules;
+    private readonly IPasswordHasher _hasher;
     private readonly IAppLogger<UsuarioApplication> _logger;
 
     public UsuarioApplication(
         IUnitOfWork unitOfWork,
         IMapper mapper,
         UsuarioDTOValidator validationRules,
+        IPasswordHasher hasher,
         IAppLogger<UsuarioApplication> logger)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
         _validationRules = validationRules;
+        _hasher = hasher;
         _logger = logger;
     }
 
@@ -48,6 +51,40 @@ public class UsuarioApplication : IUsuarioApplication
 
             if (response.Data)
             {
+                // 1. Asignar contraseña (si se proporciona)
+                if (!string.IsNullOrWhiteSpace(dto.Password))
+                {
+                    var catCred = _unitOfWork.CatCredenciales.GetAll()
+                        .FirstOrDefault(c => c.Descripcion == "PASSWORD");
+                    if (catCred != null)
+                    {
+                        var (hash, salt) = _hasher.HashPassword(dto.Password);
+                        _unitOfWork.Credenciales.Insert(new Credencial
+                        {
+                            IdUsuario = entity.Id,
+                            IdCredencial = catCred.Id,
+                            Hash = hash,
+                            Salt = salt,
+                            IsActive = true,
+                            CreatedBy = "system",
+                            UpdatedBy = ""
+                        });
+                    }
+                }
+
+                // 2. Asignar rol (si se proporciona)
+                if (dto.IdRol.HasValue)
+                {
+                    _unitOfWork.UsuarioRoles.Insert(new UsuarioRol
+                    {
+                        UsuarioId = entity.Id,
+                        IdRol = dto.IdRol.Value,
+                        IsActive = true,
+                        CreatedBy = "system",
+                        UpdatedBy = ""
+                    });
+                }
+
                 response.isSuccess = true;
                 response.Message = "Usuario creado correctamente";
             }
@@ -80,6 +117,68 @@ public class UsuarioApplication : IUsuarioApplication
 
             if (response.Data)
             {
+                // 1. Actualizar/Asignar contraseña (si se proporciona)
+                if (!string.IsNullOrWhiteSpace(dto.Password))
+                {
+                    var existingCred = _unitOfWork.Usuarios.GetPasswordCredentialAsync(entity.Id, CancellationToken.None).GetAwaiter().GetResult();
+                    var (hash, salt) = _hasher.HashPassword(dto.Password);
+
+                    if (existingCred != null)
+                    {
+                        existingCred.Hash = hash;
+                        existingCred.Salt = salt;
+                        existingCred.UpdatedAt = DateTime.UtcNow;
+                        existingCred.UpdatedBy = "system";
+                        _unitOfWork.Credenciales.Update(existingCred);
+                    }
+                    else
+                    {
+                        var catCred = _unitOfWork.CatCredenciales.GetAll()
+                            .FirstOrDefault(c => c.Descripcion == "PASSWORD");
+                        if (catCred != null)
+                        {
+                            _unitOfWork.Credenciales.Insert(new Credencial
+                            {
+                                IdUsuario = entity.Id,
+                                IdCredencial = catCred.Id,
+                                Hash = hash,
+                                Salt = salt,
+                                IsActive = true,
+                                CreatedBy = "system",
+                                UpdatedBy = ""
+                            });
+                        }
+                    }
+                }
+
+                // 2. Actualizar rol (si se proporciona)
+                if (dto.IdRol.HasValue)
+                {
+                    var userRoles = _unitOfWork.UsuarioRoles.GetAll()
+                        .Where(ur => ur.UsuarioId == entity.Id)
+                        .ToList();
+
+                    var hasThisRole = userRoles.Any(ur => ur.IdRol == dto.IdRol.Value);
+                    if (!hasThisRole)
+                    {
+                        // Remover roles anteriores
+                        foreach (var ur in userRoles)
+                        {
+                            _unitOfWork.UsuarioRoles.Delete(ur.Id);
+                        }
+
+                        // Agregar nuevo rol
+                        _unitOfWork.UsuarioRoles.Insert(new UsuarioRol
+                        {
+                            UsuarioId = entity.Id,
+                            IdRol = dto.IdRol.Value,
+                            IsActive = true,
+                            CreatedBy = "system",
+                            UpdatedBy = ""
+                        });
+                    }
+                }
+
                 response.isSuccess = true;
                 response.Message = "Usuario modificado correctamente";
             }
@@ -129,7 +228,13 @@ public class UsuarioApplication : IUsuarioApplication
             
             if (entity != null)
             {
-                response.Data = _mapper.Map<UsuarioDTO>(entity);
+                var dto = _mapper.Map<UsuarioDTO>(entity);
+                var role = _unitOfWork.UsuarioRoles.GetAll().FirstOrDefault(ur => ur.UsuarioId == entity.Id && ur.IsActive);
+                if (role != null)
+                {
+                    dto.IdRol = role.IdRol;
+                }
+                response.Data = dto;
                 response.isSuccess = true;
                 response.Message = "Usuario encontrado";
             }
@@ -154,7 +259,17 @@ public class UsuarioApplication : IUsuarioApplication
         try
         {
             var list = _unitOfWork.Usuarios.GetAll();
-            response.Data = _mapper.Map<IEnumerable<UsuarioDTO>>(list);
+            var mapped = _mapper.Map<IEnumerable<UsuarioDTO>>(list).ToList();
+            var userRoles = _unitOfWork.UsuarioRoles.GetAll().Where(ur => ur.IsActive).ToList();
+            foreach (var item in mapped)
+            {
+                var ur = userRoles.FirstOrDefault(r => r.UsuarioId == item.Id);
+                if (ur != null)
+                {
+                    item.IdRol = ur.IdRol;
+                }
+            }
+            response.Data = mapped;
             response.isSuccess = true;
             response.Message = "Usuarios obtenidos correctamente";
         }
@@ -232,6 +347,40 @@ public class UsuarioApplication : IUsuarioApplication
 
             if (response.Data)
             {
+                // 1. Asignar contraseña (si se proporciona)
+                if (!string.IsNullOrWhiteSpace(dto.Password))
+                {
+                    var catCreds = await _unitOfWork.CatCredenciales.GetAllAsync();
+                    var catCred = catCreds.FirstOrDefault(c => c.Descripcion == "PASSWORD");
+                    if (catCred != null)
+                    {
+                        var (hash, salt) = _hasher.HashPassword(dto.Password);
+                        await _unitOfWork.Credenciales.InsertAsync(new Credencial
+                        {
+                            IdUsuario = entity.Id,
+                            IdCredencial = catCred.Id,
+                            Hash = hash,
+                            Salt = salt,
+                            IsActive = true,
+                            CreatedBy = "system",
+                            UpdatedBy = ""
+                        });
+                    }
+                }
+
+                // 2. Asignar rol (si se proporciona)
+                if (dto.IdRol.HasValue)
+                {
+                    await _unitOfWork.UsuarioRoles.InsertAsync(new UsuarioRol
+                    {
+                        UsuarioId = entity.Id,
+                        IdRol = dto.IdRol.Value,
+                        IsActive = true,
+                        CreatedBy = "system",
+                        UpdatedBy = ""
+                    });
+                }
+
                 response.isSuccess = true;
                 response.Message = "Usuario creado correctamente";
             }
@@ -264,6 +413,67 @@ public class UsuarioApplication : IUsuarioApplication
 
             if (response.Data)
             {
+                // 1. Actualizar/Asignar contraseña (si se proporciona)
+                if (!string.IsNullOrWhiteSpace(dto.Password))
+                {
+                    var existingCred = await _unitOfWork.Usuarios.GetPasswordCredentialAsync(entity.Id, CancellationToken.None);
+                    var (hash, salt) = _hasher.HashPassword(dto.Password);
+
+                    if (existingCred != null)
+                    {
+                        existingCred.Hash = hash;
+                        existingCred.Salt = salt;
+                        existingCred.UpdatedAt = DateTime.UtcNow;
+                        existingCred.UpdatedBy = "system";
+                        await _unitOfWork.Credenciales.UpdateAsync(existingCred);
+                    }
+                    else
+                    {
+                        var catCreds = await _unitOfWork.CatCredenciales.GetAllAsync();
+                        var catCred = catCreds.FirstOrDefault(c => c.Descripcion == "PASSWORD");
+                        if (catCred != null)
+                        {
+                            await _unitOfWork.Credenciales.InsertAsync(new Credencial
+                            {
+                                IdUsuario = entity.Id,
+                                IdCredencial = catCred.Id,
+                                Hash = hash,
+                                Salt = salt,
+                                IsActive = true,
+                                CreatedBy = "system",
+                                UpdatedBy = ""
+                            });
+                        }
+                    }
+                }
+
+                // 2. Actualizar rol (si se proporciona)
+                if (dto.IdRol.HasValue)
+                {
+                    var userRolesList = await _unitOfWork.UsuarioRoles.GetAllAsync();
+                    var userRoles = userRolesList.Where(ur => ur.UsuarioId == entity.Id).ToList();
+
+                    var hasThisRole = userRoles.Any(ur => ur.IdRol == dto.IdRol.Value);
+                    if (!hasThisRole)
+                    {
+                        // Remover roles anteriores
+                        foreach (var ur in userRoles)
+                        {
+                            await _unitOfWork.UsuarioRoles.DeleteAsync(ur.Id);
+                        }
+
+                        // Agregar nuevo rol
+                        await _unitOfWork.UsuarioRoles.InsertAsync(new UsuarioRol
+                        {
+                            UsuarioId = entity.Id,
+                            IdRol = dto.IdRol.Value,
+                            IsActive = true,
+                            CreatedBy = "system",
+                            UpdatedBy = ""
+                        });
+                    }
+                }
+
                 response.isSuccess = true;
                 response.Message = "Usuario modificado correctamente";
             }
@@ -313,7 +523,14 @@ public class UsuarioApplication : IUsuarioApplication
             
             if (entity != null)
             {
-                response.Data = _mapper.Map<UsuarioDTO>(entity);
+                var dto = _mapper.Map<UsuarioDTO>(entity);
+                var userRoles = await _unitOfWork.UsuarioRoles.GetAllAsync();
+                var role = userRoles.FirstOrDefault(ur => ur.UsuarioId == entity.Id && ur.IsActive);
+                if (role != null)
+                {
+                    dto.IdRol = role.IdRol;
+                }
+                response.Data = dto;
                 response.isSuccess = true;
                 response.Message = "Usuario encontrado";
             }
@@ -338,7 +555,18 @@ public class UsuarioApplication : IUsuarioApplication
         try
         {
             var list = await _unitOfWork.Usuarios.GetAllAsync();
-            response.Data = _mapper.Map<IEnumerable<UsuarioDTO>>(list);
+            var mapped = _mapper.Map<IEnumerable<UsuarioDTO>>(list).ToList();
+            var userRoles = await _unitOfWork.UsuarioRoles.GetAllAsync();
+            var activeRoles = userRoles.Where(ur => ur.IsActive).ToList();
+            foreach (var item in mapped)
+            {
+                var ur = activeRoles.FirstOrDefault(r => r.UsuarioId == item.Id);
+                if (ur != null)
+                {
+                    item.IdRol = ur.IdRol;
+                }
+            }
+            response.Data = mapped;
             response.isSuccess = true;
             response.Message = "Usuarios obtenidos correctamente";
         }

@@ -47,12 +47,25 @@ public class FormFieldConfiguration : IEntityTypeConfiguration<FormField>
         // podrías quitar el [NotMapped] de la entidad y usar HasConversion aquí.
         // De lo contrario, configuramos las columnas de texto:
         
-        e.Property(x => x.ValidationsJson)
-            .HasColumnName("ValidationsJson")
-            .HasColumnType("jsonb");
+        e.Ignore(x => x.ValidationsJson);
+        e.Ignore(x => x.OptionsJson);
 
-        e.Property(x => x.OptionsJson)
+        e.Property(x => x.Validations)
+            .HasColumnName("ValidationsJson")
+            .HasColumnType("jsonb")
+            .IsRequired(false)
+            .HasConversion(
+                v => JsonSerializer.Serialize(v, (JsonSerializerOptions)null),
+                v => JsonSerializer.Deserialize<List<FormValidation>>(v ?? "[]", (JsonSerializerOptions)null) ?? new List<FormValidation>()
+            );
+
+        e.Property(x => x.Options)
             .HasColumnName("OptionsJson")
-            .HasColumnType("jsonb");
+            .HasColumnType("jsonb")
+            .IsRequired(false)
+            .HasConversion(
+                v => JsonSerializer.Serialize(v, (JsonSerializerOptions)null),
+                v => JsonSerializer.Deserialize<List<SelectFormOption>>(v ?? "[]", (JsonSerializerOptions)null) ?? new List<SelectFormOption>()
+            );
     }
 }

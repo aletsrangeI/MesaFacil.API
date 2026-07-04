@@ -28,8 +28,8 @@ public class AuthController : ControllerBase
     }
 
     [AllowAnonymous]
-    [HttpPost("login")]
-    public async Task<IActionResult> Login([FromBody] LoginRequest req, CancellationToken ct)
+    [HttpPost("login", Name = "Auth_Login")]
+    public async Task<ActionResult<Response<AuthResponseDTO>>> Login([FromBody] LoginRequest req, CancellationToken ct)
     {
         var val = await _loginValidator.ValidateAsync(req, ct);
         if (!val.IsValid)
@@ -52,8 +52,8 @@ public class AuthController : ControllerBase
     }
 
     [Authorize]
-    [HttpGet("me")]
-    public async Task<IActionResult> Me(CancellationToken ct)
+    [HttpGet("me", Name = "Auth_Me")]
+    public async Task<ActionResult<Response<AuthMeDTO>>> Me(CancellationToken ct)
     {
         // Obtenemos el usuario autenticado del HttpContext
         var user = HttpContext.User;

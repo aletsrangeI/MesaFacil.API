@@ -19,13 +19,39 @@ builder.Configuration
     .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true);
 
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddControllers();
+builder.Services.AddControllers(options =>
+{
+    options.SuppressAsyncSuffixInActionNames = false;
+});
 builder.Services.AddFeature(builder.Configuration);
 builder.Services.AddInjection(builder.Configuration);
 builder.Services.AddPersistenceServices(builder.Configuration);
 builder.Services.AddApplicationServices();
 builder.Services.AddWatchDog(builder.Configuration);
-builder.Services.AddOpenApi();
+builder.Services.AddOpenApi(options =>
+{
+    options.AddOperationTransformer((operation, context, cancellationToken) =>
+    {
+        if (context.Description.ActionDescriptor is Microsoft.AspNetCore.Mvc.Controllers.ControllerActionDescriptor actionDescriptor)
+        {
+            var explicitName = actionDescriptor.AttributeRouteInfo?.Name;
+            if (!string.IsNullOrEmpty(explicitName))
+            {
+                operation.OperationId = explicitName;
+            }
+            else
+            {
+                var actionName = actionDescriptor.ActionName;
+                if (actionName.EndsWith("Async") && actionName.Length > 5)
+                {
+                    actionName = actionName.Substring(0, actionName.Length - 5) + "_Async";
+                }
+                operation.OperationId = $"{actionDescriptor.ControllerName}_{actionName}";
+            }
+        }
+        return Task.CompletedTask;
+    });
+});
 
 builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection(JwtOptions.SectionName));
 builder.Services.AddJwtAuthentication(builder.Configuration);
