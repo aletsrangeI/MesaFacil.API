@@ -23,10 +23,8 @@ public class FormField : BaseAuditableEntity // Asume que hereda IdFormField y a
     // ==========================================
     // PROPIEDADES AUXILIARES (Ignoradas en BD, útiles en código)
     // ==========================================
-    [NotMapped]
     public List<FormValidation> Validations { get; set; } = new();
     
-    [NotMapped]
     public List<SelectFormOption> Options { get; set; } = new();
 
     // ==========================================

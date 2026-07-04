@@ -43,11 +43,11 @@ public sealed class DatabaseInitializer : IDatabaseInitializer
         _logger.LogInformation("Inicialización completada con éxito.");
     }
 
-private async Task SeedFormulariosAsync(CancellationToken ct)
+    private async Task SeedFormulariosAsync(CancellationToken ct)
     {
         const string formLoginCode = "LOGIN";
 
-        // 1. Formulario (Entidad directa, no Catálogo)
+        // 1. Formulario de Login
         var form = await _db.Set<Formulario>().FirstOrDefaultAsync(f => f.Codigo == formLoginCode, ct);
         if (form is null)
         {
@@ -63,15 +63,90 @@ private async Task SeedFormulariosAsync(CancellationToken ct)
             await _db.SaveChangesAsync(ct);
         }
 
-        // 2. FormFields
-        await EnsureFormFieldAsync(form.Id, "username", "text", "Usuario", "Ingresa tu usuario", 1, 
-            new() { new FormValidation { Type = "required", Value = 1 } }, ct);
+        // Campos del Formulario de Login
+        await EnsureFormFieldAsync(form.Id, "username", "text", "Correo Usuario", "Ingresa tu correo electrónico", 1, 
+            new() 
+            { 
+                new FormValidation { Type = "required", Value = 1 }, 
+                new FormValidation { Type = "email", Value = 1 } 
+            }, ct);
 
         await EnsureFormFieldAsync(form.Id, "password", "password", "Contraseña", "Ingresa tu contraseña", 2, 
-            new() { new FormValidation { Type = "required", Value = 1 }, new FormValidation { Type = "minLength", Value = 8 } }, ct);
+            new() 
+            { 
+                new FormValidation { Type = "required", Value = 1 }, 
+                new FormValidation { Type = "minLength", Value = 8 } 
+            }, ct);
+
+        // 2. Formulario CRUD de Usuario
+        const string formUserCode = "USUARIO_CRUD";
+        var userForm = await _db.Set<Formulario>().FirstOrDefaultAsync(f => f.Codigo == formUserCode, ct);
+        if (userForm is null)
+        {
+            userForm = new Formulario 
+            { 
+                Codigo = formUserCode, 
+                Nombre = "Formulario de Gestión de Usuarios", 
+                Descripcion = "CRUD y asignación de seguridad para usuarios", 
+                IsActive = true, 
+                CreatedBy = "seed" 
+            };
+            _db.Add(userForm);
+            await _db.SaveChangesAsync(ct);
+        }
+
+        // Campos del Formulario CRUD de Usuario:
+        
+        // 2.1 Nombre Completo
+        await EnsureFormFieldAsync(userForm.Id, "nombreCompleto", "text", "Nombre Completo", "Ingresa el nombre completo", 1, 
+            new() 
+            { 
+                new FormValidation { Type = "required", Value = 1 },
+                new FormValidation { Type = "maxLength", Value = 150 }
+            }, ct);
+
+        // 2.2 Correo Electrónico
+        await EnsureFormFieldAsync(userForm.Id, "correo", "text", "Correo Electrónico", "Ingresa el correo electrónico", 2, 
+            new() 
+            { 
+                new FormValidation { Type = "required", Value = 1 }, 
+                new FormValidation { Type = "email", Value = 1 },
+                new FormValidation { Type = "maxLength", Value = 200 }
+            }, ct);
+
+        // 2.3 Contraseña (Para creación de credenciales iniciales)
+        await EnsureFormFieldAsync(userForm.Id, "password", "password", "Contraseña", "Ingresa la contraseña (mínimo 8 caracteres)", 3, 
+            new() 
+            { 
+                new FormValidation { Type = "minLength", Value = 8 } 
+            }, ct);
+
+        // 2.4 Rol de Usuario (Cargado dinámicamente)
+        await EnsureFormFieldAsync(userForm.Id, "idRol", "select", "Rol de Usuario", "Selecciona el rol asignado", 4, 
+            new() 
+            { 
+                new FormValidation { Type = "required", Value = 1 } 
+            }, ct, dataSource: "roles");
+
+        // 2.5 Empresa
+        await EnsureFormFieldAsync(userForm.Id, "idEmpresa", "select", "Empresa", "Selecciona la empresa", 5, 
+            new() 
+            { 
+                new FormValidation { Type = "required", Value = 1 } 
+            }, ct, dataSource: "empresas");
     }
 
-    private async Task EnsureFormFieldAsync(int idFormulario, string name, string type, string label, string placeholder, int order, List<FormValidation> validations, CancellationToken ct)
+    private async Task EnsureFormFieldAsync(
+        int idFormulario, 
+        string name, 
+        string type, 
+        string label, 
+        string placeholder, 
+        int order, 
+        List<FormValidation> validations, 
+        CancellationToken ct,
+        string? dataSource = null,
+        List<SelectFormOption>? options = null)
     {
         var field = await _db.Set<FormField>().FirstOrDefaultAsync(f => f.IdFormulario == idFormulario && f.Name == name, ct);
 
@@ -87,6 +162,8 @@ private async Task SeedFormulariosAsync(CancellationToken ct)
                 Orden = order,
                 IsActive = true,
                 Validations = validations,
+                DataSource = dataSource,
+                Options = options ?? new(),
                 CreatedBy = "seed"
             };
             _db.Add(field);
@@ -99,6 +176,8 @@ private async Task SeedFormulariosAsync(CancellationToken ct)
             field.Placeholder = placeholder;
             field.Orden = order;
             field.Validations = validations;
+            field.DataSource = dataSource;
+            field.Options = options ?? new();
             field.UpdatedAt = DateTime.UtcNow;
             _db.Update(field);
         }
@@ -159,6 +238,13 @@ private async Task SeedFormulariosAsync(CancellationToken ct)
                 _db.Add(admin);
                 await _db.SaveChangesAsync(ct);
             }
+            else
+            {
+                admin.IsActive = true;
+                admin.NombreCompleto = "Administrador";
+                _db.Update(admin);
+                await _db.SaveChangesAsync(ct);
+            }
 
             // 4. UsuarioRol (Vincular Admin)
             var role = await _db.Roles.FirstAsync(r => r.Nombre == "Admin", ct);
@@ -169,10 +255,10 @@ private async Task SeedFormulariosAsync(CancellationToken ct)
             }
 
             // 5. Credencial (Password)
-            var hasCred = await _db.Credenciales.AnyAsync(c => c.IdUsuario == admin.Id && c.IdCredencial == catCred.Id, ct);
-            if (!hasCred)
+            var existingCred = await _db.Credenciales.FirstOrDefaultAsync(c => c.IdUsuario == admin.Id && c.IdCredencial == catCred.Id, ct);
+            var (hash, salt) = CreatePasswordHash(adminPlainPassword);
+            if (existingCred is null)
             {
-                var (hash, salt) = CreatePasswordHash(adminPlainPassword);
                 _db.Add(new Credencial 
                 { 
                     IdUsuario = admin.Id, 
@@ -182,6 +268,13 @@ private async Task SeedFormulariosAsync(CancellationToken ct)
                     IsActive = true, 
                     CreatedBy = "seed" 
                 });
+            }
+            else
+            {
+                existingCred.Hash = hash;
+                existingCred.Salt = salt;
+                existingCred.IsActive = true;
+                _db.Update(existingCred);
             }
 
             await _db.SaveChangesAsync(ct);
