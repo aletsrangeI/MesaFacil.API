@@ -1,3 +1,4 @@
+using Domain.Entities;
 using Interface.Persistence;
 using Persistence.Context;
 
@@ -5,12 +6,8 @@ namespace Persistence.Repositories;
 
 public class UnitOfWork : IUnitOfWork
 {
-    public ICatalogRepository Catalogs { get; }
 
     private readonly ApplicationDbContext _context;
-
-    public ICatalogItemRepository CatalogItems { get; }
-
     public IAreaRepository Areas { get; }
 
     public ICategoriaMenuRepository CategoriaMenus { get; }
@@ -61,9 +58,10 @@ public class UnitOfWork : IUnitOfWork
     public IFormFieldRepository FormFields { get; }
     public IAccesoRutaRepository AccesoRutas { get; }
     public IRolAccesoRutaRepository RolAccesoRutas { get; }
+    public IFormularioRepository Formularios { get; }
+    
+    public ICatCredencialRepository CatCredenciales { get; }
     public UnitOfWork(ApplicationDbContext context,
-        ICatalogRepository catalogRepository,
-        ICatalogItemRepository catalogItems,
         IAreaRepository areaRepository,
         ICategoriaMenuRepository categoriaMenuRepository,
         IClienteRepository clienteRepository,
@@ -97,7 +95,9 @@ public class UnitOfWork : IUnitOfWork
         IVarianteProductoRepository varianteProductoRepository,
         IFormFieldRepository formFieldRepository,
         IAccesoRutaRepository accesoRutaRepository,
-        IRolAccesoRutaRepository rolAccesoRutaRepository
+        IRolAccesoRutaRepository rolAccesoRutaRepository,
+        IFormularioRepository formularioRepository,
+        ICatCredencialRepository catCredencialRepository
     )
     {
         RolAccesoRutas = rolAccesoRutaRepository;
@@ -134,9 +134,9 @@ public class UnitOfWork : IUnitOfWork
         Clientes = clienteRepository;
         CategoriaMenus = categoriaMenuRepository;
         Areas = areaRepository;
-        CatalogItems = catalogItems;
         _context = context;
-        Catalogs = catalogRepository;
+        Formularios = formularioRepository;
+        CatCredenciales = catCredencialRepository;
     }
 
     public async Task<int> Save(CancellationToken cancellationToken)

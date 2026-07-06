@@ -1,6 +1,6 @@
 namespace Domain.Entities;
 
-public class Pago : BaseAuditableEntity
+public class Pago : BaseAuditableEntity // Hereda Id y campos de auditoría
 {
     public int IdCuenta { get; set; }
     public decimal Monto { get; set; }
@@ -10,10 +10,15 @@ public class Pago : BaseAuditableEntity
     public string? Referencia { get; set; }
     public int? RecibidoPor { get; set; }
 
-    public int MetodoCatalogId { get; set; }
-    public int MetodoItemId { get; set; }
+    // [CORREGIDO] - Referencia única al catálogo de métodos de pago
+    public int IdMetodoDePago { get; set; }
 
+    // ==========================================
+    // PROPIEDADES DE NAVEGACIÓN
+    // ==========================================
     public Cuenta Cuenta { get; set; } = null!;
     public Usuario? RecibidoPorUsuario { get; set; }
-    public CatalogItem MetodoItem { get; set; } = null!;
+    
+    // [CORREGIDO] - Navegación tipada hacia el catálogo específico
+    public virtual CatMetodoDePago MetodoDePago { get; set; } = null!;
 }

@@ -6,9 +6,11 @@ namespace Interface.UseCases;
 public interface IAuthApplication
 {
     Task<Response<AuthResponseDTO>> LoginAsync(LoginRequest request, CancellationToken ct);
+    Task<Response<AuthResponseDTO>> LoginWithPinAsync(PinLoginRequest request, CancellationToken ct);
 }
 
 public sealed record LoginRequest(string UserOrEmail, string Password, int? EmpresaId = null, int? SucursalId = null);
+public sealed record PinLoginRequest(string UserOrEmail, string Pin, int? EmpresaId = null, int? SucursalId = null);
 
 public sealed record TokenResult(
     bool Success,

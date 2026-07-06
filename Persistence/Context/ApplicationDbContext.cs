@@ -20,8 +20,6 @@ public class ApplicationDbContext : DbContext
         AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
     }
 
-    public DbSet<Catalog> Catalogs { get; set; }
-    public DbSet<CatalogItem> CatalogItems { get; set; }
     public DbSet<Area> Areas { get; set; }
     public DbSet<CategoriaMenu> CategoriaMenus { get; set; }
     public DbSet<Cliente> Clientes { get; set; }
@@ -56,6 +54,9 @@ public class ApplicationDbContext : DbContext
     public DbSet<FormField> FormFields { get; set; }
     public DbSet<AccesoRuta> AccesoRutas { get; set; }
     public DbSet<RolAccesoRuta> RolAccesoRutas { get; set; }
+    public DbSet<Formulario> Formularios { get; set; }
+    public DbSet<CatCredencial> CatCredenciales { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Ignore<FormValidation>();

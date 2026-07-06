@@ -2,8 +2,6 @@ namespace Interface.Persistence;
 
 public interface IUnitOfWork : IDisposable
 {
-    ICatalogRepository Catalogs { get; }
-    ICatalogItemRepository CatalogItems { get; }
     IAreaRepository Areas { get; }
     ICategoriaMenuRepository CategoriaMenus { get; }
     IClienteRepository Clientes { get; }
@@ -38,4 +36,7 @@ public interface IUnitOfWork : IDisposable
     IFormFieldRepository FormFields { get; }
     IAccesoRutaRepository AccesoRutas { get; }
     IRolAccesoRutaRepository RolAccesoRutas { get; }
+    IFormularioRepository Formularios { get; }
+    
+    ICatCredencialRepository CatCredenciales { get; } 
 }

@@ -8,25 +8,33 @@ public class TicketCocinaConfiguration : IEntityTypeConfiguration<TicketCocina>
 {
     public void Configure(EntityTypeBuilder<TicketCocina> e)
     {
-        const string tsTz = "timestamptz";
-        
         e.ToTable("TicketCocina");
+        
+        // Asumiendo que BaseAuditableEntity provee el Id (IdTicket)
         e.HasKey(x => x.Id);
-        e.Property(x => x.CompletadoEn).HasColumnType(tsTz);
 
+        // [CORREGIDO] - Ajuste para SQL Server y consistencia con DBML
+        e.Property(x => x.CompletadoEn)
+            .IsRequired(false);
+
+        // Relación con la Estación de Cocina
         e.HasOne(x => x.Estacion)
-            .WithMany(x => x.Tickets)
+            .WithMany(x => x.Tickets) // Asegúrate de que EstacionCocina tenga ICollection<TicketCocina>
             .HasForeignKey(x => x.IdEstacion)
             .OnDelete(DeleteBehavior.Restrict);
 
+        // Relación con el Pedido
         e.HasOne(x => x.Pedido)
             .WithMany(x => x.TicketsCocina)
             .HasForeignKey(x => x.IdPedido)
             .OnDelete(DeleteBehavior.Cascade);
 
-        e.HasOne(x => x.EstadoItem)
+        // ==========================================
+        // [CORREGIDO] - Relación con Catálogo Tipado
+        // ==========================================
+        e.HasOne(x => x.EstadoTicketCocina)
             .WithMany()
-            .HasForeignKey(x => new { x.EstadoCatalogId, x.EstadoItemId })
+            .HasForeignKey(x => x.IdEstadoTicketCocina)
             .OnDelete(DeleteBehavior.Restrict);
     }
 }

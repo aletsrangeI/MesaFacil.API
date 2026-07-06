@@ -12,6 +12,8 @@ public class MesaConfiguration : IEntityTypeConfiguration<Mesa>
         e.HasKey(x => x.Id);
         e.Property(x => x.Codigo).HasMaxLength(32).IsRequired();
         e.Property(x => x.Asientos).HasDefaultValue(2);
+        
+        // Mantenemos la restricción de que el código sea único por sucursal
         e.HasIndex(x => new { x.IdSucursal, x.Codigo }).IsUnique();
 
         e.HasOne(x => x.Sucursal)
@@ -24,10 +26,10 @@ public class MesaConfiguration : IEntityTypeConfiguration<Mesa>
             .HasForeignKey(x => x.IdArea)
             .OnDelete(DeleteBehavior.SetNull);
 
-        // Estado: FK compuesta a CatalogItem (EstadoCatalogId, EstadoItemId)
-        e.HasOne(x => x.EstadoItem)
+        // [CORREGIDO] - Relación directa con el catálogo de estados de mesa
+        e.HasOne(x => x.EstadoMesa)
             .WithMany()
-            .HasForeignKey(x => new { x.EstadoCatalogId, x.EstadoItemId })
+            .HasForeignKey(x => x.IdEstadoMesa)
             .OnDelete(DeleteBehavior.Restrict);
     }
 }

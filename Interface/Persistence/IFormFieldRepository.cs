@@ -14,8 +14,8 @@ public interface IFormFieldRepository
     IEnumerable<FormField> GetAllWithPagination(int page, int pageSize);
     int Count();
 
-    public IEnumerable<FormField> GetFormFieldByFormCatId(string code);
-    public Task<IEnumerable<FormField>> GetFormFieldByFormCatIdAsync(int id);
+    // [CORREGIDO] Ahora se busca por el Código único del Formulario
+    IEnumerable<FormField> GetFormFieldByFormCode(string code);
 
     #endregion
 
@@ -28,6 +28,9 @@ public interface IFormFieldRepository
     Task<IEnumerable<FormField>> GetAllAsync();
     Task<IEnumerable<FormField>> GetAllWithPaginationAsync(int page, int pageSize);
     Task<int> CountAsync();
+
+    // [CORREGIDO] Búsqueda asíncrona por el ID real del Formulario
+    Task<IEnumerable<FormField>> GetFormFieldByFormIdAsync(int formularioId);
 
     #endregion
 }

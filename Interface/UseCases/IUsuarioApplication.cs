@@ -28,4 +28,17 @@ public interface IUsuarioApplication
     Task<Response<int>> CountAsync();
 
     #endregion
+
+    #region Metodos de Seguridad y Operativos
+
+    Task<Response<UsuarioDTO?>> GetByCorreoWithRolesAndCredentialsAsync(string correo, CancellationToken ct);
+    Task<Response<UsuarioDTO?>> GetByUserOrEmailWithAuthGraphAsync(string userOrEmail, CancellationToken ct);
+    Task<Response<IReadOnlyList<string>>> GetRoleNamesAsync(int usuarioId, CancellationToken ct);
+    Task<Response<IReadOnlyList<string>>> GetAccesoPathsByUsuarioIdAsync(int usuarioId, CancellationToken ct);
+    Task<Response<object?>> GetPasswordCredentialAsync(int usuarioId, CancellationToken ct); 
+    Task<Response<bool>> HasOpenTurnoAsync(int idUsuario, CancellationToken ct);
+    Task<Response<List<string>>> GetPermissionKeysByUsuarioIdAsync(int usuarioId, CancellationToken ct);
+    Task<Response<string?>> GetPermissionsVersionAsync(int usuarioId, CancellationToken ct);
+
+    #endregion
 }

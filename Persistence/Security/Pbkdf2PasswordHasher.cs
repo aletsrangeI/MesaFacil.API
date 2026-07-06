@@ -23,4 +23,21 @@ public class Pbkdf2PasswordHasher : IPasswordHasher
         // Tiempo constante
         return CryptographicOperations.FixedTimeEquals(stored, computed);
     }
+
+    public (string Hash, string Salt) HashPassword(string password)
+    {
+        using var rng = RandomNumberGenerator.Create();
+        var saltBytes = new byte[16];
+        rng.GetBytes(saltBytes);
+
+        var hashBytes = Rfc2898DeriveBytes.Pbkdf2(
+            password: password,
+            salt: saltBytes,
+            iterations: Iterations,
+            hashAlgorithm: Algo,
+            outputLength: KeySize
+        );
+
+        return (Convert.ToBase64String(hashBytes), Convert.ToBase64String(saltBytes));
+    }
 }

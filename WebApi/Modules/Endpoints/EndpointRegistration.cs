@@ -1,46 +1,28 @@
-using Microsoft.AspNetCore.Routing;
+using System.Reflection;
 
 namespace MesaFacil.API.Modules.Endpoints;
 
 public static class EndpointRegistration
 {
-    public static IEndpointRouteBuilder MapMesaFacilEndpoints(this IEndpointRouteBuilder app)
+    public static IEndpointRouteBuilder MapAllEndpoints(this IEndpointRouteBuilder app)
     {
-        app.MapCatalogoEndpoints();
-        app.MapAreaEndpoints();
-        app.MapCategoriaMenuEndpoints();
-        app.MapClienteEndpoints();
-        app.MapAuthEndpoints();
-        app.MapCuentaEndpoints();
+        // 1. Obtenemos todas las clases estáticas (Abstract y Sealed en IL) que terminen en "Endpoints"
+        var endpointClasses = Assembly.GetExecutingAssembly().GetTypes()
+            .Where(t => t.IsAbstract && t.IsSealed && t.Name.EndsWith("Endpoints"));
 
-        app.MapDescuentoAplicadoEndpoints();
-        app.MapDetalleCuentaEndpoints();
-        app.MapEmpresaEndpoints();
-        app.MapEstacionCocinaEndpoints();
-        app.MapEventoPedidoEndpoints();
-        app.MapGrupoModificadorEndpoints();
-        app.MapMenuEndpoints();
-        app.MapMesaEndpoints();
-        app.MapMovimientoCajaEndpoints();
-        app.MapOpcionModificadorEndpoints();
-        app.MapPagoEndpoints();
-        app.MapPedidoEndpoints();
-        app.MapPedidoAsientoEndpoints();
-        app.MapPedidoDetalleEndpoints();
-        app.MapPedidoModificadorEndpoints();
-        app.MapPrecioEndpoints();
-        app.MapProductoEndpoints();
-        app.MapRolEndpoints();
-        app.MapSucursalEndpoints();
-        app.MapTicketCocinaEndpoints();
-        app.MapTicketDetalleEndpoints();
-        app.MapTurnoEndpoints();
-        app.MapUsuarioEndpoints();
-        app.MapUsuarioRolEndpoints();
-        app.MapVarianteProductoEndpoints();
-        app.MapFormFieldEndpoints();
-        app.MapAccesoRutaEndpoints();
-        app.MapRolAccesoRutaEndpoints();
+        foreach (var type in endpointClasses)
+        {
+            // 2. Buscamos un método público y estático cuyo nombre sea "Map" + NombreDeLaClase
+            // Ej: Si la clase es "CuentaEndpoints", busca "MapCuentaEndpoints"
+            var method = type.GetMethod($"Map{type.Name}", BindingFlags.Static | BindingFlags.Public);
+
+            if (method != null)
+            {
+                // 3. Invocamos el método pasando 'app' como parámetro
+                method.Invoke(null, new object[] { app });
+            }
+        }
+
         return app;
     }
 }

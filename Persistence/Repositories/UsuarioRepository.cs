@@ -40,17 +40,33 @@ public class UsuarioRepository : IUsuarioRepository
 
     public Usuario Get(int id)
     {
-        return _context.Usuarios.Find(id);
+        return _context.Usuarios
+            .Include(u => u.Empresa)
+            .Include(u => u.UsuarioRoles)
+                .ThenInclude(ur => ur.Rol)
+            .Include(u => u.Credenciales)
+                .ThenInclude(c => c.CatCredencial)
+            .FirstOrDefault(u => u.Id == id);
     }
 
     public IEnumerable<Usuario> GetAll()
     {
-        return _context.Usuarios;
+        return _context.Usuarios
+            .Include(u => u.Empresa)
+            .Include(u => u.UsuarioRoles)
+                .ThenInclude(ur => ur.Rol)
+            .Include(u => u.Credenciales)
+                .ThenInclude(c => c.CatCredencial);
     }
 
     public IEnumerable<Usuario> GetAllWithPagination(int page, int pageSize)
     {
         return _context.Usuarios
+            .Include(u => u.Empresa)
+            .Include(u => u.UsuarioRoles)
+                .ThenInclude(ur => ur.Rol)
+            .Include(u => u.Credenciales)
+                .ThenInclude(c => c.CatCredencial)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToList();
@@ -87,17 +103,34 @@ public class UsuarioRepository : IUsuarioRepository
 
     public async Task<Usuario> GetAsync(int id)
     {
-        return await _context.Usuarios.FindAsync(id);
+        return await _context.Usuarios
+            .Include(u => u.Empresa)
+            .Include(u => u.UsuarioRoles)
+                .ThenInclude(ur => ur.Rol)
+            .Include(u => u.Credenciales)
+                .ThenInclude(c => c.CatCredencial)
+            .FirstOrDefaultAsync(u => u.Id == id);
     }
 
     public async Task<IEnumerable<Usuario>> GetAllAsync()
     {
-        return await _context.Usuarios.ToListAsync();
+        return await _context.Usuarios
+            .Include(u => u.Empresa)
+            .Include(u => u.UsuarioRoles)
+                .ThenInclude(ur => ur.Rol)
+            .Include(u => u.Credenciales)
+                .ThenInclude(c => c.CatCredencial)
+            .ToListAsync();
     }
 
     public async Task<IEnumerable<Usuario>> GetAllWithPaginationAsync(int page, int pageSize)
     {
         return await _context.Usuarios
+            .Include(u => u.Empresa)
+            .Include(u => u.UsuarioRoles)
+                .ThenInclude(ur => ur.Rol)
+            .Include(u => u.Credenciales)
+                .ThenInclude(c => c.CatCredencial)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync();
@@ -112,42 +145,33 @@ public class UsuarioRepository : IUsuarioRepository
 
     public async Task<Usuario?> GetByCorreoWithRolesAndCredentialsAsync(string correo, CancellationToken ct)
     {
-        return await _context.Set<Usuario>()
+        return await _context.Usuarios
             .Include(u => u.UsuarioRoles)
             .ThenInclude(ur => ur.Rol)
-            .ThenInclude(r => r.AccesosRuta)
-            .ThenInclude(rar => rar.AccesoRuta)
             .Include(u => u.Credenciales)
-            .ThenInclude(c => c.TipoItem) // CatalogItem (Code/Name)
+            .ThenInclude(c => c.CatCredencial) // [CORREGIDO] Catálogo específico
             .FirstOrDefaultAsync(u => u.Correo != null && u.Correo.ToLower() == correo.ToLower(), ct);
     }
 
     public async Task<Usuario?> GetByUserOrEmailWithAuthGraphAsync(string userOrEmail, CancellationToken ct)
     {
-        var q = _context.Set<Usuario>()
+        if (string.IsNullOrWhiteSpace(userOrEmail)) return null;
+
+        return await _context.Usuarios
             .Include(u => u.UsuarioRoles)
             .ThenInclude(ur => ur.Rol)
             .ThenInclude(r => r.AccesosRuta)
             .ThenInclude(rar => rar.AccesoRuta)
             .Include(u => u.Credenciales)
-            .ThenInclude(c => c.TipoItem);
-
-        userOrEmail = userOrEmail?.Trim() ?? string.Empty;
-        if (string.IsNullOrEmpty(userOrEmail))
-            return null;
-
-        return await q.FirstOrDefaultAsync(u =>
-                u.Correo != null && u.Correo.ToLower() == userOrEmail.ToLower()
-            // || u.Username != null && u.Username.ToLower() == userOrEmail.ToLower()
-            , ct);
+            .ThenInclude(c => c.CatCredencial) // [CORREGIDO]
+            .FirstOrDefaultAsync(u => u.Correo.ToLower() == userOrEmail.Trim().ToLower(), ct);
     }
 
     public async Task<IReadOnlyList<string>> GetRoleNamesAsync(int usuarioId, CancellationToken ct)
     {
-        // Nota: si tu mapping hace que UsuarioRol.Id == Usuario.Id, esta proyección funciona igual
-        return await _context.Set<Usuario>()
-            .Where(u => u.Id == usuarioId)
-            .SelectMany(u => u.UsuarioRoles.Select(ur => ur.Rol.Nombre))
+        return await _context.UsuarioRoles
+            .Where(ur => ur.UsuarioId == usuarioId && ur.IsActive)
+            .Select(ur => ur.Rol.Nombre)
             .Distinct()
             .ToListAsync(ct);
     }
@@ -163,56 +187,47 @@ public class UsuarioRepository : IUsuarioRepository
 
     public async Task<Credencial?> GetPasswordCredentialAsync(int usuarioId, CancellationToken ct)
     {
-        // intento por Code
-        var cred = await _context.Set<Credencial>()
-            .Include(c => c.TipoItem)
-            .Where(c => c.IdUsuario == usuarioId && c.TipoItem != null && c.TipoItem.Code == "PASSWORD")
-            .FirstOrDefaultAsync(ct);
+        return await GetCredentialByTypeAsync(usuarioId, "PASSWORD", ct);
+    }
 
-        if (cred != null) return cred;
-
-        // fallback: primera credencial
-        return await _context.Set<Credencial>()
-            .Include(c => c.TipoItem)
-            .Where(c => c.IdUsuario == usuarioId)
+    public async Task<Credencial?> GetCredentialByTypeAsync(int usuarioId, string typeDescription, CancellationToken ct)
+    {
+        return await _context.Credenciales
+            .Include(c => c.CatCredencial)
+            .Where(c => c.IdUsuario == usuarioId && 
+                        c.IsActive && 
+                        c.CatCredencial.IsActive && 
+                        c.CatCredencial.Descripcion == typeDescription)
             .FirstOrDefaultAsync(ct);
     }
 
     public async Task<bool> HasOpenTurnoAsync(int idUsuario, CancellationToken ct)
     {
+        // Asumiendo que la tabla Turno tiene IdUsuario
         return await _context.Set<Turno>()
             .AnyAsync(t => t.IdUsuario == idUsuario && t.Cierre == null, ct);
     }
 
     public async Task<List<string>> GetPermissionKeysByUsuarioIdAsync(int usuarioId, CancellationToken ct)
     {
-        var query =
-            from ur in _context.UsuarioRoles.AsNoTracking()
-            where ur.UsuarioId == usuarioId
-            join rr in _context.RolAccesoRutas.AsNoTracking()
-                on ur.IdRol equals rr.IdRol
-            join ar in _context.AccesoRutas.AsNoTracking()
-                on rr.IdAccesoRuta equals ar.Id
-            select ar.Key;
-
-        return await query.Distinct().ToListAsync(ct);
+        // Query optimizada para obtener los Keys de permiso (DASHBOARD_VIEW, etc.)
+        return await (from ur in _context.UsuarioRoles
+                where ur.UsuarioId == usuarioId && ur.IsActive
+                join rar in _context.RolAccesoRutas on ur.IdRol equals rar.IdRol
+                join ar in _context.AccesoRutas on rar.IdAccesoRuta equals ar.Id
+                where rar.IsActive && ar.IsActive
+                select ar.Key)
+            .Distinct()
+            .ToListAsync(ct);
     }
 
     public async Task<string?> GetPermissionsVersionAsync(int usuarioId, CancellationToken ct)
     {
-        // 1) Obtén las keys de permiso actuales (ya tienes este método)
         var keys = await GetPermissionKeysByUsuarioIdAsync(usuarioId, ct);
+        if (!keys.Any()) return "none";
 
-        // 2) Canonicaliza el conjunto para que el hash sea estable
-        //    (mismo orden => mismo hash)
-        var canonical = string.Join("\n", keys.OrderBy(k => k, StringComparer.Ordinal));
-
-        // 3) Hashea (SHA-1/256; cualquiera funciona, es solo una etiqueta/ETag)
+        var canonical = string.Join("|", keys.OrderBy(k => k));
         using var sha1 = SHA1.Create();
-        var bytes = Encoding.UTF8.GetBytes(canonical);
-        var hash = sha1.ComputeHash(bytes);
-
-        // 4) Devuelve una string corta y estable (Hex o Base64)
-        return Convert.ToHexString(hash); // e.g. "A1B2C3..."
+        return Convert.ToHexString(sha1.ComputeHash(Encoding.UTF8.GetBytes(canonical)));
     }
 }
