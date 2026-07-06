@@ -121,15 +121,23 @@ public sealed class DatabaseInitializer : IDatabaseInitializer
                 new FormValidation { Type = "minLength", Value = 8 } 
             }, ct);
 
+        // 2.3.1 PIN (Para inicio de sesión rápido)
+        await EnsureFormFieldAsync(userForm.Id, "pin", "password", "PIN de Acceso", "Ingresa un PIN numérico (4 a 8 dígitos)", 4, 
+            new() 
+            { 
+                new FormValidation { Type = "minLength", Value = 4 },
+                new FormValidation { Type = "maxLength", Value = 8 }
+            }, ct);
+
         // 2.4 Rol de Usuario (Cargado dinámicamente)
-        await EnsureFormFieldAsync(userForm.Id, "idRol", "select", "Rol de Usuario", "Selecciona el rol asignado", 4, 
+        await EnsureFormFieldAsync(userForm.Id, "idRol", "select", "Rol de Usuario", "Selecciona el rol asignado", 5, 
             new() 
             { 
                 new FormValidation { Type = "required", Value = 1 } 
             }, ct, dataSource: "roles");
 
         // 2.5 Empresa
-        await EnsureFormFieldAsync(userForm.Id, "idEmpresa", "select", "Empresa", "Selecciona la empresa", 5, 
+        await EnsureFormFieldAsync(userForm.Id, "idEmpresa", "select", "Empresa", "Selecciona la empresa", 6, 
             new() 
             { 
                 new FormValidation { Type = "required", Value = 1 } 
@@ -227,6 +235,14 @@ public sealed class DatabaseInitializer : IDatabaseInitializer
             {
                 catCred = new CatCredencial { Descripcion = "PASSWORD", IsActive = true, CreatedBy = "seed" };
                 _db.Add(catCred);
+                await _db.SaveChangesAsync(ct);
+            }
+
+            var catCredPin = await _db.Set<CatCredencial>().FirstOrDefaultAsync(c => c.Descripcion == "PIN", ct);
+            if (catCredPin is null)
+            {
+                catCredPin = new CatCredencial { Descripcion = "PIN", IsActive = true, CreatedBy = "seed" };
+                _db.Add(catCredPin);
                 await _db.SaveChangesAsync(ct);
             }
 

@@ -53,6 +53,40 @@ public static class AuthEndpoints
             })
             .WithName("Auth_Login");
 
+        // POST /api/auth/login-pin
+        group.MapPost(
+            "/login-pin",
+            async Task<Results<
+                Ok<Response<AuthResponseDTO>>,
+                BadRequest<Response<AuthResponseDTO>>,
+                UnauthorizedHttpResult
+            >>(
+                PinLoginRequest req,
+                IAuthApplication svc,
+                PinLoginRequestValidator validator,
+                CancellationToken ct) =>
+            {
+                var val = await validator.ValidateAsync(req, ct);
+                if (!val.IsValid)
+                {
+                    var bad = new Response<AuthResponseDTO>
+                    {
+                        Data = default!,
+                        isSuccess = false,
+                        Message = "Solicitud inválida",
+                        Errors = val.Errors
+                    };
+                    return TypedResults.BadRequest(bad);
+                }
+
+                var result = await svc.LoginWithPinAsync(req, ct);
+                if (!result.isSuccess || result.Data is null)
+                    return TypedResults.Unauthorized();
+
+                return TypedResults.Ok(result);
+            })
+            .WithName("Auth_LoginWithPin");
+
         // GET /api/auth/me
         group.MapGet(
             "/me",

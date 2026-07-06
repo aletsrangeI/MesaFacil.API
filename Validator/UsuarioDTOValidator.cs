@@ -25,5 +25,10 @@ public class UsuarioDTOValidator : AbstractValidator<UsuarioDTO>
             .MaximumLength(200)
             .When(x => !string.IsNullOrWhiteSpace(x.Correo))
             .WithMessage("El campo Correo no debe exceder 200 caracteres.");
+
+        // Pin opcional pero con restricciones de longitud si se proporciona
+        RuleFor(x => x.Pin)
+            .MaximumLength(32).WithMessage("El PIN no debe exceder los 32 caracteres.")
+            .When(x => !string.IsNullOrEmpty(x.Pin));
     }
 }
