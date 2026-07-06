@@ -40,17 +40,33 @@ public class UsuarioRepository : IUsuarioRepository
 
     public Usuario Get(int id)
     {
-        return _context.Usuarios.Find(id);
+        return _context.Usuarios
+            .Include(u => u.Empresa)
+            .Include(u => u.UsuarioRoles)
+                .ThenInclude(ur => ur.Rol)
+            .Include(u => u.Credenciales)
+                .ThenInclude(c => c.CatCredencial)
+            .FirstOrDefault(u => u.Id == id);
     }
 
     public IEnumerable<Usuario> GetAll()
     {
-        return _context.Usuarios;
+        return _context.Usuarios
+            .Include(u => u.Empresa)
+            .Include(u => u.UsuarioRoles)
+                .ThenInclude(ur => ur.Rol)
+            .Include(u => u.Credenciales)
+                .ThenInclude(c => c.CatCredencial);
     }
 
     public IEnumerable<Usuario> GetAllWithPagination(int page, int pageSize)
     {
         return _context.Usuarios
+            .Include(u => u.Empresa)
+            .Include(u => u.UsuarioRoles)
+                .ThenInclude(ur => ur.Rol)
+            .Include(u => u.Credenciales)
+                .ThenInclude(c => c.CatCredencial)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToList();
@@ -87,17 +103,34 @@ public class UsuarioRepository : IUsuarioRepository
 
     public async Task<Usuario> GetAsync(int id)
     {
-        return await _context.Usuarios.FindAsync(id);
+        return await _context.Usuarios
+            .Include(u => u.Empresa)
+            .Include(u => u.UsuarioRoles)
+                .ThenInclude(ur => ur.Rol)
+            .Include(u => u.Credenciales)
+                .ThenInclude(c => c.CatCredencial)
+            .FirstOrDefaultAsync(u => u.Id == id);
     }
 
     public async Task<IEnumerable<Usuario>> GetAllAsync()
     {
-        return await _context.Usuarios.ToListAsync();
+        return await _context.Usuarios
+            .Include(u => u.Empresa)
+            .Include(u => u.UsuarioRoles)
+                .ThenInclude(ur => ur.Rol)
+            .Include(u => u.Credenciales)
+                .ThenInclude(c => c.CatCredencial)
+            .ToListAsync();
     }
 
     public async Task<IEnumerable<Usuario>> GetAllWithPaginationAsync(int page, int pageSize)
     {
         return await _context.Usuarios
+            .Include(u => u.Empresa)
+            .Include(u => u.UsuarioRoles)
+                .ThenInclude(ur => ur.Rol)
+            .Include(u => u.Credenciales)
+                .ThenInclude(c => c.CatCredencial)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync();
@@ -154,10 +187,17 @@ public class UsuarioRepository : IUsuarioRepository
 
     public async Task<Credencial?> GetPasswordCredentialAsync(int usuarioId, CancellationToken ct)
     {
-        // Buscamos la credencial cuyo catálogo específico sea tipo "PASSWORD"
+        return await GetCredentialByTypeAsync(usuarioId, "PASSWORD", ct);
+    }
+
+    public async Task<Credencial?> GetCredentialByTypeAsync(int usuarioId, string typeDescription, CancellationToken ct)
+    {
         return await _context.Credenciales
             .Include(c => c.CatCredencial)
-            .Where(c => c.IdUsuario == usuarioId && c.CatCredencial.Descripcion == "PASSWORD")
+            .Where(c => c.IdUsuario == usuarioId && 
+                        c.IsActive && 
+                        c.CatCredencial.IsActive && 
+                        c.CatCredencial.Descripcion == typeDescription)
             .FirstOrDefaultAsync(ct);
     }
 

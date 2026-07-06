@@ -72,6 +72,27 @@ public class UsuarioApplication : IUsuarioApplication
                     }
                 }
 
+                // 1.2 Asignar PIN (si se proporciona)
+                if (!string.IsNullOrWhiteSpace(dto.Pin))
+                {
+                    var catCred = _unitOfWork.CatCredenciales.GetAll()
+                        .FirstOrDefault(c => c.Descripcion == "PIN");
+                    if (catCred != null)
+                    {
+                        var (hash, salt) = _hasher.HashPassword(dto.Pin);
+                        _unitOfWork.Credenciales.Insert(new Credencial
+                        {
+                            IdUsuario = entity.Id,
+                            IdCredencial = catCred.Id,
+                            Hash = hash,
+                            Salt = salt,
+                            IsActive = true,
+                            CreatedBy = "system",
+                            UpdatedBy = ""
+                        });
+                    }
+                }
+
                 // 2. Asignar rol (si se proporciona)
                 if (dto.IdRol.HasValue)
                 {
@@ -135,6 +156,40 @@ public class UsuarioApplication : IUsuarioApplication
                     {
                         var catCred = _unitOfWork.CatCredenciales.GetAll()
                             .FirstOrDefault(c => c.Descripcion == "PASSWORD");
+                        if (catCred != null)
+                        {
+                            _unitOfWork.Credenciales.Insert(new Credencial
+                            {
+                                IdUsuario = entity.Id,
+                                IdCredencial = catCred.Id,
+                                Hash = hash,
+                                Salt = salt,
+                                IsActive = true,
+                                CreatedBy = "system",
+                                UpdatedBy = ""
+                            });
+                        }
+                    }
+                }
+
+                // 1.2 Actualizar/Asignar PIN (si se proporciona)
+                if (!string.IsNullOrWhiteSpace(dto.Pin))
+                {
+                    var existingCred = _unitOfWork.Usuarios.GetCredentialByTypeAsync(entity.Id, "PIN", CancellationToken.None).GetAwaiter().GetResult();
+                    var (hash, salt) = _hasher.HashPassword(dto.Pin);
+
+                    if (existingCred != null)
+                    {
+                        existingCred.Hash = hash;
+                        existingCred.Salt = salt;
+                        existingCred.UpdatedAt = DateTime.UtcNow;
+                        existingCred.UpdatedBy = "system";
+                        _unitOfWork.Credenciales.Update(existingCred);
+                    }
+                    else
+                    {
+                        var catCred = _unitOfWork.CatCredenciales.GetAll()
+                            .FirstOrDefault(c => c.Descripcion == "PIN");
                         if (catCred != null)
                         {
                             _unitOfWork.Credenciales.Insert(new Credencial
@@ -229,10 +284,12 @@ public class UsuarioApplication : IUsuarioApplication
             if (entity != null)
             {
                 var dto = _mapper.Map<UsuarioDTO>(entity);
-                var role = _unitOfWork.UsuarioRoles.GetAll().FirstOrDefault(ur => ur.UsuarioId == entity.Id && ur.IsActive);
+                dto.NombreEmpresa = entity.Empresa?.Nombre;
+                var role = entity.UsuarioRoles.FirstOrDefault(ur => ur.IsActive);
                 if (role != null)
                 {
                     dto.IdRol = role.IdRol;
+                    dto.NombreRol = role.Rol?.Nombre;
                 }
                 response.Data = dto;
                 response.isSuccess = true;
@@ -259,15 +316,18 @@ public class UsuarioApplication : IUsuarioApplication
         try
         {
             var list = _unitOfWork.Usuarios.GetAll();
-            var mapped = _mapper.Map<IEnumerable<UsuarioDTO>>(list).ToList();
-            var userRoles = _unitOfWork.UsuarioRoles.GetAll().Where(ur => ur.IsActive).ToList();
-            foreach (var item in mapped)
+            var mapped = new List<UsuarioDTO>();
+            foreach (var user in list)
             {
-                var ur = userRoles.FirstOrDefault(r => r.UsuarioId == item.Id);
+                var dto = _mapper.Map<UsuarioDTO>(user);
+                dto.NombreEmpresa = user.Empresa?.Nombre;
+                var ur = user.UsuarioRoles.FirstOrDefault(r => r.IsActive);
                 if (ur != null)
                 {
-                    item.IdRol = ur.IdRol;
+                    dto.IdRol = ur.IdRol;
+                    dto.NombreRol = ur.Rol?.Nombre;
                 }
+                mapped.Add(dto);
             }
             response.Data = mapped;
             response.isSuccess = true;
@@ -290,7 +350,21 @@ public class UsuarioApplication : IUsuarioApplication
             var count = _unitOfWork.Usuarios.Count();
             var list = _unitOfWork.Usuarios.GetAllWithPagination(page, pageSize);
 
-            response.Data = _mapper.Map<IEnumerable<UsuarioDTO>>(list);
+            var mapped = new List<UsuarioDTO>();
+            foreach (var user in list)
+            {
+                var dto = _mapper.Map<UsuarioDTO>(user);
+                dto.NombreEmpresa = user.Empresa?.Nombre;
+                var ur = user.UsuarioRoles.FirstOrDefault(r => r.IsActive);
+                if (ur != null)
+                {
+                    dto.IdRol = ur.IdRol;
+                    dto.NombreRol = ur.Rol?.Nombre;
+                }
+                mapped.Add(dto);
+            }
+
+            response.Data = mapped;
             response.PageNumber = page;
             response.TotalCount = count;
             response.TotalPages = (int)Math.Ceiling(count / (double)pageSize);
@@ -368,6 +442,27 @@ public class UsuarioApplication : IUsuarioApplication
                     }
                 }
 
+                // 1.2 Asignar PIN (si se proporciona)
+                if (!string.IsNullOrWhiteSpace(dto.Pin))
+                {
+                    var catCreds = await _unitOfWork.CatCredenciales.GetAllAsync();
+                    var catCred = catCreds.FirstOrDefault(c => c.Descripcion == "PIN");
+                    if (catCred != null)
+                    {
+                        var (hash, salt) = _hasher.HashPassword(dto.Pin);
+                        await _unitOfWork.Credenciales.InsertAsync(new Credencial
+                        {
+                            IdUsuario = entity.Id,
+                            IdCredencial = catCred.Id,
+                            Hash = hash,
+                            Salt = salt,
+                            IsActive = true,
+                            CreatedBy = "system",
+                            UpdatedBy = ""
+                        });
+                    }
+                }
+
                 // 2. Asignar rol (si se proporciona)
                 if (dto.IdRol.HasValue)
                 {
@@ -431,6 +526,40 @@ public class UsuarioApplication : IUsuarioApplication
                     {
                         var catCreds = await _unitOfWork.CatCredenciales.GetAllAsync();
                         var catCred = catCreds.FirstOrDefault(c => c.Descripcion == "PASSWORD");
+                        if (catCred != null)
+                        {
+                            await _unitOfWork.Credenciales.InsertAsync(new Credencial
+                            {
+                                IdUsuario = entity.Id,
+                                IdCredencial = catCred.Id,
+                                Hash = hash,
+                                Salt = salt,
+                                IsActive = true,
+                                CreatedBy = "system",
+                                UpdatedBy = ""
+                            });
+                        }
+                    }
+                }
+
+                // 1.2 Actualizar/Asignar PIN (si se proporciona)
+                if (!string.IsNullOrWhiteSpace(dto.Pin))
+                {
+                    var existingCred = await _unitOfWork.Usuarios.GetCredentialByTypeAsync(entity.Id, "PIN", CancellationToken.None);
+                    var (hash, salt) = _hasher.HashPassword(dto.Pin);
+
+                    if (existingCred != null)
+                    {
+                        existingCred.Hash = hash;
+                        existingCred.Salt = salt;
+                        existingCred.UpdatedAt = DateTime.UtcNow;
+                        existingCred.UpdatedBy = "system";
+                        await _unitOfWork.Credenciales.UpdateAsync(existingCred);
+                    }
+                    else
+                    {
+                        var catCreds = await _unitOfWork.CatCredenciales.GetAllAsync();
+                        var catCred = catCreds.FirstOrDefault(c => c.Descripcion == "PIN");
                         if (catCred != null)
                         {
                             await _unitOfWork.Credenciales.InsertAsync(new Credencial
@@ -524,11 +653,12 @@ public class UsuarioApplication : IUsuarioApplication
             if (entity != null)
             {
                 var dto = _mapper.Map<UsuarioDTO>(entity);
-                var userRoles = await _unitOfWork.UsuarioRoles.GetAllAsync();
-                var role = userRoles.FirstOrDefault(ur => ur.UsuarioId == entity.Id && ur.IsActive);
+                dto.NombreEmpresa = entity.Empresa?.Nombre;
+                var role = entity.UsuarioRoles.FirstOrDefault(ur => ur.IsActive);
                 if (role != null)
                 {
                     dto.IdRol = role.IdRol;
+                    dto.NombreRol = role.Rol?.Nombre;
                 }
                 response.Data = dto;
                 response.isSuccess = true;
@@ -555,16 +685,18 @@ public class UsuarioApplication : IUsuarioApplication
         try
         {
             var list = await _unitOfWork.Usuarios.GetAllAsync();
-            var mapped = _mapper.Map<IEnumerable<UsuarioDTO>>(list).ToList();
-            var userRoles = await _unitOfWork.UsuarioRoles.GetAllAsync();
-            var activeRoles = userRoles.Where(ur => ur.IsActive).ToList();
-            foreach (var item in mapped)
+            var mapped = new List<UsuarioDTO>();
+            foreach (var user in list)
             {
-                var ur = activeRoles.FirstOrDefault(r => r.UsuarioId == item.Id);
+                var dto = _mapper.Map<UsuarioDTO>(user);
+                dto.NombreEmpresa = user.Empresa?.Nombre;
+                var ur = user.UsuarioRoles.FirstOrDefault(r => r.IsActive);
                 if (ur != null)
                 {
-                    item.IdRol = ur.IdRol;
+                    dto.IdRol = ur.IdRol;
+                    dto.NombreRol = ur.Rol?.Nombre;
                 }
+                mapped.Add(dto);
             }
             response.Data = mapped;
             response.isSuccess = true;
@@ -587,7 +719,21 @@ public class UsuarioApplication : IUsuarioApplication
             var count = await _unitOfWork.Usuarios.CountAsync();
             var list = await _unitOfWork.Usuarios.GetAllWithPaginationAsync(page, pageSize);
 
-            response.Data = _mapper.Map<IEnumerable<UsuarioDTO>>(list);
+            var mapped = new List<UsuarioDTO>();
+            foreach (var user in list)
+            {
+                var dto = _mapper.Map<UsuarioDTO>(user);
+                dto.NombreEmpresa = user.Empresa?.Nombre;
+                var ur = user.UsuarioRoles.FirstOrDefault(r => r.IsActive);
+                if (ur != null)
+                {
+                    dto.IdRol = ur.IdRol;
+                    dto.NombreRol = ur.Rol?.Nombre;
+                }
+                mapped.Add(dto);
+            }
+
+            response.Data = mapped;
             response.PageNumber = page;
             response.TotalCount = count;
             response.TotalPages = (int)Math.Ceiling(count / (double)pageSize);

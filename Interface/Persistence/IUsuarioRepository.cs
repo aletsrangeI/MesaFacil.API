@@ -41,6 +41,7 @@ public interface IUsuarioRepository
 
     // Credenciales
     Task<Credencial?> GetPasswordCredentialAsync(int usuarioId, CancellationToken ct);
+    Task<Credencial?> GetCredentialByTypeAsync(int usuarioId, string typeDescription, CancellationToken ct);
 
     // Operativo
     Task<bool> HasOpenTurnoAsync(int idUsuario, CancellationToken ct);

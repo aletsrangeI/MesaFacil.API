@@ -16,15 +16,18 @@ public class AuthController : ControllerBase
     private readonly IAuthApplication _authApplication;
     private readonly IUsuarioRepository _usuariosRepository;
     private readonly LoginRequestValidator _loginValidator;
+    private readonly PinLoginRequestValidator _pinValidator;
 
     public AuthController(
         IAuthApplication authApplication,
         IUsuarioRepository usuariosRepository,
-        LoginRequestValidator loginValidator)
+        LoginRequestValidator loginValidator,
+        PinLoginRequestValidator pinValidator)
     {
         _authApplication = authApplication;
         _usuariosRepository = usuariosRepository;
         _loginValidator = loginValidator;
+        _pinValidator = pinValidator;
     }
 
     [AllowAnonymous]
@@ -46,7 +49,31 @@ public class AuthController : ControllerBase
 
         var result = await _authApplication.LoginAsync(req, ct);
         if (!result.isSuccess || result.Data is null)
-            return Unauthorized();
+            return Unauthorized(result);
+
+        return Ok(result);
+    }
+
+    [AllowAnonymous]
+    [HttpPost("login-pin", Name = "Auth_LoginWithPin")]
+    public async Task<ActionResult<Response<AuthResponseDTO>>> LoginWithPin([FromBody] PinLoginRequest req, CancellationToken ct)
+    {
+        var val = await _pinValidator.ValidateAsync(req, ct);
+        if (!val.IsValid)
+        {
+            var bad = new Response<AuthResponseDTO>
+            {
+                Data = default!,
+                isSuccess = false,
+                Message = "Solicitud inválida",
+                Errors = val.Errors
+            };
+            return BadRequest(bad);
+        }
+
+        var result = await _authApplication.LoginWithPinAsync(req, ct);
+        if (!result.isSuccess || result.Data is null)
+            return Unauthorized(result);
 
         return Ok(result);
     }

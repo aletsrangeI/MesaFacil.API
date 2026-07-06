@@ -4,6 +4,7 @@ using System.Security.Claims;
 using Common;
 using DTO.Auth;
 using Microsoft.IdentityModel.JsonWebTokens;
+using Domain.Entities;
 
 namespace UseCases.Auth;
 
@@ -22,35 +23,104 @@ public class AuthApplication : IAuthApplication
         _logger = logger;
     }
 
-     public async Task<Response<AuthResponseDTO>> LoginAsync(LoginRequest request, CancellationToken ct)
-{
-    var response = new Response<AuthResponseDTO>();
-
-    try
+    public async Task<Response<AuthResponseDTO>> LoginAsync(LoginRequest request, CancellationToken ct)
     {
-        // 1) Usuario + roles + credenciales
-        var usuario = await _usuarios.GetByCorreoWithRolesAndCredentialsAsync(request.UserOrEmail, ct);
-        if (usuario is null || !usuario.IsActive)
+        var response = new Response<AuthResponseDTO>();
+
+        try
         {
-            response.Message = "Usuario no encontrado o inactivo.";
+            // 1) Usuario + roles + credenciales
+            var usuario = await _usuarios.GetByCorreoWithRolesAndCredentialsAsync(request.UserOrEmail, ct);
+            if (usuario is null || !usuario.IsActive)
+            {
+                response.Message = "Usuario no encontrado o inactivo.";
+                return response;
+            }
+
+            // 2) Credencial (PASSWORD)
+            var cred = usuario.Credenciales.FirstOrDefault(c => c.IsActive && c.CatCredencial.Descripcion == "PASSWORD");
+            if (cred is null)
+            {
+                response.Message = "Usuario sin contraseña activa.";
+                return response;
+            }
+
+            // 3) Verificar hash
+            if (!_hasher.Verify(request.Password, cred.Hash, cred.Salt))
+            {
+                response.Message = "Credenciales inválidas.";
+                return response;
+            }
+
+            var roles = usuario.UsuarioRoles
+                .Select(ur => ur.Rol.Nombre)
+                .Where(n => !string.IsNullOrWhiteSpace(n))
+                .Distinct()
+                .ToList();
+
+            response.Data = await BuildAuthResponseAsync(usuario, roles, request.SucursalId, ct);
+            response.isSuccess = true;
+            response.Message = "Autenticación exitosa.";
             return response;
         }
-
-        // 2) Credencial
-        var cred = usuario.Credenciales.FirstOrDefault();
-        if (cred is null)
+        catch (Exception ex)
         {
-            response.Message = "Usuario sin credenciales.";
+            _logger.LogError(ex.Message, "Error en LoginAsync");
+            response.Message = "No fue posible procesar la autenticación.";
             return response;
         }
+    }
 
-        // 3) Verificar hash
-        if (!_hasher.Verify(request.Password, cred.Hash, cred.Salt))
+    public async Task<Response<AuthResponseDTO>> LoginWithPinAsync(PinLoginRequest request, CancellationToken ct)
+    {
+        var response = new Response<AuthResponseDTO>();
+
+        try
         {
-            response.Message = "Credenciales inválidas.";
+            // 1) Usuario + roles + credenciales
+            var usuario = await _usuarios.GetByCorreoWithRolesAndCredentialsAsync(request.UserOrEmail, ct);
+            if (usuario is null || !usuario.IsActive)
+            {
+                response.Message = "Usuario no encontrado o inactivo.";
+                return response;
+            }
+
+            // 2) Credencial (PIN)
+            var cred = usuario.Credenciales.FirstOrDefault(c => c.IsActive && c.CatCredencial.Descripcion == "PIN");
+            if (cred is null)
+            {
+                response.Message = "Usuario sin PIN activo.";
+                return response;
+            }
+
+            // 3) Verificar hash
+            if (!_hasher.Verify(request.Pin, cred.Hash, cred.Salt))
+            {
+                response.Message = "Credenciales inválidas.";
+                return response;
+            }
+
+            var roles = usuario.UsuarioRoles
+                .Select(ur => ur.Rol.Nombre)
+                .Where(n => !string.IsNullOrWhiteSpace(n))
+                .Distinct()
+                .ToList();
+
+            response.Data = await BuildAuthResponseAsync(usuario, roles, request.SucursalId, ct);
+            response.isSuccess = true;
+            response.Message = "Autenticación exitosa.";
             return response;
         }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex.Message, "Error en LoginWithPinAsync");
+            response.Message = "No fue posible procesar la autenticación.";
+            return response;
+        }
+    }
 
+    private async Task<AuthResponseDTO> BuildAuthResponseAsync(Usuario usuario, List<string> roles, int? sucursalId, CancellationToken ct)
+    {
         // 4) Claims base
         var claims = new List<Claim>
         {
@@ -62,23 +132,17 @@ public class AuthApplication : IAuthApplication
         };
 
         // 5) Roles
-        var roles = usuario.UsuarioRoles
-            .Select(ur => ur.Rol.Nombre)
-            .Where(n => !string.IsNullOrWhiteSpace(n))
-            .Distinct()
-            .ToList();
         foreach (var roleName in roles)
             claims.Add(new Claim(ClaimTypes.Role, roleName));
 
         // 6) Contexto opcional
-        if (request.SucursalId.HasValue)
-            claims.Add(new Claim("sucursal_id", request.SucursalId.Value.ToString()));
+        if (sucursalId.HasValue)
+            claims.Add(new Claim("sucursal_id", sucursalId.Value.ToString()));
 
         var tieneTurnoAbierto = await _usuarios.HasOpenTurnoAsync(usuario.Id, ct);
         claims.Add(new Claim("turno_abierto", tieneTurnoAbierto ? "1" : "0"));
 
         // 7) Permisos (AccesoRuta.Key) -> claims "perm"
-        //    Puedes implementar el repo como: GetPermissionKeysByUsuarioIdAsync(userId)
         var permissionKeys = await _usuarios.GetPermissionKeysByUsuarioIdAsync(usuario.Id, ct);
         foreach (var key in permissionKeys.Distinct())
             claims.Add(new Claim("perm", key));
@@ -114,22 +178,11 @@ public class AuthApplication : IAuthApplication
             PermsVersion = null
         };
 
-        response.Data = new AuthResponseDTO
+        return new AuthResponseDTO
         {
             Token = tokenDto,
             Session = sessionDto
         };
-
-        response.isSuccess = true;
-        response.Message = "Autenticación exitosa.";
-        return response;
     }
-    catch (Exception ex)
-    {
-        _logger.LogError(ex.Message, "Error en LoginAsync");
-        response.Message = "No fue posible procesar la autenticación.";
-        return response;
-    }
-}
 
 }
