@@ -41,17 +41,23 @@ public class FormFieldRepository : IFormFieldRepository
 
     public FormField Get(int id)
     {
-        return _context.FormFields.Find(id);
+        return _context.FormFields
+            .Include(ff => ff.Formulario)
+            .FirstOrDefault(ff => ff.Id == id);
     }
 
     public IEnumerable<FormField> GetAll()
     {
-        return _context.FormFields.AsNoTracking().ToList();
+        return _context.FormFields
+            .Include(ff => ff.Formulario)
+            .AsNoTracking()
+            .ToList();
     }
 
     public IEnumerable<FormField> GetAllWithPagination(int page, int pageSize)
     {
         return _context.FormFields
+            .Include(ff => ff.Formulario)
             .AsNoTracking()
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
@@ -101,17 +107,23 @@ public class FormFieldRepository : IFormFieldRepository
 
     public async Task<FormField> GetAsync(int id)
     {
-        return await _context.FormFields.FindAsync(id);
+        return await _context.FormFields
+            .Include(ff => ff.Formulario)
+            .FirstOrDefaultAsync(ff => ff.Id == id);
     }
 
     public async Task<IEnumerable<FormField>> GetAllAsync()
     {
-        return await _context.FormFields.AsNoTracking().ToListAsync();
+        return await _context.FormFields
+            .Include(ff => ff.Formulario)
+            .AsNoTracking()
+            .ToListAsync();
     }
 
     public async Task<IEnumerable<FormField>> GetAllWithPaginationAsync(int page, int pageSize)
     {
         return await _context.FormFields
+            .Include(ff => ff.Formulario)
             .AsNoTracking()
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
@@ -127,6 +139,7 @@ public class FormFieldRepository : IFormFieldRepository
     public async Task<IEnumerable<FormField>> GetFormFieldByFormIdAsync(int formularioId)
     {
         return await _context.FormFields
+            .Include(ff => ff.Formulario)
             .Where(ff => ff.IdFormulario == formularioId && ff.IsActive)
             .OrderBy(a => a.Orden)
             .ToListAsync();

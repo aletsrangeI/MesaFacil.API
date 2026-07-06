@@ -39,12 +39,16 @@ public class FormularioRepository : IFormularioRepository
 
     public Formulario Get(int id)
     {
-        return _context.Formularios.Find(id);
+        return _context.Formularios
+            .Include(f => f.Campos)
+            .FirstOrDefault(f => f.Id == id);
     }
 
     public IEnumerable<Formulario> GetAll()
     {
-        return _context.Formularios.ToList();
+        return _context.Formularios
+            .Include(f => f.Campos)
+            .ToList();
     }
     
     public Formulario? GetByCode(string code, bool includeFields = true)
@@ -60,6 +64,7 @@ public class FormularioRepository : IFormularioRepository
     public IEnumerable<Formulario> GetAllWithPagination(int page, int pageSize)
     {
         return _context.Formularios
+            .Include(f => f.Campos)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToList();
@@ -97,12 +102,16 @@ public class FormularioRepository : IFormularioRepository
 
     public async Task<Formulario> GetAsync(int id)
     {
-        return await _context.Formularios.FindAsync(id);
+        return await _context.Formularios
+            .Include(f => f.Campos)
+            .FirstOrDefaultAsync(f => f.Id == id);
     }
 
     public async Task<IEnumerable<Formulario>> GetAllAsync()
     {
-        return await _context.Formularios.ToListAsync();
+        return await _context.Formularios
+            .Include(f => f.Campos)
+            .ToListAsync();
     }
     
     public async Task<Formulario?> GetByCodeAsync(string code, bool includeFields = true)
@@ -118,6 +127,7 @@ public class FormularioRepository : IFormularioRepository
     public async Task<IEnumerable<Formulario>> GetAllWithPaginationAsync(int page, int pageSize)
     {
         return await _context.Formularios
+            .Include(f => f.Campos)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync();
