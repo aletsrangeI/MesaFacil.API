@@ -9,18 +9,23 @@ public class CredencialConfiguration : IEntityTypeConfiguration<Credencial>
     public void Configure(EntityTypeBuilder<Credencial> e)
     {
         e.ToTable("Credencial");
-        e.HasKey(x => new { x.IdUsuario, x.TipoCatalogId, x.TipoItemId });
+        
+        // [CORREGIDO] - La nueva llave primaria compuesta
+        e.HasKey(x => new { x.IdUsuario, x.IdCredencial });
+        
         e.Property(x => x.Hash).HasMaxLength(256).IsRequired();
         e.Property(x => x.Salt).HasMaxLength(128);
 
+        // Relación con Usuario
         e.HasOne(x => x.Usuario)
-            .WithMany(x => x.Credenciales)
+            .WithMany(x => x.Credenciales) // Asegúrate de tener public ICollection<Credencial> Credenciales en Usuario
             .HasForeignKey(x => x.IdUsuario)
             .OnDelete(DeleteBehavior.Cascade);
 
-        e.HasOne(x => x.TipoItem)
+        // [CORREGIDO] - Relación directa con el catálogo tipado CatCredencial
+        e.HasOne(x => x.CatCredencial)
             .WithMany()
-            .HasForeignKey(x => new { x.TipoCatalogId, x.TipoItemId })
-            .OnDelete(DeleteBehavior.Restrict);
+            .HasForeignKey(x => x.IdCredencial)
+            .OnDelete(DeleteBehavior.Restrict); 
     }
 }

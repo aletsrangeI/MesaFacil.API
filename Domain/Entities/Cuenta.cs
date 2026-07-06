@@ -1,6 +1,8 @@
+using System.Collections.Generic;
+
 namespace Domain.Entities;
 
-public class Cuenta : BaseAuditableEntity
+public class Cuenta : BaseAuditableEntity // Asume que hereda Id (o IdCuenta)
 {
     public int IdPedido { get; set; }
     public decimal Subtotal { get; set; }
@@ -9,12 +11,18 @@ public class Cuenta : BaseAuditableEntity
     public decimal ImpuestoTotal { get; set; }
     public decimal Total { get; set; }
 
-    public int EstadoCatalogId { get; set; }
-    public int EstadoItemId { get; set; }
+    // [CORREGIDO] - La única llave foránea necesaria para el estado
+    public int IdEstadoCuenta { get; set; }
 
+    // ==========================================
+    // PROPIEDADES DE NAVEGACIÓN
+    // ==========================================
     public Pedido Pedido { get; set; } = null!;
-    public CatalogItem EstadoItem { get; set; } = null!;
+    
+    // [CORREGIDO] - Propiedad de navegación tipada
+    public CatEstadoCuenta EstadoCuenta { get; set; } = null!;
 
+    // Colecciones hijas
     public ICollection<DetalleCuenta> Detalles { get; set; } = new List<DetalleCuenta>();
     public ICollection<Pago> Pagos { get; set; } = new List<Pago>();
     public ICollection<DescuentoAplicado> Descuentos { get; set; } = new List<DescuentoAplicado>();
