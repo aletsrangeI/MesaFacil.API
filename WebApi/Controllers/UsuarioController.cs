@@ -28,6 +28,7 @@ public class UsuarioController : Controller
     }
 
     [HttpGet("GetAll")]
+    [AllowAnonymous]
     public ActionResult<Response<IEnumerable<UsuarioDTO>>> GetAll()
     {
         var response = _usuarioApplication.GetAll();

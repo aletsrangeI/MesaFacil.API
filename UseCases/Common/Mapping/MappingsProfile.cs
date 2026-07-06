@@ -14,6 +14,7 @@ using DTO.Empresa;
 using DTO.EstacionCocina;
 using DTO.EventoPedido;
 using DTO.FormField;
+using DTO.Formulario;
 using DTO.GrupoModificador;
 using DTO.Menu;
 using DTO.Mesa;
@@ -44,7 +45,10 @@ public class MappingsProfile : Profile
     {
         CreateMap<RolAccesoRuta, RolAccesoRutaDTO>().ReverseMap();
         CreateMap<AccesoRuta, AccesoRutaDTO>().ReverseMap();
-        CreateMap<FormField, FormFieldDTO>().ReverseMap();
+        CreateMap<FormField, FormFieldDTO>()
+            .ReverseMap()
+            .ForMember(dest => dest.Formulario, opt => opt.Ignore());
+        CreateMap<Formulario, FormularioDTO>().ReverseMap();
         CreateMap<VarianteProducto, VarianteProductoDTO>().ReverseMap();
         CreateMap<UsuarioRol, UsuarioRolDTO>().ReverseMap();
         CreateMap<Usuario, UsuarioDTO>().ReverseMap();
