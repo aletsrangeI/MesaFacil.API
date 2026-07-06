@@ -10,7 +10,7 @@ public interface IAuthApplication
 }
 
 public sealed record LoginRequest(string UserOrEmail, string Password, int? EmpresaId = null, int? SucursalId = null);
-public sealed record PinLoginRequest(string UserOrEmail, string Pin, int? EmpresaId = null, int? SucursalId = null);
+public sealed record PinLoginRequest(string? UserOrEmail, string Pin, int? UsuarioId = null, int? EmpresaId = null, int? SucursalId = null);
 
 public sealed record TokenResult(
     bool Success,

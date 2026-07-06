@@ -78,7 +78,16 @@ public class AuthApplication : IAuthApplication
         try
         {
             // 1) Usuario + roles + credenciales
-            var usuario = await _usuarios.GetByCorreoWithRolesAndCredentialsAsync(request.UserOrEmail, ct);
+            Usuario? usuario = null;
+            if (request.UsuarioId.HasValue)
+            {
+                usuario = await _usuarios.GetAsync(request.UsuarioId.Value);
+            }
+            else if (!string.IsNullOrEmpty(request.UserOrEmail))
+            {
+                usuario = await _usuarios.GetByCorreoWithRolesAndCredentialsAsync(request.UserOrEmail, ct);
+            }
+
             if (usuario is null || !usuario.IsActive)
             {
                 response.Message = "Usuario no encontrado o inactivo.";
