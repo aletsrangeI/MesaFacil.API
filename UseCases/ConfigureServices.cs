@@ -1,7 +1,11 @@
 using System.Reflection;
+using Domain.Entities;
+using Interface.UseCases;
 using Microsoft.Extensions.DependencyInjection;
+using UseCases.Common;
 using UseCases.Menus;
 using Validator; // <-- Asegúrate de agregar este using
+
 
 namespace UseCases;
 
@@ -28,6 +32,33 @@ public static class ConfigureServices
             .AsSelf() 
             .WithTransientLifetime()); 
 
+        // 3. Registro de GenericCatalogApplication para cada catálogo simple (Cat*).
+        //    Se usa keyed services (.NET 8+) para que el CatalogosController pueda
+        //    resolver la implementación correcta por nombre de ruta.
+        RegisterGenericCatalog<CatCredencial>         (services, "credenciales");
+        RegisterGenericCatalog<CatEstacionesCocina>   (services, "estaciones-cocina");
+        RegisterGenericCatalog<CatEstadoCuenta>       (services, "estados-cuenta");
+        RegisterGenericCatalog<CatEstadoItemKDS>      (services, "estados-item-kds");
+        RegisterGenericCatalog<CatEstadoMesa>         (services, "estados-mesa");
+        RegisterGenericCatalog<CatEstadoPedido>       (services, "estados-pedido");
+        RegisterGenericCatalog<CatEstadoPedidoDetalle>(services, "estados-pedido-detalle");
+        RegisterGenericCatalog<CatEstadoTicketCocina> (services, "estados-ticket-cocina");
+        RegisterGenericCatalog<CatImpuesto>           (services, "impuestos");
+        RegisterGenericCatalog<CatMetodoDePago>       (services, "metodos-pago");
+        RegisterGenericCatalog<CatMoneda>             (services, "monedas");
+        RegisterGenericCatalog<CatTipoDescuento>      (services, "tipos-descuento");
+        RegisterGenericCatalog<CatTipoPedido>         (services, "tipos-pedido");
+
         return services;
+    }
+
+    /// <summary>
+    /// Registra GenericCatalogApplication&lt;TEntity&gt; como IGenericCatalogApplication
+    /// con una clave de servicio (serviceKey) igual al segmento de ruta del catálogo.
+    /// </summary>
+    private static void RegisterGenericCatalog<TEntity>(IServiceCollection services, string serviceKey)
+        where TEntity : BaseAuditableEntity, ICatalogEntity, new()
+    {
+        services.AddKeyedScoped<IGenericCatalogApplication, GenericCatalogApplication<TEntity>>(serviceKey);
     }
 }

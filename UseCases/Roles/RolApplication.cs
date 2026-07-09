@@ -34,7 +34,18 @@ public class RolApplication : IRolApplication
         var response = new Response<bool>();
         try
         {
+            var validation = _validationRules.Validate(dto);
+            if (!validation.IsValid)
+            {
+                response.Message = string.Join("; ", validation.Errors.Select(e => e.ErrorMessage));
+                return response;
+            }
+
             var entity = _mapper.Map<Rol>(dto);
+            // Garantizar ConcurrencyStamp siempre presente
+            if (string.IsNullOrWhiteSpace(entity.ConcurrencyStamp))
+                entity.ConcurrencyStamp = Guid.NewGuid().ToString();
+
             response.Data = _unitOfWork.Roles.Insert(entity);
 
             if (response.Data)
@@ -56,7 +67,17 @@ public class RolApplication : IRolApplication
         var response = new Response<bool>();
         try
         {
+            var validation = _validationRules.Validate(dto);
+            if (!validation.IsValid)
+            {
+                response.Message = string.Join("; ", validation.Errors.Select(e => e.ErrorMessage));
+                return response;
+            }
+
             var entity = _mapper.Map<Rol>(dto);
+            // Siempre regenerar ConcurrencyStamp en escrituras
+            entity.ConcurrencyStamp = Guid.NewGuid().ToString();
+
             response.Data = _unitOfWork.Roles.Update(entity);
 
             if (response.Data)
@@ -184,7 +205,18 @@ public class RolApplication : IRolApplication
         var response = new Response<bool>();
         try
         {
+            var validation = await _validationRules.ValidateAsync(dto);
+            if (!validation.IsValid)
+            {
+                response.Message = string.Join("; ", validation.Errors.Select(e => e.ErrorMessage));
+                return response;
+            }
+
             var entity = _mapper.Map<Rol>(dto);
+            // Garantizar ConcurrencyStamp siempre presente
+            if (string.IsNullOrWhiteSpace(entity.ConcurrencyStamp))
+                entity.ConcurrencyStamp = Guid.NewGuid().ToString();
+
             response.Data = await _unitOfWork.Roles.InsertAsync(entity);
 
             if (response.Data)
@@ -206,7 +238,17 @@ public class RolApplication : IRolApplication
         var response = new Response<bool>();
         try
         {
+            var validation = await _validationRules.ValidateAsync(dto);
+            if (!validation.IsValid)
+            {
+                response.Message = string.Join("; ", validation.Errors.Select(e => e.ErrorMessage));
+                return response;
+            }
+
             var entity = _mapper.Map<Rol>(dto);
+            // Siempre regenerar ConcurrencyStamp en escrituras
+            entity.ConcurrencyStamp = Guid.NewGuid().ToString();
+
             response.Data = await _unitOfWork.Roles.UpdateAsync(entity);
 
             if (response.Data)

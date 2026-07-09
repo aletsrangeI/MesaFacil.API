@@ -23,20 +23,25 @@ public class AuditableEntitySaveChangesInterceptor : SaveChangesInterceptor
     {
         if (context is null) return;
 
+        var now = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Unspecified);
+
         foreach (var entry in context.ChangeTracker.Entries<BaseAuditableEntity>())
         {
             switch (entry.State)
             {
                 case EntityState.Added:
-                    entry.Entity.CreatedBy = "system";
-                    entry.Entity.CreatedAt = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Unspecified);
-                    entry.Entity.UpdatedBy = "system";
-                    entry.Entity.UpdatedAt = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Unspecified);
+                    entry.Entity.CreatedBy ??= "system";
+                    entry.Entity.CreatedAt = now;
+                    entry.Entity.UpdatedBy ??= "system";
+                    entry.Entity.UpdatedAt = now;
                     break;
+
                 case EntityState.Modified:
+                    // Proteger CreatedAt: si llegó como MinValue (→ -infinity en Postgres) corregirlo
+                    if (entry.Entity.CreatedAt == DateTime.MinValue)
+                        entry.Entity.CreatedAt = now;
                     entry.Entity.UpdatedBy = "system";
-                    entry.Entity.UpdatedAt = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Unspecified);
-                    entry.Entity.CreatedBy = "system";
+                    entry.Entity.UpdatedAt = now;
                     break;
             }
         }
