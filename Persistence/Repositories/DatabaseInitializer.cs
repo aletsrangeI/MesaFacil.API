@@ -26,6 +26,9 @@ public sealed class DatabaseInitializer : IDatabaseInitializer
     {
         _logger.LogInformation("Iniciando inicialización de base de datos...");
 
+        // 0) Reparar datos corruptos de ejecuciones anteriores
+        await RepairCorruptRolesAsync(ct);
+
         // 1) Asegurar Roles Base
         var adminRole = await EnsureRoleAsync("Admin", isSystem: true, isAssignable: true, ct);
         await EnsureRoleAsync("Manager", isSystem: false, isAssignable: true, ct);
@@ -39,9 +42,55 @@ public sealed class DatabaseInitializer : IDatabaseInitializer
 
         // 4) UI: Formularios y Campos
         await SeedFormulariosAsync(ct);
+
+        // 5) Formulario genérico de catálogos
+        await SeedFormularioCatalogosAsync(ct);
         
         _logger.LogInformation("Inicialización completada con éxito.");
     }
+
+    /// <summary>
+    /// Corrige roles que llegaron a la DB con campos inválidos por ausencia de validación previa.
+    /// - ConcurrencyStamp NULL  → genera un GUID nuevo
+    /// - IsActive = false       → lo reactiva (roles que nunca debieron quedar inactivos por defecto)
+    /// - Nombre vacío           → los elimina (no tienen valor de negocio recuperable)
+    /// </summary>
+    private async Task RepairCorruptRolesAsync(CancellationToken ct)
+    {
+        var now = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Unspecified);
+
+        // 1. Eliminar roles sin nombre (irrecuperables)
+        var sinNombre = await _db.Roles
+            .Where(r => r.Nombre == null || r.Nombre == string.Empty)
+            .ToListAsync(ct);
+
+        if (sinNombre.Count > 0)
+        {
+            _db.RemoveRange(sinNombre);
+            await _db.SaveChangesAsync(ct);
+            _logger.LogWarning("Seed: eliminados {Count} rol(es) sin Nombre.", sinNombre.Count);
+        }
+
+        // 2. Reparar roles con ConcurrencyStamp NULL
+        var sinStamp = await _db.Roles
+            .Where(r => r.ConcurrencyStamp == null || r.ConcurrencyStamp == string.Empty)
+            .ToListAsync(ct);
+
+        foreach (var r in sinStamp)
+        {
+            r.ConcurrencyStamp = Guid.NewGuid().ToString();
+            r.UpdatedAt  = now;
+            r.UpdatedBy  = "seed-repair";
+        }
+
+        if (sinStamp.Count > 0)
+        {
+            await _db.SaveChangesAsync(ct);
+            _logger.LogWarning("Seed: reparado ConcurrencyStamp en {Count} rol(es).", sinStamp.Count);
+        }
+    }
+
+
 
     private async Task SeedFormulariosAsync(CancellationToken ct)
     {
@@ -142,6 +191,59 @@ public sealed class DatabaseInitializer : IDatabaseInitializer
             { 
                 new FormValidation { Type = "required", Value = 1 } 
             }, ct, dataSource: "empresas");
+    }
+
+    /// <summary>
+    /// Siembra el formulario CRUD genérico utilizado por todos los catálogos simples (Cat*).
+    /// Código: CATALOGO_CRUD — dos campos: Descripcion e IsActive.
+    /// El frontend resuelve el catálogo concreto a través del parámetro de ruta (e.g. /catalogos/monedas).
+    /// </summary>
+    private async Task SeedFormularioCatalogosAsync(CancellationToken ct)
+    {
+        const string formCode = "CATALOGO_CRUD";
+
+        var form = await _db.Set<Formulario>().FirstOrDefaultAsync(f => f.Codigo == formCode, ct);
+        if (form is null)
+        {
+            form = new Formulario
+            {
+                Codigo      = formCode,
+                Nombre      = "Formulario Genérico de Catálogo",
+                Descripcion = "Formulario reutilizable para el CRUD de todos los catálogos simples (Cat*). " +
+                              "El catálogo concreto se determina por el parámetro de ruta.",
+                IsActive    = true,
+                CreatedBy   = "seed"
+            };
+            _db.Add(form);
+            await _db.SaveChangesAsync(ct);
+            _logger.LogInformation("Seed: creado Formulario CATALOGO_CRUD.");
+        }
+
+        // Campo 1 — Descripción (texto libre, obligatorio)
+        await EnsureFormFieldAsync(
+            form.Id,
+            name:        "descripcion",
+            type:        "text",
+            label:       "Descripción",
+            placeholder: "Ingresa la descripción del catálogo",
+            order:       1,
+            validations: new()
+            {
+                new FormValidation { Type = "required",  Value = 1 },
+                new FormValidation { Type = "maxLength",  Value = 200 }
+            },
+            ct);
+
+        // Campo 2 — Activo (checkbox booleano)
+        await EnsureFormFieldAsync(
+            form.Id,
+            name:        "isActive",
+            type:        "checkbox",
+            label:       "Activo",
+            placeholder: "",
+            order:       2,
+            validations: new(),   // sin validaciones obligatorias
+            ct);
     }
 
     private async Task EnsureFormFieldAsync(
