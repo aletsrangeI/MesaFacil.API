@@ -1,4 +1,4 @@
-﻿using Interface.Persistence;
+using Interface.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -46,6 +46,11 @@ public static class ConfigureServices
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         
         services.AddScoped<IDatabaseInitializer, DatabaseInitializer>();
+
+        // Repositorio genérico para todos los catálogos simples (Cat*).
+        // Al registrar el tipo abierto, el DI resuelve IGenericRepository<CatMoneda>
+        // → GenericCatalogRepository<CatMoneda> automáticamente.
+        services.AddScoped(typeof(IGenericRepository<>), typeof(GenericCatalogRepository<>));
 
         return services;
     }
