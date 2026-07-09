@@ -55,7 +55,20 @@ public class ApplicationDbContext : DbContext
     public DbSet<AccesoRuta> AccesoRutas { get; set; }
     public DbSet<RolAccesoRuta> RolAccesoRutas { get; set; }
     public DbSet<Formulario> Formularios { get; set; }
-    public DbSet<CatCredencial> CatCredenciales { get; set; }
+    public DbSet<CatCredencial>          CatCredenciales         { get; set; }
+    public DbSet<CatEstacionesCocina>    CatEstacionesCocina     { get; set; }
+    public DbSet<CatEstadoCuenta>        CatEstadosCuenta        { get; set; }
+    public DbSet<CatEstadoItemKDS>       CatEstadosItemKDS       { get; set; }
+    public DbSet<CatEstadoMesa>          CatEstadosMesa          { get; set; }
+    public DbSet<CatEstadoPedido>        CatEstadosPedido        { get; set; }
+    public DbSet<CatEstadoPedidoDetalle> CatEstadosPedidoDetalle { get; set; }
+    public DbSet<CatEstadoTicketCocina>  CatEstadosTicketCocina  { get; set; }
+    public DbSet<CatImpuesto>            CatImpuestos            { get; set; }
+    public DbSet<CatMetodoDePago>        CatMetodosDePago        { get; set; }
+    public DbSet<CatMoneda>              CatMonedas              { get; set; }
+    public DbSet<CatTipoDescuento>       CatTiposDescuento       { get; set; }
+    public DbSet<CatTipoPedido>          CatTiposPedido          { get; set; }
+
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
