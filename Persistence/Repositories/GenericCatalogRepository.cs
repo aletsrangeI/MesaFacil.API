@@ -24,7 +24,7 @@ public class GenericCatalogRepository<TEntity> : IGenericRepository<TEntity>
 
     #region Métodos síncronos
 
-    public bool Insert(TEntity entity)c
+    public bool Insert(TEntity entity)
     {
         _dbSet.Add(entity);
         return _context.SaveChanges() > 0;
