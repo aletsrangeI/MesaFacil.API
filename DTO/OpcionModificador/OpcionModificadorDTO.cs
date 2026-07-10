@@ -7,4 +7,5 @@ public class OpcionModificadorDTO
     public string? Nombre { get; set; }
     public decimal PrecioExtra { get; set; }
     public bool EsDefault { get; set; }
+    public bool Activo { get; set; }
 }

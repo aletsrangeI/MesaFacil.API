@@ -46,6 +46,25 @@ public sealed class DatabaseInitializer : IDatabaseInitializer
         // 5) Formulario genérico de catálogos
         await SeedFormularioCatalogosAsync(ct);
         
+        // 6) Formulario de Productos
+        await SeedFormularioProductosAsync(ct);
+        
+        // 7) Formulario de Categorias
+        await SeedFormularioCategoriasAsync(ct);
+        
+        // 8) Formulario de Menus
+        await SeedFormularioMenusAsync(ct);
+        
+        // 9) Formulario de Variantes
+        await SeedFormularioVariantesAsync(ct);
+        
+        // 10) Formulario de Precios
+        await SeedFormularioPreciosAsync(ct);
+        
+        // 11) Formularios de Modificadores
+        await SeedFormularioGrupoModificadorAsync(ct);
+        await SeedFormularioOpcionModificadorAsync(ct);
+        
         _logger.LogInformation("Inicialización completada con éxito.");
     }
 
@@ -244,6 +263,264 @@ public sealed class DatabaseInitializer : IDatabaseInitializer
             order:       2,
             validations: new(),   // sin validaciones obligatorias
             ct);
+    }
+
+    private async Task SeedFormularioProductosAsync(CancellationToken ct)
+    {
+        const string formCode = "PRODUCTO_CRUD";
+
+        var form = await _db.Set<Formulario>().FirstOrDefaultAsync(f => f.Codigo == formCode, ct);
+        if (form is null)
+        {
+            form = new Formulario
+            {
+                Codigo      = formCode,
+                Nombre      = "Formulario de Productos",
+                Descripcion = "CRUD para la gestión de productos",
+                IsActive    = true,
+                CreatedBy   = "seed"
+            };
+            _db.Add(form);
+            await _db.SaveChangesAsync(ct);
+            _logger.LogInformation("Seed: creado Formulario PRODUCTO_CRUD.");
+        }
+
+        await EnsureFormFieldAsync(form.Id, "nombre", "text", "Nombre", "Ingresa el nombre del producto", 1, 
+            new() { new FormValidation { Type = "required", Value = 1 } }, ct);
+
+        await EnsureFormFieldAsync(form.Id, "codigo", "text", "Código", "Ingresa el código del producto", 2, 
+            new() { new FormValidation { Type = "required", Value = 1 } }, ct);
+
+        await EnsureFormFieldAsync(form.Id, "descripcion", "text", "Descripción", "Descripción del producto", 3, 
+            new(), ct);
+
+        await EnsureFormFieldAsync(form.Id, "idMenu", "select", "Menú", "Selecciona el menú", 4, 
+            new() { new FormValidation { Type = "required", Value = 1 } }, ct, dataSource: "menus");
+
+        await EnsureFormFieldAsync(form.Id, "idCategoria", "select", "Categoría", "Selecciona la categoría", 5, 
+            new() { new FormValidation { Type = "required", Value = 1 } }, ct, dataSource: "categorias");
+
+        await EnsureFormFieldAsync(form.Id, "idEstacionCocina", "select", "Estación KDS", "Selecciona la estación", 6, 
+            new(), ct, dataSource: "estaciones");
+
+        await EnsureFormFieldAsync(form.Id, "activo", "checkbox", "Activo", "", 7, 
+            new(), ct);
+    }
+
+    private async Task SeedFormularioCategoriasAsync(CancellationToken ct)
+    {
+        const string formCode = "CATEGORIA_CRUD";
+
+        var form = await _db.Set<Formulario>().FirstOrDefaultAsync(f => f.Codigo == formCode, ct);
+        if (form is null)
+        {
+            form = new Formulario
+            {
+                Codigo      = formCode,
+                Nombre      = "Formulario de Categorías",
+                Descripcion = "CRUD para la gestión de categorías del menú",
+                IsActive    = true,
+                CreatedBy   = "seed"
+            };
+            _db.Add(form);
+            await _db.SaveChangesAsync(ct);
+            _logger.LogInformation("Seed: creado Formulario CATEGORIA_CRUD.");
+        }
+
+        await EnsureFormFieldAsync(form.Id, "nombre", "text", "Nombre", "Ingresa el nombre de la categoría", 1, 
+            new() { new FormValidation { Type = "required", Value = 1 } }, ct);
+
+        await EnsureFormFieldAsync(form.Id, "idMenu", "select", "Menú", "Selecciona el menú", 2, 
+            new() { new FormValidation { Type = "required", Value = 1 } }, ct, dataSource: "menus");
+
+        await EnsureFormFieldAsync(form.Id, "orden", "text", "Orden", "Orden de aparición (Ej. 1, 2, 3)", 3, 
+            new() { new FormValidation { Type = "required", Value = 1 } }, ct);
+
+        await EnsureFormFieldAsync(form.Id, "activo", "checkbox", "Activo", "", 4, 
+            new(), ct);
+    }
+
+    private async Task SeedFormularioMenusAsync(CancellationToken ct)
+    {
+        const string formCode = "MENU_CRUD";
+
+        var form = await _db.Set<Formulario>().FirstOrDefaultAsync(f => f.Codigo == formCode, ct);
+        if (form is null)
+        {
+            form = new Formulario
+            {
+                Codigo      = formCode,
+                Nombre      = "Formulario de Menús",
+                Descripcion = "CRUD para la gestión de menús",
+                IsActive    = true,
+                CreatedBy   = "seed"
+            };
+            _db.Add(form);
+            await _db.SaveChangesAsync(ct);
+            _logger.LogInformation("Seed: creado Formulario MENU_CRUD.");
+        }
+
+        await EnsureFormFieldAsync(form.Id, "nombre", "text", "Nombre", "Ingresa el nombre del menú", 1, 
+            new() { new FormValidation { Type = "required", Value = 1 } }, ct);
+
+        await EnsureFormFieldAsync(form.Id, "idSucursal", "select", "Sucursal", "Selecciona la sucursal", 2, 
+            new() { new FormValidation { Type = "required", Value = 1 } }, ct, dataSource: "sucursales");
+
+        await EnsureFormFieldAsync(form.Id, "activo", "checkbox", "Activo", "", 3, 
+            new(), ct);
+    }
+
+    private async Task SeedFormularioVariantesAsync(CancellationToken ct)
+    {
+        const string formCode = "VARIANTE_CRUD";
+
+        var form = await _db.Set<Formulario>().FirstOrDefaultAsync(f => f.Codigo == formCode, ct);
+        if (form is null)
+        {
+            form = new Formulario
+            {
+                Codigo      = formCode,
+                Nombre      = "Formulario de Variantes",
+                Descripcion = "CRUD para la gestión de variantes de productos",
+                IsActive    = true,
+                CreatedBy   = "seed"
+            };
+            _db.Add(form);
+            await _db.SaveChangesAsync(ct);
+            _logger.LogInformation("Seed: creado Formulario VARIANTE_CRUD.");
+        }
+
+        await EnsureFormFieldAsync(form.Id, "nombre", "text", "Nombre", "Ej: Regular, Grande, Extra", 1, 
+            new() { new FormValidation { Type = "required", Value = 1 } }, ct);
+
+        await EnsureFormFieldAsync(form.Id, "codigo", "text", "Código", "Código interno (opcional)", 2, 
+            new(), ct);
+
+        await EnsureFormFieldAsync(form.Id, "idProducto", "select", "Producto", "Selecciona el producto", 3, 
+            new() { new FormValidation { Type = "required", Value = 1 } }, ct, dataSource: "productos");
+
+        await EnsureFormFieldAsync(form.Id, "esDefault", "checkbox", "Es Default", "", 4, 
+            new(), ct);
+
+        await EnsureFormFieldAsync(form.Id, "activo", "checkbox", "Activo", "", 5, 
+            new(), ct);
+    }
+
+    private async Task SeedFormularioPreciosAsync(CancellationToken ct)
+    {
+        const string formCode = "PRECIO_CRUD";
+
+        var form = await _db.Set<Formulario>().FirstOrDefaultAsync(f => f.Codigo == formCode, ct);
+        if (form is null)
+        {
+            form = new Formulario
+            {
+                Codigo      = formCode,
+                Nombre      = "Formulario de Precios",
+                Descripcion = "CRUD para la gestión de precios",
+                IsActive    = true,
+                CreatedBy   = "seed"
+            };
+            _db.Add(form);
+            await _db.SaveChangesAsync(ct);
+            _logger.LogInformation("Seed: creado Formulario PRECIO_CRUD.");
+        }
+
+        await EnsureFormFieldAsync(form.Id, "idVariante", "select", "Variante", "Selecciona la variante", 1, 
+            new() { new FormValidation { Type = "required", Value = 1 } }, ct, dataSource: "variantes");
+
+        await EnsureFormFieldAsync(form.Id, "monto", "text", "Monto", "0.00", 2, 
+            new() { new FormValidation { Type = "required", Value = 1 } }, ct);
+
+        await EnsureFormFieldAsync(form.Id, "idMoneda", "select", "Moneda", "Selecciona la moneda", 3, 
+            new() { new FormValidation { Type = "required", Value = 1 } }, ct, dataSource: "monedas");
+
+        await EnsureFormFieldAsync(form.Id, "idImpuesto", "select", "Impuesto", "Selecciona el impuesto", 4, 
+            new() { new FormValidation { Type = "required", Value = 1 } }, ct, dataSource: "impuestos");
+
+        await EnsureFormFieldAsync(form.Id, "validoDesde", "date", "Válido Desde", "", 5, 
+            new(), ct);
+
+        await EnsureFormFieldAsync(form.Id, "validoHasta", "date", "Válido Hasta", "", 6, 
+            new(), ct);
+
+        await EnsureFormFieldAsync(form.Id, "activo", "checkbox", "Activo", "", 7, 
+            new(), ct);
+    }
+
+    private async Task SeedFormularioGrupoModificadorAsync(CancellationToken ct)
+    {
+        const string formCode = "GRUPO_MODIFICADOR_CRUD";
+
+        var form = await _db.Set<Formulario>().FirstOrDefaultAsync(f => f.Codigo == formCode, ct);
+        if (form is null)
+        {
+            form = new Formulario
+            {
+                Codigo      = formCode,
+                Nombre      = "Formulario de Grupo de Modificadores",
+                Descripcion = "CRUD para grupos de modificadores",
+                IsActive    = true,
+                CreatedBy   = "seed"
+            };
+            _db.Add(form);
+            await _db.SaveChangesAsync(ct);
+            _logger.LogInformation("Seed: creado Formulario GRUPO_MODIFICADOR_CRUD.");
+        }
+
+        await EnsureFormFieldAsync(form.Id, "nombre", "text", "Nombre", "Ej: Tipo de Pan", 1, 
+            new() { new FormValidation { Type = "required", Value = 1 } }, ct);
+
+        await EnsureFormFieldAsync(form.Id, "idProducto", "select", "Producto", "Selecciona el producto", 2, 
+            new() { new FormValidation { Type = "required", Value = 1 } }, ct, dataSource: "productos");
+
+        await EnsureFormFieldAsync(form.Id, "minSeleccion", "text", "Selección Mínima", "0", 3, 
+            new() { new FormValidation { Type = "required", Value = 1 } }, ct);
+
+        await EnsureFormFieldAsync(form.Id, "maxSeleccion", "text", "Selección Máxima", "1", 4, 
+            new() { new FormValidation { Type = "required", Value = 1 } }, ct);
+
+        await EnsureFormFieldAsync(form.Id, "obligatorio", "checkbox", "Obligatorio", "", 5, 
+            new(), ct);
+
+        await EnsureFormFieldAsync(form.Id, "activo", "checkbox", "Activo", "", 6, 
+            new(), ct);
+    }
+
+    private async Task SeedFormularioOpcionModificadorAsync(CancellationToken ct)
+    {
+        const string formCode = "OPCION_MODIFICADOR_CRUD";
+
+        var form = await _db.Set<Formulario>().FirstOrDefaultAsync(f => f.Codigo == formCode, ct);
+        if (form is null)
+        {
+            form = new Formulario
+            {
+                Codigo      = formCode,
+                Nombre      = "Formulario de Opción de Modificadores",
+                Descripcion = "CRUD para opciones de modificadores",
+                IsActive    = true,
+                CreatedBy   = "seed"
+            };
+            _db.Add(form);
+            await _db.SaveChangesAsync(ct);
+            _logger.LogInformation("Seed: creado Formulario OPCION_MODIFICADOR_CRUD.");
+        }
+
+        await EnsureFormFieldAsync(form.Id, "nombre", "text", "Nombre", "Ej: Pan Blanco", 1, 
+            new() { new FormValidation { Type = "required", Value = 1 } }, ct);
+
+        await EnsureFormFieldAsync(form.Id, "idGrupo", "select", "Grupo", "Selecciona el grupo", 2, 
+            new() { new FormValidation { Type = "required", Value = 1 } }, ct, dataSource: "grupoModificadores");
+
+        await EnsureFormFieldAsync(form.Id, "precioExtra", "text", "Precio Extra", "0.00", 3, 
+            new() { new FormValidation { Type = "required", Value = 1 } }, ct);
+
+        await EnsureFormFieldAsync(form.Id, "esDefault", "checkbox", "Es Default", "", 4, 
+            new(), ct);
+
+        await EnsureFormFieldAsync(form.Id, "activo", "checkbox", "Activo", "", 5, 
+            new(), ct);
     }
 
     private async Task EnsureFormFieldAsync(
@@ -619,6 +896,9 @@ public sealed class DatabaseInitializer : IDatabaseInitializer
                 // Dispositivos
                 Perm("DEVICES_ADMIN", "Dispositivos", "/admin/devices", "DEVICES", isMenu: true),
 
+                // Menú y Productos
+                Perm("MENU_ADMIN", "Gestión de Menú", "/menu", "MENU", isMenu: true),
+
                 // Reportes
                 Perm("REPORTS_VIEW", "Reportes", "/admin/reports", "REPORTS", isMenu: true),
             };
@@ -705,6 +985,7 @@ public sealed class DatabaseInitializer : IDatabaseInitializer
                 "CATALOG_ADMIN",
                 "FORMS_ADMIN",
                 "PRICING_ADMIN",
+                "MENU_ADMIN",
                 "INVENTORY_READ", "INVENTORY_WRITE",
                 "DEVICES_ADMIN",
                 "REPORTS_VIEW"
