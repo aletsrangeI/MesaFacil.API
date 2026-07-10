@@ -23,10 +23,12 @@ public class PrecioDTOValidator : AbstractValidator<PrecioDTO>
             .WithMessage("El campo Moneda debe contener solo letras mayúsculas (ej: MXN, USD, EUR).");
 
         // Impuesto requerido
-        RuleFor(x => x.ImpuestoCatalogId)
-            .GreaterThan(0).WithMessage("El campo ImpuestoCatalogId es requerido y debe ser mayor a 0.");
-        RuleFor(x => x.ImpuestoItemId)
-            .GreaterThan(0).WithMessage("El campo ImpuestoItemId es requerido y debe ser mayor a 0.");
+        RuleFor(x => x.IdImpuesto)
+            .GreaterThan(0).WithMessage("El campo IdImpuesto es requerido y debe ser mayor a 0.");
+            
+        // Moneda requerida
+        RuleFor(x => x.IdMoneda)
+            .GreaterThan(0).WithMessage("El campo IdMoneda es requerido y debe ser mayor a 0.");
 
         // Validaciones de fechas
         RuleFor(x => x.ValidoHasta)

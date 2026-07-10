@@ -8,4 +8,5 @@ public class GrupoModificadorDTO
     public int MinSeleccion { get; set; }
     public int MaxSeleccion { get; set; }
     public bool Obligatorio { get; set; }
+    public bool Activo { get; set; }
 }
