@@ -7,4 +7,5 @@ public class VarianteProductoDTO
     public string? Nombre { get; set; }
     public string? Codigo { get; set; }
     public bool EsDefault { get; set; }
+    public bool Activo { get; set; }
 }
