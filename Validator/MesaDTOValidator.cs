@@ -29,10 +29,7 @@ public class MesaDTOValidator : AbstractValidator<MesaDTO>
             .LessThanOrEqualTo(20).WithMessage("Asientos no debe exceder 20.");
 
         // Estado requerido (par cat/item)
-        RuleFor(x => x.EstadoCatalogId)
-            .GreaterThan(0).WithMessage("EstadoCatalogId es requerido y debe ser mayor a 0.");
-
-        RuleFor(x => x.EstadoItemId)
-            .GreaterThan(0).WithMessage("EstadoItemId es requerido y debe ser mayor a 0.");
+        RuleFor(x => x.IdEstadoMesa)
+            .GreaterThan(0).WithMessage("IdEstadoMesa es requerido y debe ser mayor a 0.");
     }
 }

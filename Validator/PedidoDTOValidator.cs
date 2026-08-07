@@ -51,16 +51,12 @@ public PedidoDTOValidator()
             .When(x => !string.IsNullOrWhiteSpace(x.Notas))
             .WithMessage("Notas no debe exceder los 500 caracteres.");
 
-        // Tipo y Estado (par cat/item) requeridos
-        RuleFor(x => x.TipoCatalogId)
-            .GreaterThan(0).WithMessage("TipoCatalogId es requerido y debe ser mayor a 0.");
-        RuleFor(x => x.TipoItemId)
-            .GreaterThan(0).WithMessage("TipoItemId es requerido y debe ser mayor a 0.");
+        // Tipo y Estado requeridos
+        RuleFor(x => x.IdTipoPedido)
+            .GreaterThan(0).WithMessage("IdTipoPedido es requerido y debe ser mayor a 0.");
 
-        RuleFor(x => x.EstadoCatalogId)
-            .GreaterThan(0).WithMessage("EstadoCatalogId es requerido y debe ser mayor a 0.");
-        RuleFor(x => x.EstadoItemId)
-            .GreaterThan(0).WithMessage("EstadoItemId es requerido y debe ser mayor a 0.");
+        RuleFor(x => x.IdEstadoPedido)
+            .GreaterThan(0).WithMessage("IdEstadoPedido es requerido y debe ser mayor a 0.");
 
         // Cargo de servicio como porcentaje 0–100
         RuleFor(x => x.CargoServicioPct)

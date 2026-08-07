@@ -42,10 +42,10 @@ public class PedidoConfiguration : IEntityTypeConfiguration<Pedido>
             .HasForeignKey(x => x.IdMesa)
             .OnDelete(DeleteBehavior.SetNull);
 
-        e.HasOne(x => x.Mesa)
+        e.HasOne(x => x.Sucursal)
             .WithMany(x => x.Pedidos)
-            .HasForeignKey(x => x.IdMesa)
-            .OnDelete(DeleteBehavior.SetNull);
+            .HasForeignKey(x => x.IdSucursal)
+            .OnDelete(DeleteBehavior.Restrict);
 
         e.HasOne(x => x.Cliente)
             .WithMany(x => x.Pedidos) // <-- IMPORTANTE

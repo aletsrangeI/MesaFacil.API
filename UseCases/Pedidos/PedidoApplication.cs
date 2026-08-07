@@ -201,6 +201,29 @@ public class PedidoApplication : IPedidoApplication
         return response;
     }
 
+    public async Task<Response<int>> InsertConDetallesAsync(CrearPedidoRequestDTO dto)
+    {
+        var response = new Response<int>();
+        try
+        {
+            var entity = _mapper.Map<Pedido>(dto);
+            var success = await _unitOfWork.Pedidos.InsertAsync(entity);
+
+            if (success)
+            {
+                response.Data = entity.Id;
+                response.isSuccess = true;
+                response.Message = "Pedido con detalles creado correctamente";
+            }
+        }
+        catch (Exception ex)
+        {
+            response.Message = ex.Message;
+            _logger.LogError(ex.Message);
+        }
+        return response;
+    }
+
     public async Task<Response<bool>> UpdateAsync(PedidoDTO dto)
     {
         var response = new Response<bool>();

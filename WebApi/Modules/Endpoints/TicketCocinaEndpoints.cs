@@ -18,18 +18,18 @@ public static class TicketCocinaEndpoints
         // =========================================================
 
         group.MapPost("/insert",
-                (TicketCocinaDTO dto, ITicketCocinaApplication svc, CancellationToken ct) =>
+                Results<Ok<Response<int>>, BadRequest<Response<int>>> (TicketCocinaDTO dto, ITicketCocinaApplication svc, CancellationToken ct) =>
                 {
-                    Response<bool> result = svc.Insert(dto);
-                    return TypedResults.Ok(result);
+                    Response<int> result = svc.Insert(dto);
+                    return result.isSuccess ? TypedResults.Ok(result) : TypedResults.BadRequest(result);
                 })
             .WithName("TicketCocina_Insert");
 
         group.MapPost("/insert-async",
-                async (TicketCocinaDTO dto, ITicketCocinaApplication svc, CancellationToken ct) =>
+                async Task<Results<Ok<Response<int>>, BadRequest<Response<int>>>> (TicketCocinaDTO dto, ITicketCocinaApplication svc, CancellationToken ct) =>
                 {
-                    Response<bool> result = await svc.InsertAsync(dto);
-                    return TypedResults.Ok(result);
+                    Response<int> response = await svc.InsertAsync(dto);
+                    return response.isSuccess ? TypedResults.Ok(response) : TypedResults.BadRequest(response);
                 })
             .WithName("TicketCocina_Insert_Async");
 

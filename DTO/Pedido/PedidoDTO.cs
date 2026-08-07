@@ -12,9 +12,7 @@ public class PedidoDTO
     public DateTime AbiertoEn { get; set; }
     public DateTime? CerradoEn { get; set; }
     public string? Notas { get; set; }
-    public int TipoCatalogId { get; set; }
-    public int TipoItemId { get; set; }
-    public int EstadoCatalogId { get; set; }
-    public int EstadoItemId { get; set; }
+    public int IdTipoPedido { get; set; }
+    public int IdEstadoPedido { get; set; }
     public decimal CargoServicioPct { get; set; }
 }
