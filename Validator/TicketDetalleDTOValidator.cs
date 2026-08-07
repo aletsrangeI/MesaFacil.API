@@ -17,12 +17,8 @@ public class TicketDetalleDTOValidator : AbstractValidator<TicketDetalleDTO>
             .WithMessage("El campo IdDetalle es requerido y debe ser mayor a 0.");
 
         // Estado requerido
-        RuleFor(x => x.EstadoCatalogId)
+        RuleFor(x => x.IdEstadoItemKDS)
             .GreaterThan(0)
-            .WithMessage("El campo EstadoCatalogId es requerido y debe ser mayor a 0.");
-
-        RuleFor(x => x.EstadoItemId)
-            .GreaterThan(0)
-            .WithMessage("El campo EstadoItemId es requerido y debe ser mayor a 0.");
+            .WithMessage("El campo IdEstadoItemKDS es requerido y debe ser mayor a 0.");
     }
 }

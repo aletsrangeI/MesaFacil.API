@@ -35,6 +35,7 @@ public class PrecioApplication : IPrecioApplication
         try
         {
             var entity = _mapper.Map<Precio>(dto);
+            entity.Moneda ??= "MXN";
             response.Data = _unitOfWork.Precios.Insert(entity);
 
             if (response.Data)
@@ -57,6 +58,7 @@ public class PrecioApplication : IPrecioApplication
         try
         {
             var entity = _mapper.Map<Precio>(dto);
+            entity.Moneda ??= "MXN";
             response.Data = _unitOfWork.Precios.Update(entity);
 
             if (response.Data)
@@ -185,6 +187,7 @@ public class PrecioApplication : IPrecioApplication
         try
         {
             var entity = _mapper.Map<Precio>(dto);
+            entity.Moneda ??= "MXN";
             response.Data = await _unitOfWork.Precios.InsertAsync(entity);
 
             if (response.Data)
@@ -207,6 +210,7 @@ public class PrecioApplication : IPrecioApplication
         try
         {
             var entity = _mapper.Map<Precio>(dto);
+            entity.Moneda ??= "MXN";
             response.Data = await _unitOfWork.Precios.UpdateAsync(entity);
 
             if (response.Data)

@@ -5,6 +5,6 @@ public class TicketDetalleDTO
     public int Id { get; set; }
     public int IdTicket { get; set; }
     public int IdDetalle { get; set; }
-    public int EstadoCatalogId { get; set; }
-    public int EstadoItemId { get; set; }
+    public int IdEstadoItemKDS { get; set; }
+    public bool Activo { get; set; }
 }

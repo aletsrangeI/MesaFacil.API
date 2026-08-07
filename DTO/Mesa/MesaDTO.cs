@@ -7,6 +7,5 @@ public class MesaDTO
     public int? IdArea { get; set; }
     public string Codigo { get; set; }
     public int Asientos { get; set; }
-    public int EstadoCatalogId { get; set; }
-    public int EstadoItemId { get; set; }
+    public int IdEstadoMesa { get; set; }
 }

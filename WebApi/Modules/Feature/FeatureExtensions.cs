@@ -14,7 +14,8 @@ public static class FeatureExtensions
                     .WithOrigins(
                         "http://100.110.215.58:8081",
                         "http://100.110.215.58",
-                        "https://orionsys.net"
+                        "https://orionsys.net",
+                        "http://localhost:5173"
                     )
                     .AllowAnyHeader()
                     .AllowAnyMethod()
