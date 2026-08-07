@@ -1,7 +1,7 @@
 # 07 Testing
 
 ## Estrategia de Pruebas
-Actualmente el repositorio no muestra proyectos explícitos de pruebas (`Tests`, `UnitTests`), pero para futuras funcionalidades y módulos, se deben seguir las siguientes pautas.
+Actualmente el repositorio cuenta con un proyecto de pruebas llamado `MesaFacil.API.UnitTests` basado en **xUnit**, que sirve de base para futuras funcionalidades y módulos. Las pruebas existentes y nuevas deben seguir las siguientes pautas.
 
 ## Qué Probar (Prioridades)
 1. **Lógica de Dominio:** Comportamiento dentro de las entidades (si se añade lógica rica en lugar de modelo anémico).
@@ -17,3 +17,4 @@ Actualmente el repositorio no muestra proyectos explícitos de pruebas (`Tests`,
 - El nombre del test debe describir la intención. 
 - Formato sugerido: `MetodoAProbar_Condicion_ResultadoEsperado`
 - Ejemplo: `CreatePedidoAsync_WithInvalidMesaId_ReturnsError`
+Pue

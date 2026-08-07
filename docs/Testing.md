@@ -18,4 +18,5 @@ Al escribir pruebas o configurar entornos de testing.
 - Ejemplos
 
 ## Estado
-> Pendiente de documentar.
+> El repositorio ya cuenta con el proyecto `MesaFacil.API.UnitTests` preconfigurado con `xUnit`, `Moq` y `FluentAssertions`.
+> Puedes ver los lineamientos detallados en [07-testing.md](./07-testing.md).

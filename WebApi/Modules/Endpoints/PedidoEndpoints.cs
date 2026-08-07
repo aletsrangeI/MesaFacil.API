@@ -33,6 +33,14 @@ public static class PedidoEndpoints
                 })
             .WithName("Pedido_Insert_Async");
 
+        group.MapPost("/insert-con-detalles",
+                async (CrearPedidoRequestDTO dto, IPedidoApplication svc, CancellationToken ct) =>
+                {
+                    Response<int> result = await svc.InsertConDetallesAsync(dto);
+                    return TypedResults.Ok(result);
+                })
+            .WithName("Pedido_Insert_Con_Detalles");
+
         // =========================================================
         // UPDATE
         // =========================================================

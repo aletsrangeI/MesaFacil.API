@@ -37,9 +37,12 @@ public class AuditableEntitySaveChangesInterceptor : SaveChangesInterceptor
                     break;
 
                 case EntityState.Modified:
-                    // Proteger CreatedAt: si llegó como MinValue (→ -infinity en Postgres) corregirlo
+                    // Proteger CreatedAt/CreatedBy si vienen vacíos de un DTO mapping
                     if (entry.Entity.CreatedAt == DateTime.MinValue)
                         entry.Entity.CreatedAt = now;
+                    if (string.IsNullOrEmpty(entry.Entity.CreatedBy))
+                        entry.Entity.CreatedBy = "system";
+                        
                     entry.Entity.UpdatedBy = "system";
                     entry.Entity.UpdatedAt = now;
                     break;
