@@ -7,7 +7,7 @@ public interface ITicketCocinaApplication
 {
     #region Metodos sincronos
 
-    Response<bool> Insert(TicketCocinaDTO dto);
+    Response<int> Insert(TicketCocinaDTO dto);
     Response<bool> Update(TicketCocinaDTO dto);
     Response<bool> Delete(int id);
     Response<TicketCocinaDTO> Get(int id);
@@ -19,7 +19,7 @@ public interface ITicketCocinaApplication
 
     #region Metodos asincronos
 
-    Task<Response<bool>> InsertAsync(TicketCocinaDTO dto);
+    Task<Response<int>> InsertAsync(TicketCocinaDTO dto);
     Task<Response<bool>> UpdateAsync(TicketCocinaDTO dto);
     Task<Response<bool>> DeleteAsync(int id);
     Task<Response<TicketCocinaDTO>> GetAsync(int id);

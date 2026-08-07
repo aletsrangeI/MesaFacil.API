@@ -13,12 +13,9 @@ public class TicketCocinaDTOValidator : AbstractValidator<TicketCocinaDTO>
         RuleFor(x => x.IdPedido)
             .GreaterThan(0).WithMessage("El campo IdPedido es requerido y debe ser mayor a 0.");
 
-        // Estado requerido (par cat/item)
-        RuleFor(x => x.EstadoCatalogId)
-            .GreaterThan(0).WithMessage("El campo EstadoCatalogId es requerido y debe ser mayor a 0.");
-
-        RuleFor(x => x.EstadoItemId)
-            .GreaterThan(0).WithMessage("El campo EstadoItemId es requerido y debe ser mayor a 0.");
+        // Estado requerido
+        RuleFor(x => x.IdEstadoTicketCocina)
+            .GreaterThan(0).WithMessage("El campo IdEstadoTicketCocina es requerido y debe ser mayor a 0.");
 
         // CompletadoEn opcional, pero si existe debe ser válido (no en el futuro)
         RuleFor(x => x.CompletadoEn)

@@ -10,7 +10,10 @@ using Persistence.Security;
 using Scalar.AspNetCore;
 using UseCases;
 using WatchDog;
+using WebApi.Hubs;
 using JwtOptions = MesaFacil.API.Modules.Authentication.JwtOptions;
+
+AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -59,6 +62,8 @@ builder.Services.AddJwtAuthentication(builder.Configuration);
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
 builder.Services.AddScoped<IPasswordHasher, Pbkdf2PasswordHasher>();
 
+builder.Services.AddSignalR();
+
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
@@ -97,8 +102,9 @@ app.UseWatchDog(conf =>
 });
 
 app.MapControllers();
+app.MapHub<KdsHub>("/hubs/kds");
 
-    app.Run();
+app.Run();
 
 public partial class Program
 {

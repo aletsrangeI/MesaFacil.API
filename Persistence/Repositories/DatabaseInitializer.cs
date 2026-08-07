@@ -64,7 +64,26 @@ public sealed class DatabaseInitializer : IDatabaseInitializer
         // 11) Formularios de Modificadores
         await SeedFormularioGrupoModificadorAsync(ct);
         await SeedFormularioOpcionModificadorAsync(ct);
+        // 12) CatEstadoMesa
+        await SeedCatEstadoMesaAsync(ct);
         
+        // 13) Monedas e Impuestos
+        await SeedCatMonedasAsync(ct);
+        await SeedCatImpuestosAsync(ct);
+
+        // 14) Estados y Tipos de Pedido
+        await SeedCatEstadoPedidoAsync(ct);
+        await SeedCatEstadoPedidoDetalleAsync(ct);
+        await SeedCatTipoPedidoAsync(ct);
+
+        // 15) Modificadores para producto de prueba (Café Americano)
+        await SeedCoffeeModifiersAsync(ct);
+
+        // 16) KDS Catalogs
+        await SeedEstacionCocinaAsync(ct);
+        await SeedCatEstadoTicketCocinaAsync(ct);
+        await SeedCatEstadoItemKDSAsync(ct);
+
         _logger.LogInformation("Inicialización completada con éxito.");
     }
 
@@ -109,7 +128,170 @@ public sealed class DatabaseInitializer : IDatabaseInitializer
         }
     }
 
+    private async Task SeedCatEstadoMesaAsync(CancellationToken ct)
+    {
+        var estados = new[] { "Disponible", "Ocupada", "Reservada", "Sucia", "Fuera de Servicio" };
+        foreach (var estado in estados)
+        {
+            var exists = await _db.Set<CatEstadoMesa>().AnyAsync(e => e.Descripcion == estado, ct);
+            if (!exists)
+            {
+                _db.Add(new CatEstadoMesa
+                {
+                    Descripcion = estado,
+                    IsActive = true,
+                    CreatedBy = "seed"
+                });
+            }
+        }
+        await _db.SaveChangesAsync(ct);
+        _logger.LogInformation("Seed: asegurados estados base en CatEstadoMesa.");
+    }
 
+    private async Task SeedEstacionCocinaAsync(CancellationToken ct)
+    {
+        var estacion = await _db.Set<EstacionCocina>().FirstOrDefaultAsync(e => e.Id == 1, ct);
+        if (estacion == null)
+        {
+            _db.Add(new EstacionCocina
+            {
+                Id = 1,
+                Nombre = "Cocina Principal",
+                IdSucursal = 1,
+                IsActive = true,
+                CreatedBy = "seed"
+            });
+            await _db.SaveChangesAsync(ct);
+        }
+    }
+
+    private async Task SeedCatEstadoTicketCocinaAsync(CancellationToken ct)
+    {
+        var estados = new[] { "Pendiente", "Preparando", "Listo" };
+        for (int i = 0; i < estados.Length; i++)
+        {
+            int id = i + 1;
+            if (!await _db.Set<CatEstadoTicketCocina>().AnyAsync(e => e.Id == id, ct))
+            {
+                _db.Add(new CatEstadoTicketCocina { Id = id, Descripcion = estados[i], IsActive = true, CreatedBy = "seed" });
+            }
+        }
+        await _db.SaveChangesAsync(ct);
+    }
+
+    private async Task SeedCatEstadoItemKDSAsync(CancellationToken ct)
+    {
+        var estados = new[] { "Pendiente", "Preparando", "Listo" };
+        for (int i = 0; i < estados.Length; i++)
+        {
+            int id = i + 1;
+            if (!await _db.Set<CatEstadoItemKDS>().AnyAsync(e => e.Id == id, ct))
+            {
+                _db.Add(new CatEstadoItemKDS { Id = id, Descripcion = estados[i], IsActive = true, CreatedBy = "seed" });
+            }
+        }
+        await _db.SaveChangesAsync(ct);
+    }
+
+    private async Task SeedCatEstadoPedidoAsync(CancellationToken ct)
+    {
+        var estados = new[] { "Registrado", "En Preparación", "Listo", "Entregado", "Cerrado", "Cancelado" };
+        foreach (var estado in estados)
+        {
+            var exists = await _db.Set<CatEstadoPedido>().AnyAsync(e => e.Descripcion == estado, ct);
+            if (!exists)
+            {
+                _db.Add(new CatEstadoPedido
+                {
+                    Descripcion = estado,
+                    IsActive = true,
+                    CreatedBy = "seed"
+                });
+            }
+        }
+        await _db.SaveChangesAsync(ct);
+        _logger.LogInformation("Seed: asegurados estados base en CatEstadoPedido.");
+    }
+
+    private async Task SeedCatEstadoPedidoDetalleAsync(CancellationToken ct)
+    {
+        var estados = new[] { "Registrado", "En Cocina", "Preparado", "Entregado", "Cancelado" };
+        foreach (var estado in estados)
+        {
+            var exists = await _db.Set<CatEstadoPedidoDetalle>().AnyAsync(e => e.Descripcion == estado, ct);
+            if (!exists)
+            {
+                _db.Add(new CatEstadoPedidoDetalle
+                {
+                    Descripcion = estado,
+                    IsActive = true,
+                    CreatedBy = "seed"
+                });
+            }
+        }
+        await _db.SaveChangesAsync(ct);
+        _logger.LogInformation("Seed: asegurados estados base en CatEstadoPedidoDetalle.");
+    }
+
+    private async Task SeedCatTipoPedidoAsync(CancellationToken ct)
+    {
+        var tipos = new[] { "Comedor", "Para Llevar", "Delivery" };
+        foreach (var tipo in tipos)
+        {
+            var exists = await _db.Set<CatTipoPedido>().AnyAsync(e => e.Descripcion == tipo, ct);
+            if (!exists)
+            {
+                _db.Add(new CatTipoPedido
+                {
+                    Descripcion = tipo,
+                    IsActive = true,
+                    CreatedBy = "seed"
+                });
+            }
+        }
+        await _db.SaveChangesAsync(ct);
+        _logger.LogInformation("Seed: asegurados tipos base en CatTipoPedido.");
+    }
+
+    private async Task SeedCatMonedasAsync(CancellationToken ct)
+    {
+        var monedas = new[] { "MXN", "USD" };
+        foreach (var moneda in monedas)
+        {
+            var exists = await _db.Set<CatMoneda>().AnyAsync(e => e.Descripcion == moneda, ct);
+            if (!exists)
+            {
+                _db.Add(new CatMoneda
+                {
+                    Descripcion = moneda,
+                    IsActive = true,
+                    CreatedBy = "seed"
+                });
+            }
+        }
+        await _db.SaveChangesAsync(ct);
+        _logger.LogInformation("Seed: aseguradas monedas base en CatMoneda.");
+    }
+
+    private async Task SeedCatImpuestosAsync(CancellationToken ct)
+    {
+        var impuestos = new[] { "IVA 16%", "IVA 8%", "Exento" };
+        foreach (var impuesto in impuestos)
+        {
+            var exists = await _db.Set<CatImpuesto>().AnyAsync(e => e.Descripcion == impuesto, ct);
+            if (!exists)
+            {
+                _db.Add(new CatImpuesto
+                {
+                    Descripcion = impuesto,
+                    IsActive = true,
+                    CreatedBy = "seed"
+                });
+            }
+        }
+        await _db.SaveChangesAsync(ct);
+        _logger.LogInformation("Seed: asegurados impuestos base en CatImpuesto.");
+    }
 
     private async Task SeedFormulariosAsync(CancellationToken ct)
     {
@@ -775,9 +957,8 @@ public sealed class DatabaseInitializer : IDatabaseInitializer
             await _db.SaveChangesAsync(ct);
 
             // OPCIONAL: si ya quieres sembrar otros accesos base, descomenta y ajusta:
-            // await EnsureAccesoAndBindAsync("Administración", "/admin", new[] { "Admin" }, ct);
-            // await EnsureAccesoAndBindAsync("Vista Mesero", "/mesero", new[] { "Mesero" }, ct);
-
+            await EnsureAccesoAndBindAsync("POS", "/ventas/pos", new[] { "Admin" }, ct);
+            
             await tx.CommitAsync(ct);
         }
         catch (Exception ex)
@@ -896,11 +1077,15 @@ public sealed class DatabaseInitializer : IDatabaseInitializer
                 // Dispositivos
                 Perm("DEVICES_ADMIN", "Dispositivos", "/admin/devices", "DEVICES", isMenu: true),
 
-                // Menú y Productos
-                Perm("MENU_ADMIN", "Gestión de Menú", "/menu", "MENU", isMenu: true),
+                // MenÃº y Productos
+                Perm("MENU_ADMIN", "GestiÃ³n de MenÃº", "/menu", "MENU", isMenu: true),
 
                 // Reportes
                 Perm("REPORTS_VIEW", "Reportes", "/admin/reports", "REPORTS", isMenu: true),
+
+                // OperaciÃ³n
+                Perm("POS_VIEW", "Punto de Venta", "/ventas/pos", "OPERACION", isMenu: true),
+                Perm("KDS_VIEW", "Cocina KDS", "/ventas/kds", "OPERACION", isMenu: true),
             };
 
             // UPSERT por Key (idempotente: si cambias Nombre/Path/Group/IsMenu se actualiza)
@@ -988,7 +1173,9 @@ public sealed class DatabaseInitializer : IDatabaseInitializer
                 "MENU_ADMIN",
                 "INVENTORY_READ", "INVENTORY_WRITE",
                 "DEVICES_ADMIN",
-                "REPORTS_VIEW"
+                "REPORTS_VIEW",
+                "POS_VIEW",
+                "KDS_VIEW"
             };
             await EnsureRolePermissionsAsync(
                 manager.Id,
@@ -996,12 +1183,14 @@ public sealed class DatabaseInitializer : IDatabaseInitializer
                 ct
             );
 
-            // Mesero => lo mínimo (ajústalo a tu UX real)
+            // Mesero => lo mÃ­nimo (ajÃºstalo a tu UX real)
             var meseroKeys = new[]
             {
                 "DASHBOARD_VIEW",
+                "POS_VIEW",
+                "KDS_VIEW"
                 // si el mesero no debe entrar a admin, quita todos los /admin/*. 
-                // para front de operación crea luego permisos específicos (e.g., ORDER_TAKE)
+                // para front de operaciÃ³n crea luego permisos especÃ­ficos (e.g., ORDER_TAKE)
             };
             await EnsureRolePermissionsAsync(
                 mesero.Id,
@@ -1135,5 +1324,65 @@ public sealed class DatabaseInitializer : IDatabaseInitializer
             _db.UsuarioRoles.Add(new UsuarioRol { UsuarioId = usuarioId, IdRol = rolId });
             await _db.SaveChangesAsync(ct);
         }
+    }
+
+    private async Task SeedCoffeeModifiersAsync(CancellationToken ct)
+    {
+        var cafeId = 1; // Asumimos que el Café Americano tiene ID 1
+        
+        // Verificar si ya existe algún grupo
+        var exists = await _db.Set<GrupoModificador>().AnyAsync(g => g.IdProducto == cafeId && g.Nombre == "Tipo de Leche", ct);
+        if (exists) return;
+
+        // Tipo de Leche
+        var grpLeche = new GrupoModificador { IdProducto = cafeId, Nombre = "Tipo de Leche", MinSeleccion = 0, MaxSeleccion = 1, Obligatorio = false, IsActive = true, CreatedBy = "seed" };
+        _db.Set<GrupoModificador>().Add(grpLeche);
+
+        // Endulzante
+        var grpEndulzante = new GrupoModificador { IdProducto = cafeId, Nombre = "Endulzante", MinSeleccion = 0, MaxSeleccion = 2, Obligatorio = false, IsActive = true, CreatedBy = "seed" };
+        _db.Set<GrupoModificador>().Add(grpEndulzante);
+
+        // Extras
+        var grpExtras = new GrupoModificador { IdProducto = cafeId, Nombre = "Shots / Extras", MinSeleccion = 0, MaxSeleccion = 5, Obligatorio = false, IsActive = true, CreatedBy = "seed" };
+        _db.Set<GrupoModificador>().Add(grpExtras);
+
+        // Temperatura
+        var grpTemp = new GrupoModificador { IdProducto = cafeId, Nombre = "Temperatura", MinSeleccion = 1, MaxSeleccion = 1, Obligatorio = true, IsActive = true, CreatedBy = "seed" };
+        _db.Set<GrupoModificador>().Add(grpTemp);
+
+        await _db.SaveChangesAsync(ct);
+
+        // Opciones Tipo Leche
+        _db.Set<OpcionModificador>().AddRange(
+            new OpcionModificador { IdGrupo = grpLeche.Id, Nombre = "Sin Leche", PrecioExtra = 0, EsDefault = true, IsActive = true, CreatedBy = "seed" },
+            new OpcionModificador { IdGrupo = grpLeche.Id, Nombre = "Entera", PrecioExtra = 0, EsDefault = false, IsActive = true, CreatedBy = "seed" },
+            new OpcionModificador { IdGrupo = grpLeche.Id, Nombre = "Deslactosada", PrecioExtra = 5m, EsDefault = false, IsActive = true, CreatedBy = "seed" },
+            new OpcionModificador { IdGrupo = grpLeche.Id, Nombre = "Almendra", PrecioExtra = 10m, EsDefault = false, IsActive = true, CreatedBy = "seed" },
+            new OpcionModificador { IdGrupo = grpLeche.Id, Nombre = "Avena", PrecioExtra = 12m, EsDefault = false, IsActive = true, CreatedBy = "seed" }
+        );
+
+        // Opciones Endulzante
+        _db.Set<OpcionModificador>().AddRange(
+            new OpcionModificador { IdGrupo = grpEndulzante.Id, Nombre = "Sobres de Azúcar", PrecioExtra = 0, EsDefault = false, IsActive = true, CreatedBy = "seed" },
+            new OpcionModificador { IdGrupo = grpEndulzante.Id, Nombre = "Stevia", PrecioExtra = 0, EsDefault = false, IsActive = true, CreatedBy = "seed" },
+            new OpcionModificador { IdGrupo = grpEndulzante.Id, Nombre = "Splenda", PrecioExtra = 0, EsDefault = false, IsActive = true, CreatedBy = "seed" },
+            new OpcionModificador { IdGrupo = grpEndulzante.Id, Nombre = "Miel de Abeja", PrecioExtra = 5m, EsDefault = false, IsActive = true, CreatedBy = "seed" }
+        );
+
+        // Opciones Extras
+        _db.Set<OpcionModificador>().AddRange(
+            new OpcionModificador { IdGrupo = grpExtras.Id, Nombre = "Shot Espresso", PrecioExtra = 15m, EsDefault = false, IsActive = true, CreatedBy = "seed" },
+            new OpcionModificador { IdGrupo = grpExtras.Id, Nombre = "Jarabe de Vainilla", PrecioExtra = 10m, EsDefault = false, IsActive = true, CreatedBy = "seed" },
+            new OpcionModificador { IdGrupo = grpExtras.Id, Nombre = "Jarabe de Caramelo", PrecioExtra = 10m, EsDefault = false, IsActive = true, CreatedBy = "seed" }
+        );
+
+        // Opciones Temperatura
+        _db.Set<OpcionModificador>().AddRange(
+            new OpcionModificador { IdGrupo = grpTemp.Id, Nombre = "Caliente", PrecioExtra = 0, EsDefault = true, IsActive = true, CreatedBy = "seed" },
+            new OpcionModificador { IdGrupo = grpTemp.Id, Nombre = "Frío / En las Rocas", PrecioExtra = 5m, EsDefault = false, IsActive = true, CreatedBy = "seed" }
+        );
+
+        await _db.SaveChangesAsync(ct);
+        _logger.LogInformation("Seed: Modificadores para Café Americano agregados.");
     }
 }

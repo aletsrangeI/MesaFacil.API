@@ -49,26 +49,54 @@ public class MappingsProfile : Profile
             .ReverseMap()
             .ForMember(dest => dest.Formulario, opt => opt.Ignore());
         CreateMap<Formulario, FormularioDTO>().ReverseMap();
-        CreateMap<VarianteProducto, VarianteProductoDTO>().ReverseMap();
+        CreateMap<VarianteProducto, VarianteProductoDTO>()
+            .ForMember(dest => dest.Activo, opt => opt.MapFrom(src => src.IsActive))
+            .ReverseMap()
+            .ForMember(dest => dest.IsActive, opt => opt.MapFrom(src => src.Activo));
         CreateMap<UsuarioRol, UsuarioRolDTO>().ReverseMap();
         CreateMap<Usuario, UsuarioDTO>().ReverseMap();
         CreateMap<Turno, TurnoDTO>().ReverseMap();
-        CreateMap<TicketDetalle, TicketDetalleDTO>().ReverseMap();
-        CreateMap<TicketCocina, TicketCocinaDTO>().ReverseMap();
+        CreateMap<TicketDetalle, TicketDetalleDTO>()
+            .ForMember(dest => dest.Activo, opt => opt.MapFrom(src => src.IsActive))
+            .ReverseMap()
+            .ForMember(dest => dest.IsActive, opt => opt.MapFrom(src => src.Activo));
+        CreateMap<TicketCocina, TicketCocinaDTO>()
+            .ForMember(dest => dest.Activo, opt => opt.MapFrom(src => src.IsActive))
+            .ReverseMap()
+            .ForMember(dest => dest.IsActive, opt => opt.MapFrom(src => src.Activo));
         CreateMap<Sucursal, SucursalDTO>().ReverseMap();
         CreateMap<Rol, RolDTO>().ReverseMap();
         CreateMap<Producto, ProductoDTO>().ReverseMap();
-        CreateMap<Precio, PrecioDTO>().ReverseMap();
+        CreateMap<Precio, PrecioDTO>()
+            .ForMember(dest => dest.Activo, opt => opt.MapFrom(src => src.IsActive))
+            .ReverseMap()
+            .ForMember(dest => dest.IsActive, opt => opt.MapFrom(src => src.Activo));
         CreateMap<PedidoModificador, PedidoModificadorDTO>().ReverseMap();
         CreateMap<PedidoDetalle, PedidoDetalleDTO>().ReverseMap();
         CreateMap<PedidoAsiento, PedidoAsientoDTO>().ReverseMap();
         CreateMap<Pedido, PedidoDTO>().ReverseMap();
+        
+        // Mapeo Compuesto para POS
+        CreateMap<CrearPedidoRequestDTO, Pedido>().ReverseMap();
+        CreateMap<CrearPedidoDetalleDTO, PedidoDetalle>()
+            .ForMember(dest => dest.Modificadores, opt => opt.MapFrom(src => 
+                src.OpcionesModificador != null 
+                ? src.OpcionesModificador.Select(id => new PedidoModificador { IdOpcion = id, IsActive = true, CreatedBy = "system" }).ToList() 
+                : new List<PedidoModificador>()))
+            .ReverseMap();
+        
         CreateMap<Pago, PagoDTO>().ReverseMap();
-        CreateMap<OpcionModificador, OpcionModificadorDTO>().ReverseMap();
+        CreateMap<OpcionModificador, OpcionModificadorDTO>()
+            .ForMember(dest => dest.Activo, opt => opt.MapFrom(src => src.IsActive))
+            .ReverseMap()
+            .ForMember(dest => dest.IsActive, opt => opt.MapFrom(src => src.Activo));
         CreateMap<MovimientoCaja, MovimientoCajaDTO>().ReverseMap();
         CreateMap<Mesa, MesaDTO>().ReverseMap();
         CreateMap<Menu, MenuDTO>().ReverseMap();
-        CreateMap<GrupoModificador, GrupoModificadorDTO>().ReverseMap();
+        CreateMap<GrupoModificador, GrupoModificadorDTO>()
+            .ForMember(dest => dest.Activo, opt => opt.MapFrom(src => src.IsActive))
+            .ReverseMap()
+            .ForMember(dest => dest.IsActive, opt => opt.MapFrom(src => src.Activo));
         CreateMap<EventoPedido, EventoPedidoDTO>().ReverseMap();
         CreateMap<EstacionCocina, EstacionCocinaDTO>().ReverseMap();
         CreateMap<Empresa, EmpresaDTO>().ReverseMap();

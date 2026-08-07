@@ -11,9 +11,13 @@ public class TicketDetalle : BaseAuditableEntity // Asume que hereda IdTicketDet
     // ==========================================
     // PROPIEDADES DE NAVEGACIÓN
     // ==========================================
+    [System.ComponentModel.DataAnnotations.Schema.ForeignKey("IdTicket")]
     public TicketCocina Ticket { get; set; } = null!;
+
+    [System.ComponentModel.DataAnnotations.Schema.ForeignKey("IdDetalle")]
     public PedidoDetalle DetallePedido { get; set; } = null!;
     
     // [CORREGIDO] - Navegación directa a la entidad de catálogo específica
+    [System.ComponentModel.DataAnnotations.Schema.ForeignKey("IdEstadoItemKDS")]
     public CatEstadoItemKDS EstadoItemKDS { get; set; } = null!;
 }

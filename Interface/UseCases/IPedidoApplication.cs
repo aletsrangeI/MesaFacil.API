@@ -20,6 +20,7 @@ public interface IPedidoApplication
     #region Metodos asincronos
 
     Task<Response<bool>> InsertAsync(PedidoDTO dto);
+    Task<Response<int>> InsertConDetallesAsync(CrearPedidoRequestDTO dto);
     Task<Response<bool>> UpdateAsync(PedidoDTO dto);
     Task<Response<bool>> DeleteAsync(int id);
     Task<Response<PedidoDTO>> GetAsync(int id);

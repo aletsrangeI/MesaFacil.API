@@ -29,16 +29,17 @@ public class TicketCocinaApplication : ITicketCocinaApplication
 
     #region Metodos sincronos
 
-    public Response<bool> Insert(TicketCocinaDTO dto)
+    public Response<int> Insert(TicketCocinaDTO dto)
     {
-        var response = new Response<bool>();
+        var response = new Response<int>();
         try
         {
             var entity = _mapper.Map<TicketCocina>(dto);
-            response.Data = _unitOfWork.TicketsCocina.Insert(entity);
+            var success = _unitOfWork.TicketsCocina.Insert(entity);
 
-            if (response.Data)
+            if (success)
             {
+                response.Data = entity.Id;
                 response.isSuccess = true;
                 response.Message = "TicketCocina creado correctamente";
             }
@@ -179,16 +180,17 @@ public class TicketCocinaApplication : ITicketCocinaApplication
 
     #region Metodos asincronos
 
-    public async Task<Response<bool>> InsertAsync(TicketCocinaDTO dto)
+    public async Task<Response<int>> InsertAsync(TicketCocinaDTO dto)
     {
-        var response = new Response<bool>();
+        var response = new Response<int>();
         try
         {
             var entity = _mapper.Map<TicketCocina>(dto);
-            response.Data = await _unitOfWork.TicketsCocina.InsertAsync(entity);
+            var success = await _unitOfWork.TicketsCocina.InsertAsync(entity);
 
-            if (response.Data)
+            if (success)
             {
+                response.Data = entity.Id;
                 response.isSuccess = true;
                 response.Message = "TicketCocina creado correctamente";
             }
