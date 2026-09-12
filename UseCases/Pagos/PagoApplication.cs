@@ -14,17 +14,20 @@ public class PagoApplication : IPagoApplication
     private readonly IMapper _mapper;
     private readonly PagoDTOValidator _validationRules;
     private readonly IAppLogger<PagoApplication> _logger;
+    private readonly IDescuentoInventarioService? _descuentoInventarioService;
 
     public PagoApplication(
         IUnitOfWork unitOfWork,
         IMapper mapper,
         PagoDTOValidator validationRules,
-        IAppLogger<PagoApplication> logger)
+        IAppLogger<PagoApplication> logger,
+        IDescuentoInventarioService? descuentoInventarioService = null)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
         _validationRules = validationRules;
         _logger = logger;
+        _descuentoInventarioService = descuentoInventarioService;
     }
 
     #region Metodos sincronos
@@ -332,4 +335,127 @@ public class PagoApplication : IPagoApplication
     }
 
     #endregion
+
+    public async Task<Response<bool>> RegistrarPagoAsync(DTO.Pago.RegistrarPagoDTO dto)
+    {
+        var response = new Response<bool>();
+        try
+        {
+            var cuenta = await _unitOfWork.Cuentas.GetAsync(dto.IdCuenta);
+            if (cuenta == null) throw new Exception("Cuenta no encontrada");
+
+            var pago = new Pago
+            {
+                IdCuenta = dto.IdCuenta,
+                Monto = dto.Monto,
+                Propina = dto.Propina,
+                IdMetodoDePago = dto.IdMetodoDePago,
+                Referencia = dto.Referencia,
+                PagadoEn = DateTime.UtcNow,
+                IsActive = true,
+                CreatedBy = "System",
+                CreatedAt = DateTime.UtcNow,
+                Moneda = "MXN"
+            };
+
+            await _unitOfWork.Pagos.InsertAsync(pago);
+
+            // Validar si la cuenta ya se liquidó
+            var pagosAll = await _unitOfWork.Pagos.GetAllAsync();
+            var pagosCuenta = pagosAll.Where(p => p.IdCuenta == dto.IdCuenta).ToList();
+            var totalPagado = pagosCuenta.Sum(p => p.Monto) + dto.Monto;
+
+            // Registrar evento de auditoría de pago
+            var eventoPago = new EventoPedido
+            {
+                IdPedido = cuenta.IdPedido,
+                TipoEvento = "PagoRegistrado",
+                Payload = System.Text.Json.JsonSerializer.Serialize(new
+                {
+                    IdPago = pago.Id,
+                    IdCuenta = dto.IdCuenta,
+                    Monto = dto.Monto,
+                    Propina = dto.Propina,
+                    IdMetodoDePago = dto.IdMetodoDePago,
+                    Referencia = dto.Referencia,
+                    TotalPagado = totalPagado,
+                    TotalCuenta = cuenta.Total
+                }),
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow,
+                CreatedBy = "System"
+            };
+            await _unitOfWork.EventosPedido.InsertAsync(eventoPago);
+
+            if (totalPagado >= cuenta.Total)
+            {
+                cuenta.IdEstadoCuenta = 1; // Pagada
+                await _unitOfWork.Cuentas.UpdateAsync(cuenta);
+
+                var pedido = await _unitOfWork.Pedidos.GetAsync(cuenta.IdPedido);
+                if (pedido != null)
+                {
+                    pedido.IdEstadoPedido = 5; // Cerrado
+                    await _unitOfWork.Pedidos.UpdateAsync(pedido);
+
+                    if (pedido.IdMesa.HasValue)
+                    {
+                        var mesa = await _unitOfWork.Mesas.GetAsync(pedido.IdMesa.Value);
+                        if (mesa != null)
+                        {
+                            mesa.IdEstadoMesa = 4; // Sucia
+                            await _unitOfWork.Mesas.UpdateAsync(mesa);
+                        }
+                    }
+
+                    // Registrar evento de cierre de pedido
+                    var eventoCierre = new EventoPedido
+                    {
+                        IdPedido = cuenta.IdPedido,
+                        TipoEvento = "PedidoCerrado",
+                        Payload = System.Text.Json.JsonSerializer.Serialize(new
+                        {
+                            IdPedido = cuenta.IdPedido,
+                            IdMesa = pedido.IdMesa,
+                            TotalLiquidado = totalPagado,
+                            CerradoEn = DateTime.UtcNow
+                        }),
+                        IsActive = true,
+                        CreatedAt = DateTime.UtcNow,
+                        CreatedBy = "System"
+                    };
+                    await _unitOfWork.EventosPedido.InsertAsync(eventoCierre);
+                }
+
+                // Spec 015: Descuento automático de inventario y escandallos al liquidar la cuenta
+                if (_descuentoInventarioService != null)
+                {
+                    try
+                    {
+                        await _descuentoInventarioService.DescontarPorCuentaPagadaAsync(dto.IdCuenta);
+                    }
+                    catch (Exception exDescuento)
+                    {
+                        // En piso de venta el POS nunca se bloquea
+                        _logger.LogError($"Fallo no bloqueante al descontar inventario en cuenta #{dto.IdCuenta}: {exDescuento.Message}");
+                    }
+                }
+            }
+
+            response.Data = true;
+            response.isSuccess = true;
+            response.Message = "Pago registrado exitosamente";
+        }
+        catch (Exception ex)
+        {
+            response.Message = ex.Message;
+            _logger.LogError(ex.Message);
+        }
+        return response;
+    }
+
+    public Response<bool> RegistrarPago(DTO.Pago.RegistrarPagoDTO dto)
+    {
+        return RegistrarPagoAsync(dto).GetAwaiter().GetResult();
+    }
 }

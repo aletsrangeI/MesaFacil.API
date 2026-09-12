@@ -31,6 +31,13 @@ public class PedidoConfiguration : IEntityTypeConfiguration<Pedido>
             .HasColumnType("decimal(5,2)")
             .HasDefaultValue(0m);
 
+        e.Property(x => x.IdempotencyKey)
+            .HasMaxLength(64);
+            
+        e.HasIndex(x => x.IdempotencyKey)
+            .IsUnique()
+            .HasFilter("\"IdempotencyKey\" IS NOT NULL"); // Double quotes for PostgreSQL
+
         // Relaciones Base
         e.HasOne(x => x.Empresa)
             .WithMany(x => x.Pedidos) // <-- IMPORTANTE: Indicar la colección de regreso

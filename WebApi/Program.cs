@@ -102,6 +102,7 @@ app.UseWatchDog(conf =>
 });
 
 app.MapControllers();
+app.MapAllEndpoints();
 app.MapHub<KdsHub>("/hubs/kds");
 
 app.Run();

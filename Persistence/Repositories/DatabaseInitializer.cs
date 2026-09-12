@@ -84,6 +84,17 @@ public sealed class DatabaseInitializer : IDatabaseInitializer
         await SeedCatEstadoTicketCocinaAsync(ct);
         await SeedCatEstadoItemKDSAsync(ct);
 
+        // 17) Delivery & Métodos de Pago
+        await EnsureDeliveryColumnsAsync(ct);
+        await SeedCatMetodosDePagoAsync(ct);
+
+        // 18) Nuevos Catálogos del Sistema (Almacenes, Inventario, Caja, Cancelaciones y Canales)
+        await SeedCatTipoAlmacenAsync(ct);
+        await SeedCatMotivoMovimientoInventarioAsync(ct);
+        await SeedCatConceptoMovimientoCajaAsync(ct);
+        await SeedCatMotivoCancelacionPedidoAsync(ct);
+        await SeedCatCanalVentaAsync(ct);
+
         _logger.LogInformation("Inicialización completada con éxito.");
     }
 
@@ -195,7 +206,7 @@ public sealed class DatabaseInitializer : IDatabaseInitializer
 
     private async Task SeedCatEstadoPedidoAsync(CancellationToken ct)
     {
-        var estados = new[] { "Registrado", "En Preparación", "Listo", "Entregado", "Cerrado", "Cancelado" };
+        var estados = new[] { "Registrado", "En Preparación", "Listo", "En Camino", "Entregado", "Cerrado", "Cancelado" };
         foreach (var estado in estados)
         {
             var exists = await _db.Set<CatEstadoPedido>().AnyAsync(e => e.Descripcion == estado, ct);
@@ -1083,9 +1094,15 @@ public sealed class DatabaseInitializer : IDatabaseInitializer
                 // Reportes
                 Perm("REPORTS_VIEW", "Reportes", "/admin/reports", "REPORTS", isMenu: true),
 
-                // OperaciÃ³n
+                // Operación
                 Perm("POS_VIEW", "Punto de Venta", "/ventas/pos", "OPERACION", isMenu: true),
                 Perm("KDS_VIEW", "Cocina KDS", "/ventas/kds", "OPERACION", isMenu: true),
+                Perm("DELIVERY_VIEW", "Delivery y Despacho", "/delivery", "OPERACION", isMenu: true),
+
+                // Caja
+                Perm("CAJA_TURNOS", "Turnos de Caja", "/caja/turnos", "CAJA", isMenu: true),
+                Perm("CAJA_MOVIMIENTOS", "Movimientos de Caja", "/caja/movimientos", "CAJA", isMenu: true),
+                Perm("CAJA_CORTES", "Cortes de Caja", "/caja/cortes", "CAJA", isMenu: true),
             };
 
             // UPSERT por Key (idempotente: si cambias Nombre/Path/Group/IsMenu se actualiza)
@@ -1175,7 +1192,11 @@ public sealed class DatabaseInitializer : IDatabaseInitializer
                 "DEVICES_ADMIN",
                 "REPORTS_VIEW",
                 "POS_VIEW",
-                "KDS_VIEW"
+                "KDS_VIEW",
+                "DELIVERY_VIEW",
+                "CAJA_TURNOS",
+                "CAJA_MOVIMIENTOS",
+                "CAJA_CORTES"
             };
             await EnsureRolePermissionsAsync(
                 manager.Id,
@@ -1183,14 +1204,13 @@ public sealed class DatabaseInitializer : IDatabaseInitializer
                 ct
             );
 
-            // Mesero => lo mÃ­nimo (ajÃºstalo a tu UX real)
+            // Mesero => lo mínimo (ajústalo a tu UX real)
             var meseroKeys = new[]
             {
                 "DASHBOARD_VIEW",
                 "POS_VIEW",
-                "KDS_VIEW"
-                // si el mesero no debe entrar a admin, quita todos los /admin/*. 
-                // para front de operaciÃ³n crea luego permisos especÃ­ficos (e.g., ORDER_TAKE)
+                "KDS_VIEW",
+                "DELIVERY_VIEW"
             };
             await EnsureRolePermissionsAsync(
                 mesero.Id,
@@ -1384,5 +1404,244 @@ public sealed class DatabaseInitializer : IDatabaseInitializer
 
         await _db.SaveChangesAsync(ct);
         _logger.LogInformation("Seed: Modificadores para Café Americano agregados.");
+    }
+
+    private async Task EnsureDeliveryColumnsAsync(CancellationToken ct)
+    {
+        try
+        {
+            var sql = @"
+                DO $$
+                BEGIN
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'Pedido' AND column_name = 'CanalOrigen') THEN
+                        ALTER TABLE ""Pedido"" ADD COLUMN ""CanalOrigen"" text NOT NULL DEFAULT 'POS';
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'Pedido' AND column_name = 'IdExterno') THEN
+                        ALTER TABLE ""Pedido"" ADD COLUMN ""IdExterno"" text NULL;
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'Pedido' AND column_name = 'NombreClienteDelivery') THEN
+                        ALTER TABLE ""Pedido"" ADD COLUMN ""NombreClienteDelivery"" text NULL;
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'Pedido' AND column_name = 'TelefonoDelivery') THEN
+                        ALTER TABLE ""Pedido"" ADD COLUMN ""TelefonoDelivery"" text NULL;
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'Pedido' AND column_name = 'DireccionEntrega') THEN
+                        ALTER TABLE ""Pedido"" ADD COLUMN ""DireccionEntrega"" text NULL;
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'Pedido' AND column_name = 'NombreRepartidor') THEN
+                        ALTER TABLE ""Pedido"" ADD COLUMN ""NombreRepartidor"" text NULL;
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'Pedido' AND column_name = 'TelefonoRepartidor') THEN
+                        ALTER TABLE ""Pedido"" ADD COLUMN ""TelefonoRepartidor"" text NULL;
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'Pedido' AND column_name = 'DespachadoEn') THEN
+                        ALTER TABLE ""Pedido"" ADD COLUMN ""DespachadoEn"" timestamp with time zone NULL;
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'Pedido' AND column_name = 'EntregadoEn') THEN
+                        ALTER TABLE ""Pedido"" ADD COLUMN ""EntregadoEn"" timestamp with time zone NULL;
+                    END IF;
+                END $$;";
+
+            await _db.Database.ExecuteSqlRawAsync(sql, ct);
+            _logger.LogInformation("DatabaseInitializer: columnas de delivery en 'Pedido' verificadas/creadas.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error asegurando columnas de delivery en Pedido.");
+        }
+    }
+
+    private async Task SeedCatMetodosDePagoAsync(CancellationToken ct)
+    {
+        var metodos = new[]
+        {
+            "Efectivo",
+            "Tarjeta",
+            "Uber Eats",
+            "Rappi",
+            "Didi Food",
+            "Transferencia"
+        };
+
+        foreach (var desc in metodos)
+        {
+            var exists = await _db.Set<CatMetodoDePago>().AnyAsync(m => m.Descripcion == desc, ct);
+            if (!exists)
+            {
+                _db.Add(new CatMetodoDePago
+                {
+                    Descripcion = desc,
+                    IsActive = true,
+                    CreatedBy = "seed"
+                });
+            }
+        }
+        await _db.SaveChangesAsync(ct);
+        _logger.LogInformation("Seed: asegurados métodos de pago base en CatMetodoDePago.");
+    }
+
+    private async Task SeedCatTipoAlmacenAsync(CancellationToken ct)
+    {
+        var tipos = new[]
+        {
+            new { Codigo = "GENERAL", Descripcion = "General / Bodega Central" },
+            new { Codigo = "COCINA", Descripcion = "Cocina Principal" },
+            new { Codigo = "BARRA", Descripcion = "Barra / Bebidas" },
+            new { Codigo = "PRODUCCION", Descripcion = "Producción / Subrecetas" }
+        };
+
+        foreach (var t in tipos)
+        {
+            var exists = await _db.Set<CatTipoAlmacen>().AnyAsync(x => x.Codigo == t.Codigo, ct);
+            if (!exists)
+            {
+                _db.Add(new CatTipoAlmacen
+                {
+                    Codigo = t.Codigo,
+                    Descripcion = t.Descripcion,
+                    IsActive = true,
+                    CreatedBy = "seed"
+                });
+            }
+        }
+        await _db.SaveChangesAsync(ct);
+        _logger.LogInformation("Seed: asegurados tipos de almacén en CatTipoAlmacen.");
+    }
+
+    private async Task SeedCatMotivoMovimientoInventarioAsync(CancellationToken ct)
+    {
+        var motivos = new[]
+        {
+            // Entradas
+            new { Codigo = "CompraEmergencia", Tipo = "EntradaManual", Descripcion = "Compra de Emergencia / Caja Chica" },
+            new { Codigo = "Donacion", Tipo = "EntradaManual", Descripcion = "Donación / Bonificación" },
+            new { Codigo = "AjusteCargaManual", Tipo = "EntradaManual", Descripcion = "Carga Manual de Stock" },
+            new { Codigo = "OtroEntrada", Tipo = "EntradaManual", Descripcion = "Otro Motivo de Entrada" },
+
+            // Mermas / Bajas
+            new { Codigo = "Caducidad", Tipo = "SalidaMerma", Descripcion = "Caducidad / Vencimiento" },
+            new { Codigo = "Descomposicion", Tipo = "SalidaMerma", Descripcion = "Descomposición / Mal Estado" },
+            new { Codigo = "CaidaAccidente", Tipo = "SalidaMerma", Descripcion = "Caída o Accidente en Cocina" },
+            new { Codigo = "DegustacionCortesia", Tipo = "SalidaMerma", Descripcion = "Degustación / Cortesía" },
+            new { Codigo = "MermaOperativa", Tipo = "SalidaMerma", Descripcion = "Merma Operativa de Preparación" },
+
+            // Ajustes
+            new { Codigo = "AjusteManual", Tipo = "AjusteInventario", Descripcion = "Corrección de Conteo Físico" },
+            new { Codigo = "MuestraCalidad", Tipo = "AjusteInventario", Descripcion = "Muestra de Calidad" },
+            new { Codigo = "OtroAjuste", Tipo = "AjusteInventario", Descripcion = "Otro Ajuste" }
+        };
+
+        foreach (var m in motivos)
+        {
+            var exists = await _db.Set<CatMotivoMovimientoInventario>().AnyAsync(x => x.Codigo == m.Codigo && x.TipoMovimiento == m.Tipo, ct);
+            if (!exists)
+            {
+                _db.Add(new CatMotivoMovimientoInventario
+                {
+                    Codigo = m.Codigo,
+                    TipoMovimiento = m.Tipo,
+                    Descripcion = m.Descripcion,
+                    IsActive = true,
+                    CreatedBy = "seed"
+                });
+            }
+        }
+        await _db.SaveChangesAsync(ct);
+        _logger.LogInformation("Seed: asegurados motivos de inventario en CatMotivoMovimientoInventario.");
+    }
+
+    private async Task SeedCatConceptoMovimientoCajaAsync(CancellationToken ct)
+    {
+        var conceptos = new[]
+        {
+            // Egresos
+            new { Tipo = "Egreso", Descripcion = "Compra de Insumos" },
+            new { Tipo = "Egreso", Descripcion = "Pago a Proveedor" },
+            new { Tipo = "Egreso", Descripcion = "Retiro a Caja Fuerte (Drop)" },
+            new { Tipo = "Egreso", Descripcion = "Gasto Operativo" },
+            new { Tipo = "Egreso", Descripcion = "Otro Egreso" },
+
+            // Ingresos
+            new { Tipo = "Ingreso", Descripcion = "Fondo Adicional / Cambio" },
+            new { Tipo = "Ingreso", Descripcion = "Ingreso Extraordinario" },
+            new { Tipo = "Ingreso", Descripcion = "Otro Ingreso" }
+        };
+
+        foreach (var c in conceptos)
+        {
+            var exists = await _db.Set<CatConceptoMovimientoCaja>().AnyAsync(x => x.Descripcion == c.Descripcion && x.Tipo == c.Tipo, ct);
+            if (!exists)
+            {
+                _db.Add(new CatConceptoMovimientoCaja
+                {
+                    Tipo = c.Tipo,
+                    Descripcion = c.Descripcion,
+                    IsActive = true,
+                    CreatedBy = "seed"
+                });
+            }
+        }
+        await _db.SaveChangesAsync(ct);
+        _logger.LogInformation("Seed: asegurados conceptos de caja en CatConceptoMovimientoCaja.");
+    }
+
+    private async Task SeedCatMotivoCancelacionPedidoAsync(CancellationToken ct)
+    {
+        var motivos = new[]
+        {
+            "Cliente canceló en app / llamada",
+            "Dirección incorrecta / Fuera de zona",
+            "Cliente ausente en domicilio",
+            "Pedido equivocado / Producto en mal estado",
+            "Repartidor accidentado / no disponible",
+            "Otro motivo de anulación"
+        };
+
+        foreach (var m in motivos)
+        {
+            var exists = await _db.Set<CatMotivoCancelacionPedido>().AnyAsync(x => x.Descripcion == m, ct);
+            if (!exists)
+            {
+                _db.Add(new CatMotivoCancelacionPedido
+                {
+                    Descripcion = m,
+                    IsActive = true,
+                    CreatedBy = "seed"
+                });
+            }
+        }
+        await _db.SaveChangesAsync(ct);
+        _logger.LogInformation("Seed: asegurados motivos de cancelación en CatMotivoCancelacionPedido.");
+    }
+
+    private async Task SeedCatCanalVentaAsync(CancellationToken ct)
+    {
+        var canales = new[]
+        {
+            new { Codigo = "COMEDOR", Descripcion = "Comedor Local", EsDelivery = false },
+            new { Codigo = "LLEVAR", Descripcion = "Para Llevar (Mostrador)", EsDelivery = false },
+            new { Codigo = "PROPIO", Descripcion = "Delivery Propio", EsDelivery = true },
+            new { Codigo = "UBER_EATS", Descripcion = "Uber Eats", EsDelivery = true },
+            new { Codigo = "RAPPI", Descripcion = "Rappi", EsDelivery = true },
+            new { Codigo = "DIDI_FOOD", Descripcion = "Didi Food", EsDelivery = true }
+        };
+
+        foreach (var c in canales)
+        {
+            var exists = await _db.Set<CatCanalVenta>().AnyAsync(x => x.Codigo == c.Codigo, ct);
+            if (!exists)
+            {
+                _db.Add(new CatCanalVenta
+                {
+                    Codigo = c.Codigo,
+                    Descripcion = c.Descripcion,
+                    EsDelivery = c.EsDelivery,
+                    IsActive = true,
+                    CreatedBy = "seed"
+                });
+            }
+        }
+        await _db.SaveChangesAsync(ct);
+        _logger.LogInformation("Seed: asegurados canales de venta en CatCanalVenta.");
     }
 }
