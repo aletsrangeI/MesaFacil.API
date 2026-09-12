@@ -34,6 +34,7 @@ public class AuditableEntitySaveChangesInterceptor : SaveChangesInterceptor
                     entry.Entity.CreatedAt = now;
                     entry.Entity.UpdatedBy ??= "system";
                     entry.Entity.UpdatedAt = now;
+                    entry.Entity.IsActive = true;
                     break;
 
                 case EntityState.Modified:

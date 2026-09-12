@@ -13,6 +13,16 @@ public class CrearPedidoRequestDTO
     public int IdTipoPedido { get; set; }
     public int IdEstadoPedido { get; set; }
     public decimal CargoServicioPct { get; set; }
+    public string? IdempotencyKey { get; set; }
+    
+    // [DELIVERY Y PLATAFORMAS]
+    public string CanalOrigen { get; set; } = "POS";
+    public string? IdExterno { get; set; }
+    public string? NombreClienteDelivery { get; set; }
+    public string? TelefonoDelivery { get; set; }
+    public string? DireccionEntrega { get; set; }
+    public string? NombreRepartidor { get; set; }
+    public string? TelefonoRepartidor { get; set; }
     
     public List<CrearPedidoDetalleDTO> Detalles { get; set; } = new List<CrearPedidoDetalleDTO>();
 }

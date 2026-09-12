@@ -41,10 +41,8 @@ public class PagoDTOValidator : AbstractValidator<PagoDTO>
             .WithMessage("El campo RecibidoPor debe ser mayor a 0 cuando se especifique.");
 
         // Método de pago requerido
-        RuleFor(x => x.MetodoCatalogId)
-            .GreaterThan(0).WithMessage("El campo MetodoCatalogId es requerido y debe ser mayor a 0.");
-
-        RuleFor(x => x.MetodoItemId)
-            .GreaterThan(0).WithMessage("El campo MetodoItemId es requerido y debe ser mayor a 0.");
+        RuleFor(x => x.IdMetodoDePago)
+            .GreaterThan(0)
+            .WithMessage("El método de pago es obligatorio.");
     }
 }

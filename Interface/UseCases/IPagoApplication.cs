@@ -27,5 +27,8 @@ public interface IPagoApplication
     Task<ResponsePagination<IEnumerable<PagoDTO>>> GetAllWithPaginationAsync(int page, int pageSize);
     Task<Response<int>> CountAsync();
 
+    Task<Response<bool>> RegistrarPagoAsync(DTO.Pago.RegistrarPagoDTO dto);
+    Response<bool> RegistrarPago(DTO.Pago.RegistrarPagoDTO dto);
+
     #endregion
 }

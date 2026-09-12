@@ -24,6 +24,18 @@ public class Pedido : BaseAuditableEntity // Asumo que aquí heredas el Id (IdPe
     public int IdEstadoPedido { get; set; }
 
     public decimal CargoServicioPct { get; set; }
+    public string? IdempotencyKey { get; set; }
+
+    // [DELIVERY Y PLATAFORMAS]
+    public string CanalOrigen { get; set; } = "POS";
+    public string? IdExterno { get; set; }
+    public string? NombreClienteDelivery { get; set; }
+    public string? TelefonoDelivery { get; set; }
+    public string? DireccionEntrega { get; set; }
+    public string? NombreRepartidor { get; set; }
+    public string? TelefonoRepartidor { get; set; }
+    public DateTime? DespachadoEn { get; set; }
+    public DateTime? EntregadoEn { get; set; }
 
     // ==========================================
     // PROPIEDADES DE NAVEGACIÓN

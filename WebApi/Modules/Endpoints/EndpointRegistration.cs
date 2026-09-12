@@ -7,8 +7,9 @@ public static class EndpointRegistration
     public static IEndpointRouteBuilder MapAllEndpoints(this IEndpointRouteBuilder app)
     {
         // 1. Obtenemos todas las clases estáticas (Abstract y Sealed en IL) que terminen en "Endpoints"
+        var whitelist = new[] { "AccesoRutaEndpoints", "RolAccesoRutaEndpoints" };
         var endpointClasses = Assembly.GetExecutingAssembly().GetTypes()
-            .Where(t => t.IsAbstract && t.IsSealed && t.Name.EndsWith("Endpoints"));
+            .Where(t => t.IsAbstract && t.IsSealed && whitelist.Contains(t.Name));
 
         foreach (var type in endpointClasses)
         {

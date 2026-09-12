@@ -118,5 +118,6 @@ public class MappingsProfile : Profile
         CreateMap<CategoriaMenu, CategoriaMenuDTO>().ReverseMap();
         CreateMap<Area, AreaDTO>().ReverseMap();
         CreateMap<CatCredencial, CatCredencialDTO>().ReverseMap();
+        CreateMap<CatTipoPedido, DTO.TiposPedido.TipoPedidoDTO>().ReverseMap();
     }
 }

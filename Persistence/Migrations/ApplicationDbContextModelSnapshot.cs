@@ -88,6 +88,59 @@ namespace Persistence.Migrations
                     b.ToTable("AccesoRuta", (string)null);
                 });
 
+            modelBuilder.Entity("Domain.Entities.Almacen", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Codigo")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("EsPrincipal")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("IdSucursal")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<string>("TipoAlmacen")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("IdSucursal");
+
+                    b.ToTable("Almacenes");
+                });
+
             modelBuilder.Entity("Domain.Entities.Area", b =>
                 {
                     b.Property<int>("Id")
@@ -130,6 +183,84 @@ namespace Persistence.Migrations
                     b.HasIndex("IdSucursal");
 
                     b.ToTable("Areas", (string)null);
+                });
+
+            modelBuilder.Entity("Domain.Entities.CatCanalVenta", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Codigo")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Descripcion")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("EsDelivery")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("CatCanalesVenta");
+                });
+
+            modelBuilder.Entity("Domain.Entities.CatConceptoMovimientoCaja", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Descripcion")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Tipo")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("CatConceptosMovimientoCaja");
                 });
 
             modelBuilder.Entity("Domain.Entities.CatCredencial", b =>
@@ -517,6 +648,429 @@ namespace Persistence.Migrations
                     b.ToTable("CatMoneda", (string)null);
                 });
 
+            modelBuilder.Entity("Domain.Entities.CatMotivoCancelacionPedido", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Descripcion")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("CatMotivosCancelacionPedido");
+                });
+
+            modelBuilder.Entity("Domain.Entities.CatMotivoMovimientoInventario", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Codigo")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Descripcion")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("TipoMovimiento")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("CatMotivosMovimientoInventario");
+                });
+
+            modelBuilder.Entity("Domain.Entities.CatRegimenFiscal", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Codigo")
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Descripcion")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<bool>("Fisica")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("Moral")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("CatRegimenFiscal", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Codigo = "601",
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedBy = "System",
+                            Descripcion = "General de Ley Personas Morales",
+                            Fisica = false,
+                            IsActive = true,
+                            Moral = true,
+                            UpdatedBy = ""
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Codigo = "603",
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedBy = "System",
+                            Descripcion = "Personas Morales con Fines no Lucrativos",
+                            Fisica = false,
+                            IsActive = true,
+                            Moral = true,
+                            UpdatedBy = ""
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Codigo = "605",
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedBy = "System",
+                            Descripcion = "Sueldos y Salarios e Ingresos Asimilados a Salarios",
+                            Fisica = true,
+                            IsActive = true,
+                            Moral = false,
+                            UpdatedBy = ""
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Codigo = "606",
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedBy = "System",
+                            Descripcion = "Arrendamiento",
+                            Fisica = true,
+                            IsActive = true,
+                            Moral = false,
+                            UpdatedBy = ""
+                        },
+                        new
+                        {
+                            Id = 5,
+                            Codigo = "607",
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedBy = "System",
+                            Descripcion = "Régimen de Enajenación o Adquisición de Bienes",
+                            Fisica = true,
+                            IsActive = true,
+                            Moral = false,
+                            UpdatedBy = ""
+                        },
+                        new
+                        {
+                            Id = 6,
+                            Codigo = "608",
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedBy = "System",
+                            Descripcion = "Demás ingresos",
+                            Fisica = true,
+                            IsActive = true,
+                            Moral = false,
+                            UpdatedBy = ""
+                        },
+                        new
+                        {
+                            Id = 7,
+                            Codigo = "610",
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedBy = "System",
+                            Descripcion = "Residentes en el Extranjero sin Establecimiento Permanente en México",
+                            Fisica = true,
+                            IsActive = true,
+                            Moral = true,
+                            UpdatedBy = ""
+                        },
+                        new
+                        {
+                            Id = 8,
+                            Codigo = "611",
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedBy = "System",
+                            Descripcion = "Ingresos por Dividendos (socios y accionistas)",
+                            Fisica = true,
+                            IsActive = true,
+                            Moral = false,
+                            UpdatedBy = ""
+                        },
+                        new
+                        {
+                            Id = 9,
+                            Codigo = "612",
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedBy = "System",
+                            Descripcion = "Personas Físicas con Actividades Empresariales y Profesionales",
+                            Fisica = true,
+                            IsActive = true,
+                            Moral = false,
+                            UpdatedBy = ""
+                        },
+                        new
+                        {
+                            Id = 10,
+                            Codigo = "614",
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedBy = "System",
+                            Descripcion = "Ingresos por intereses",
+                            Fisica = true,
+                            IsActive = true,
+                            Moral = false,
+                            UpdatedBy = ""
+                        },
+                        new
+                        {
+                            Id = 11,
+                            Codigo = "615",
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedBy = "System",
+                            Descripcion = "Régimen de los ingresos por obtención de premios",
+                            Fisica = true,
+                            IsActive = true,
+                            Moral = false,
+                            UpdatedBy = ""
+                        },
+                        new
+                        {
+                            Id = 12,
+                            Codigo = "616",
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedBy = "System",
+                            Descripcion = "Sin obligaciones fiscales",
+                            Fisica = true,
+                            IsActive = true,
+                            Moral = false,
+                            UpdatedBy = ""
+                        },
+                        new
+                        {
+                            Id = 13,
+                            Codigo = "620",
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedBy = "System",
+                            Descripcion = "Sociedades Cooperativas de Producción que optan por diferir sus ingresos",
+                            Fisica = false,
+                            IsActive = true,
+                            Moral = true,
+                            UpdatedBy = ""
+                        },
+                        new
+                        {
+                            Id = 14,
+                            Codigo = "621",
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedBy = "System",
+                            Descripcion = "Incorporación Fiscal",
+                            Fisica = true,
+                            IsActive = true,
+                            Moral = false,
+                            UpdatedBy = ""
+                        },
+                        new
+                        {
+                            Id = 15,
+                            Codigo = "622",
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedBy = "System",
+                            Descripcion = "Actividades Agrícolas, Ganaderas, Silvícolas y Pesqueras",
+                            Fisica = true,
+                            IsActive = true,
+                            Moral = true,
+                            UpdatedBy = ""
+                        },
+                        new
+                        {
+                            Id = 16,
+                            Codigo = "623",
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedBy = "System",
+                            Descripcion = "Opcional para Grupos de Sociedades",
+                            Fisica = false,
+                            IsActive = true,
+                            Moral = true,
+                            UpdatedBy = ""
+                        },
+                        new
+                        {
+                            Id = 17,
+                            Codigo = "624",
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedBy = "System",
+                            Descripcion = "Coordinados",
+                            Fisica = false,
+                            IsActive = true,
+                            Moral = true,
+                            UpdatedBy = ""
+                        },
+                        new
+                        {
+                            Id = 18,
+                            Codigo = "625",
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedBy = "System",
+                            Descripcion = "Régimen de las Actividades Empresariales con ingresos a través de Plataformas Tecnológicas",
+                            Fisica = true,
+                            IsActive = true,
+                            Moral = false,
+                            UpdatedBy = ""
+                        },
+                        new
+                        {
+                            Id = 19,
+                            Codigo = "626",
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedBy = "System",
+                            Descripcion = "Régimen Simplificado de Confianza (RESICO)",
+                            Fisica = true,
+                            IsActive = true,
+                            Moral = true,
+                            UpdatedBy = ""
+                        },
+                        new
+                        {
+                            Id = 20,
+                            Codigo = "628",
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedBy = "System",
+                            Descripcion = "Hidrocarburos",
+                            Fisica = false,
+                            IsActive = true,
+                            Moral = true,
+                            UpdatedBy = ""
+                        },
+                        new
+                        {
+                            Id = 21,
+                            Codigo = "629",
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedBy = "System",
+                            Descripcion = "De los Regímenes Fiscales Preferentes y de las Empresas Multinacionales",
+                            Fisica = true,
+                            IsActive = true,
+                            Moral = false,
+                            UpdatedBy = ""
+                        },
+                        new
+                        {
+                            Id = 22,
+                            Codigo = "630",
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedBy = "System",
+                            Descripcion = "Enajenación de acciones en bolsa de valores",
+                            Fisica = true,
+                            IsActive = true,
+                            Moral = false,
+                            UpdatedBy = ""
+                        });
+                });
+
+            modelBuilder.Entity("Domain.Entities.CatTipoAlmacen", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Codigo")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Descripcion")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("CatTiposAlmacen");
+                });
+
             modelBuilder.Entity("Domain.Entities.CatTipoDescuento", b =>
                 {
                     b.Property<int>("Id")
@@ -575,6 +1129,9 @@ namespace Persistence.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
+                    b.Property<bool>("IsComedor")
+                        .HasColumnType("boolean");
+
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp without time zone");
 
@@ -585,6 +1142,36 @@ namespace Persistence.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("CatTipoPedido", (string)null);
+                });
+
+            modelBuilder.Entity("Domain.Entities.CategoriaInsumo", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Codigo")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("Descripcion")
+                        .HasMaxLength(250)
+                        .HasColumnType("character varying(250)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("CategoriasInsumo");
                 });
 
             modelBuilder.Entity("Domain.Entities.CategoriaMenu", b =>
@@ -676,6 +1263,199 @@ namespace Persistence.Migrations
                     b.HasIndex("IdEmpresa");
 
                     b.ToTable("Clientes", (string)null);
+                });
+
+            modelBuilder.Entity("Domain.Entities.CompraFactura", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("DiasCredito")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("EsCredito")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Estado")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<DateTime>("FechaEmision")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<DateTime>("FechaRecepcion")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<DateTime?>("FechaVencimiento")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("Folio")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<int>("IdAlmacen")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("IdEmpresa")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("IdProveedor")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("IdSucursal")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("IdUsuario")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Observaciones")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("RutaArchivoPDF")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("RutaArchivoXML")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("Serie")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<decimal>("Subtotal")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal>("Total")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal>("TotalDescuento")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal>("TotalIEPS")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal>("TotalIVA")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<string>("UUID")
+                        .HasMaxLength(36)
+                        .HasColumnType("character varying(36)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("IdAlmacen");
+
+                    b.HasIndex("IdProveedor");
+
+                    b.HasIndex("IdSucursal");
+
+                    b.HasIndex("IdUsuario");
+
+                    b.HasIndex("UUID");
+
+                    b.HasIndex("IdEmpresa", "IdSucursal", "FechaEmision");
+
+                    b.ToTable("ComprasFactura");
+                });
+
+            modelBuilder.Entity("Domain.Entities.CompraFacturaDetalle", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("Cantidad")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal>("CantidadInsumo")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<string>("ClaveProdServ")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<decimal>("CostoUnitario")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<string>("DescripcionOriginal")
+                        .HasMaxLength(250)
+                        .HasColumnType("character varying(250)");
+
+                    b.Property<decimal>("Descuento")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal>("FactorConversion")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<int>("IdCompraFactura")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("IdInsumo")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("IdUnidadMedida")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("Importe")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal>("ImporteIEPS")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal>("ImporteIVA")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal>("ImporteTotal")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<decimal>("TasaIEPS")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal>("TasaIVA")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<string>("UnidadSAT")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("IdCompraFactura");
+
+                    b.HasIndex("IdInsumo");
+
+                    b.HasIndex("IdUnidadMedida");
+
+                    b.ToTable("CompraFacturaDetalles");
                 });
 
             modelBuilder.Entity("Domain.Entities.CorteCaja", b =>
@@ -883,6 +1663,77 @@ namespace Persistence.Migrations
                     b.ToTable("Cuenta", (string)null);
                 });
 
+            modelBuilder.Entity("Domain.Entities.CuentaPorPagar", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Estado")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<DateTime>("FechaEmision")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<DateTime>("FechaVencimiento")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<int?>("IdCompraFactura")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("IdEmpresa")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("IdProveedor")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("IdSucursal")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<decimal>("MontoTotal")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<string>("Observaciones")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<decimal>("SaldoInsoluto")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("IdCompraFactura");
+
+                    b.HasIndex("IdProveedor");
+
+                    b.HasIndex("IdSucursal");
+
+                    b.HasIndex("IdEmpresa", "IdSucursal", "Estado", "FechaVencimiento");
+
+                    b.ToTable("CuentasPorPagar");
+                });
+
             modelBuilder.Entity("Domain.Entities.DescuentoAplicado", b =>
                 {
                     b.Property<int>("Id")
@@ -1042,6 +1893,12 @@ namespace Persistence.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
+                    b.Property<int>("MinutosAmbar")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("MinutosRojo")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Nombre")
                         .HasMaxLength(120)
                         .HasColumnType("character varying(120)");
@@ -1105,6 +1962,35 @@ namespace Persistence.Migrations
                     b.HasIndex("IdUsuario");
 
                     b.ToTable("EventoPedido", (string)null);
+                });
+
+            modelBuilder.Entity("Domain.Entities.FactorConversion", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("Factor")
+                        .HasColumnType("decimal(18,6)");
+
+                    b.Property<int>("IdUnidadDestino")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("IdUnidadOrigen")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("IdUnidadDestino");
+
+                    b.HasIndex("IdUnidadOrigen");
+
+                    b.ToTable("FactoresConversion");
                 });
 
             modelBuilder.Entity("Domain.Entities.FormField", b =>
@@ -1285,6 +2171,222 @@ namespace Persistence.Migrations
                     b.HasIndex("IdProducto");
 
                     b.ToTable("GrupoModificador", (string)null);
+                });
+
+            modelBuilder.Entity("Domain.Entities.Insumo", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Codigo")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<decimal>("CostoPromedio")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("EsCritico")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("IdCategoriaInsumo")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("IdUnidadMedidaBase")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<decimal>("StockMaximo")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal>("StockMinimo")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal>("UltimoCosto")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("IdCategoriaInsumo");
+
+                    b.HasIndex("IdUnidadMedidaBase");
+
+                    b.ToTable("Insumos");
+                });
+
+            modelBuilder.Entity("Domain.Entities.InventarioExistencia", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("FechaUltimoMovimiento")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<int>("IdAlmacen")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("IdInsumo")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<decimal>("StockActual")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("IdInsumo");
+
+                    b.HasIndex("IdAlmacen", "IdInsumo")
+                        .IsUnique();
+
+                    b.ToTable("InventarioExistencias");
+                });
+
+            modelBuilder.Entity("Domain.Entities.KardexMovimiento", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("Cantidad")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal>("CostoPromedioResultante")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal>("CostoTotal")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal>("CostoUnitario")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<string>("DocumentoReferencia")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTime>("FechaHora")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<int>("IdAlmacen")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("IdInsumo")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("IdUsuario")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Observaciones")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<decimal>("SaldoAnterior")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal>("SaldoNuevo")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<string>("Submotivo")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("TipoMovimiento")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("IdInsumo");
+
+                    b.HasIndex("IdUsuario");
+
+                    b.HasIndex("IdAlmacen", "IdInsumo", "FechaHora");
+
+                    b.ToTable("KardexMovimientos");
+                });
+
+            modelBuilder.Entity("Domain.Entities.MapeoInsumoProveedor", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ClaveProdServ")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("DescripcionSAT")
+                        .IsRequired()
+                        .HasMaxLength(250)
+                        .HasColumnType("character varying(250)");
+
+                    b.Property<decimal>("FactorConversion")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<DateTime>("FechaRegistro")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<DateTime?>("FechaUltimaCompra")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<int>("IdInsumo")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("IdProveedor")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("UnidadSAT")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("IdInsumo");
+
+                    b.HasIndex("IdProveedor", "ClaveProdServ", "DescripcionSAT");
+
+                    b.ToTable("MapeosInsumoProveedor");
                 });
 
             modelBuilder.Entity("Domain.Entities.Menu", b =>
@@ -1552,6 +2654,74 @@ namespace Persistence.Migrations
                     b.ToTable("Pago", (string)null);
                 });
 
+            modelBuilder.Entity("Domain.Entities.PagoCuentaPorPagar", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ComprobanteUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("FechaPago")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<int>("IdCuentaPorPagar")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("IdMetodoPago")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("IdMovimientoCaja")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("IdUsuario")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<decimal>("Monto")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<string>("Observaciones")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("ReferenciaBancaria")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("IdCuentaPorPagar");
+
+                    b.HasIndex("IdMetodoPago");
+
+                    b.HasIndex("IdMovimientoCaja");
+
+                    b.HasIndex("IdUsuario");
+
+                    b.ToTable("PagosCuentaPorPagar");
+                });
+
             modelBuilder.Entity("Domain.Entities.Pedido", b =>
                 {
                     b.Property<int>("Id")
@@ -1567,6 +2737,10 @@ namespace Persistence.Migrations
 
                     b.Property<int?>("AbiertoPor")
                         .HasColumnType("integer");
+
+                    b.Property<string>("CanalOrigen")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<decimal>("CargoServicioPct")
                         .ValueGeneratedOnAdd()
@@ -1586,6 +2760,15 @@ namespace Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<DateTime?>("DespachadoEn")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("DireccionEntrega")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("EntregadoEn")
+                        .HasColumnType("timestamp without time zone");
+
                     b.Property<int?>("IdCliente")
                         .HasColumnType("integer");
 
@@ -1594,6 +2777,9 @@ namespace Persistence.Migrations
 
                     b.Property<int>("IdEstadoPedido")
                         .HasColumnType("integer");
+
+                    b.Property<string>("IdExterno")
+                        .HasColumnType("text");
 
                     b.Property<int?>("IdMesa")
                         .HasColumnType("integer");
@@ -1604,8 +2790,18 @@ namespace Persistence.Migrations
                     b.Property<int>("IdTipoPedido")
                         .HasColumnType("integer");
 
+                    b.Property<string>("IdempotencyKey")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
+
+                    b.Property<string>("NombreClienteDelivery")
+                        .HasColumnType("text");
+
+                    b.Property<string>("NombreRepartidor")
+                        .HasColumnType("text");
 
                     b.Property<string>("Notas")
                         .HasMaxLength(500)
@@ -1615,6 +2811,12 @@ namespace Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
                         .HasDefaultValue(1);
+
+                    b.Property<string>("TelefonoDelivery")
+                        .HasColumnType("text");
+
+                    b.Property<string>("TelefonoRepartidor")
+                        .HasColumnType("text");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp without time zone");
@@ -1640,6 +2842,10 @@ namespace Persistence.Migrations
                     b.HasIndex("IdSucursal");
 
                     b.HasIndex("IdTipoPedido");
+
+                    b.HasIndex("IdempotencyKey")
+                        .IsUnique()
+                        .HasFilter("\"IdempotencyKey\" IS NOT NULL");
 
                     b.ToTable("Pedido", (string)null);
                 });
@@ -1976,6 +3182,215 @@ namespace Persistence.Migrations
                     b.ToTable("Producto", (string)null);
                 });
 
+            modelBuilder.Entity("Domain.Entities.Proveedor", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Banco")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("Contacto")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("CuentaBancaria")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<int>("DiasCredito")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Direccion")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<string>("Email")
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<int>("IdEmpresa")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("NombreComercial")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("RFC")
+                        .IsRequired()
+                        .HasMaxLength(13)
+                        .HasColumnType("character varying(13)");
+
+                    b.Property<string>("RazonSocial")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("RegimenFiscal")
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<string>("Telefono")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("IdEmpresa", "RFC");
+
+                    b.ToTable("Proveedores");
+                });
+
+            modelBuilder.Entity("Domain.Entities.Receta", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("CostoEstimadoUnitario")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Descripcion")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<bool>("EsSubReceta")
+                        .HasColumnType("boolean");
+
+                    b.Property<int?>("IdOpcionModificador")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("IdProducto")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("IdUnidadMedidaRendimiento")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("IdVariante")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<decimal>("Rendimiento")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EsSubReceta");
+
+                    b.HasIndex("IdOpcionModificador");
+
+                    b.HasIndex("IdProducto");
+
+                    b.HasIndex("IdUnidadMedidaRendimiento");
+
+                    b.HasIndex("IdVariante");
+
+                    b.ToTable("Recetas");
+                });
+
+            modelBuilder.Entity("Domain.Entities.RecetaDetalle", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("Cantidad")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal>("CostoCalculado")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int?>("IdInsumo")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("IdReceta")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("IdSubReceta")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("IdUnidadMedida")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<decimal>("PorcentajeMermaEsperada")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("IdInsumo");
+
+                    b.HasIndex("IdReceta");
+
+                    b.HasIndex("IdSubReceta");
+
+                    b.HasIndex("IdUnidadMedida");
+
+                    b.ToTable("RecetaDetalles");
+                });
+
             modelBuilder.Entity("Domain.Entities.Rol", b =>
                 {
                     b.Property<int>("Id")
@@ -2138,6 +3553,9 @@ namespace Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<DateTime?>("FechaRecuperacion")
+                        .HasColumnType("timestamp without time zone");
+
                     b.Property<int>("IdEstacion")
                         .HasColumnType("integer");
 
@@ -2155,6 +3573,9 @@ namespace Persistence.Migrations
 
                     b.Property<string>("UpdatedBy")
                         .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("UsuarioRecuperacion")
                         .HasColumnType("text");
 
                     b.HasKey("Id");
@@ -2213,6 +3634,94 @@ namespace Persistence.Migrations
                     b.ToTable("TicketDetalle", (string)null);
                 });
 
+            modelBuilder.Entity("Domain.Entities.TraspasoAlmacen", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Estado")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<DateTime?>("FechaRecepcion")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<DateTime>("FechaSolicitud")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("Folio")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<int>("IdAlmacenDestino")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("IdAlmacenOrigen")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("IdUsuarioRecibe")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("IdUsuarioSolicita")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Observaciones")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("IdAlmacenDestino");
+
+                    b.HasIndex("IdAlmacenOrigen");
+
+                    b.HasIndex("IdUsuarioRecibe");
+
+                    b.HasIndex("IdUsuarioSolicita");
+
+                    b.ToTable("TraspasosAlmacen");
+                });
+
+            modelBuilder.Entity("Domain.Entities.TraspasoAlmacenDetalle", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("Cantidad")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal?>("CantidadRecibida")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<int>("IdInsumo")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("IdTraspasoAlmacen")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("IdInsumo");
+
+                    b.HasIndex("IdTraspasoAlmacen");
+
+                    b.ToTable("TraspasoAlmacenDetalles");
+                });
+
             modelBuilder.Entity("Domain.Entities.Turno", b =>
                 {
                     b.Property<int>("Id")
@@ -2265,6 +3774,37 @@ namespace Persistence.Migrations
                     b.HasIndex("IdUsuario");
 
                     b.ToTable("Turno", (string)null);
+                });
+
+            modelBuilder.Entity("Domain.Entities.UnidadMedida", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Codigo")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Tipo")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("UnidadesMedida");
                 });
 
             modelBuilder.Entity("Domain.Entities.Usuario", b =>
@@ -2400,6 +3940,17 @@ namespace Persistence.Migrations
                     b.ToTable("VarianteProducto", (string)null);
                 });
 
+            modelBuilder.Entity("Domain.Entities.Almacen", b =>
+                {
+                    b.HasOne("Domain.Entities.Sucursal", "Sucursal")
+                        .WithMany()
+                        .HasForeignKey("IdSucursal")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Sucursal");
+                });
+
             modelBuilder.Entity("Domain.Entities.Area", b =>
                 {
                     b.HasOne("Domain.Entities.Sucursal", "Sucursal")
@@ -2431,6 +3982,72 @@ namespace Persistence.Migrations
                         .IsRequired();
 
                     b.Navigation("Empresa");
+                });
+
+            modelBuilder.Entity("Domain.Entities.CompraFactura", b =>
+                {
+                    b.HasOne("Domain.Entities.Almacen", "Almacen")
+                        .WithMany()
+                        .HasForeignKey("IdAlmacen")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.Empresa", "Empresa")
+                        .WithMany()
+                        .HasForeignKey("IdEmpresa")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.Proveedor", "Proveedor")
+                        .WithMany("Compras")
+                        .HasForeignKey("IdProveedor")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.Sucursal", "Sucursal")
+                        .WithMany()
+                        .HasForeignKey("IdSucursal")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.Usuario", "Usuario")
+                        .WithMany()
+                        .HasForeignKey("IdUsuario");
+
+                    b.Navigation("Almacen");
+
+                    b.Navigation("Empresa");
+
+                    b.Navigation("Proveedor");
+
+                    b.Navigation("Sucursal");
+
+                    b.Navigation("Usuario");
+                });
+
+            modelBuilder.Entity("Domain.Entities.CompraFacturaDetalle", b =>
+                {
+                    b.HasOne("Domain.Entities.CompraFactura", "CompraFactura")
+                        .WithMany("Detalles")
+                        .HasForeignKey("IdCompraFactura")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.Insumo", "Insumo")
+                        .WithMany()
+                        .HasForeignKey("IdInsumo")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.UnidadMedida", "UnidadMedida")
+                        .WithMany()
+                        .HasForeignKey("IdUnidadMedida");
+
+                    b.Navigation("CompraFactura");
+
+                    b.Navigation("Insumo");
+
+                    b.Navigation("UnidadMedida");
                 });
 
             modelBuilder.Entity("Domain.Entities.CorteCaja", b =>
@@ -2495,6 +4112,40 @@ namespace Persistence.Migrations
                     b.Navigation("Pedido");
                 });
 
+            modelBuilder.Entity("Domain.Entities.CuentaPorPagar", b =>
+                {
+                    b.HasOne("Domain.Entities.CompraFactura", "CompraFactura")
+                        .WithMany()
+                        .HasForeignKey("IdCompraFactura")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Domain.Entities.Empresa", "Empresa")
+                        .WithMany()
+                        .HasForeignKey("IdEmpresa")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.Proveedor", "Proveedor")
+                        .WithMany()
+                        .HasForeignKey("IdProveedor")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.Sucursal", "Sucursal")
+                        .WithMany()
+                        .HasForeignKey("IdSucursal")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("CompraFactura");
+
+                    b.Navigation("Empresa");
+
+                    b.Navigation("Proveedor");
+
+                    b.Navigation("Sucursal");
+                });
+
             modelBuilder.Entity("Domain.Entities.DescuentoAplicado", b =>
                 {
                     b.HasOne("Domain.Entities.Cuenta", "Cuenta")
@@ -2554,6 +4205,25 @@ namespace Persistence.Migrations
                     b.Navigation("Usuario");
                 });
 
+            modelBuilder.Entity("Domain.Entities.FactorConversion", b =>
+                {
+                    b.HasOne("Domain.Entities.UnidadMedida", "UnidadDestino")
+                        .WithMany()
+                        .HasForeignKey("IdUnidadDestino")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.UnidadMedida", "UnidadOrigen")
+                        .WithMany()
+                        .HasForeignKey("IdUnidadOrigen")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("UnidadDestino");
+
+                    b.Navigation("UnidadOrigen");
+                });
+
             modelBuilder.Entity("Domain.Entities.FormField", b =>
                 {
                     b.HasOne("Domain.Entities.Formulario", "Formulario")
@@ -2574,6 +4244,88 @@ namespace Persistence.Migrations
                         .IsRequired();
 
                     b.Navigation("Producto");
+                });
+
+            modelBuilder.Entity("Domain.Entities.Insumo", b =>
+                {
+                    b.HasOne("Domain.Entities.CategoriaInsumo", "CategoriaInsumo")
+                        .WithMany()
+                        .HasForeignKey("IdCategoriaInsumo")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.UnidadMedida", "UnidadMedidaBase")
+                        .WithMany()
+                        .HasForeignKey("IdUnidadMedidaBase")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("CategoriaInsumo");
+
+                    b.Navigation("UnidadMedidaBase");
+                });
+
+            modelBuilder.Entity("Domain.Entities.InventarioExistencia", b =>
+                {
+                    b.HasOne("Domain.Entities.Almacen", "Almacen")
+                        .WithMany("Existencias")
+                        .HasForeignKey("IdAlmacen")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.Insumo", "Insumo")
+                        .WithMany("Existencias")
+                        .HasForeignKey("IdInsumo")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Almacen");
+
+                    b.Navigation("Insumo");
+                });
+
+            modelBuilder.Entity("Domain.Entities.KardexMovimiento", b =>
+                {
+                    b.HasOne("Domain.Entities.Almacen", "Almacen")
+                        .WithMany()
+                        .HasForeignKey("IdAlmacen")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.Insumo", "Insumo")
+                        .WithMany("MovimientosKardex")
+                        .HasForeignKey("IdInsumo")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.Usuario", "Usuario")
+                        .WithMany()
+                        .HasForeignKey("IdUsuario");
+
+                    b.Navigation("Almacen");
+
+                    b.Navigation("Insumo");
+
+                    b.Navigation("Usuario");
+                });
+
+            modelBuilder.Entity("Domain.Entities.MapeoInsumoProveedor", b =>
+                {
+                    b.HasOne("Domain.Entities.Insumo", "Insumo")
+                        .WithMany()
+                        .HasForeignKey("IdInsumo")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.Proveedor", "Proveedor")
+                        .WithMany("Mapeos")
+                        .HasForeignKey("IdProveedor")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Insumo");
+
+                    b.Navigation("Proveedor");
                 });
 
             modelBuilder.Entity("Domain.Entities.Menu", b =>
@@ -2663,6 +4415,39 @@ namespace Persistence.Migrations
                     b.Navigation("MetodoDePago");
 
                     b.Navigation("RecibidoPorUsuario");
+                });
+
+            modelBuilder.Entity("Domain.Entities.PagoCuentaPorPagar", b =>
+                {
+                    b.HasOne("Domain.Entities.CuentaPorPagar", "CuentaPorPagar")
+                        .WithMany("Pagos")
+                        .HasForeignKey("IdCuentaPorPagar")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.CatMetodoDePago", "MetodoPago")
+                        .WithMany()
+                        .HasForeignKey("IdMetodoPago")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.MovimientoCaja", "MovimientoCaja")
+                        .WithMany()
+                        .HasForeignKey("IdMovimientoCaja")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Domain.Entities.Usuario", "Usuario")
+                        .WithMany()
+                        .HasForeignKey("IdUsuario")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("CuentaPorPagar");
+
+                    b.Navigation("MetodoPago");
+
+                    b.Navigation("MovimientoCaja");
+
+                    b.Navigation("Usuario");
                 });
 
             modelBuilder.Entity("Domain.Entities.Pedido", b =>
@@ -2872,6 +4657,79 @@ namespace Persistence.Migrations
                     b.Navigation("Menu");
                 });
 
+            modelBuilder.Entity("Domain.Entities.Proveedor", b =>
+                {
+                    b.HasOne("Domain.Entities.Empresa", "Empresa")
+                        .WithMany()
+                        .HasForeignKey("IdEmpresa")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Empresa");
+                });
+
+            modelBuilder.Entity("Domain.Entities.Receta", b =>
+                {
+                    b.HasOne("Domain.Entities.OpcionModificador", "OpcionModificador")
+                        .WithMany()
+                        .HasForeignKey("IdOpcionModificador");
+
+                    b.HasOne("Domain.Entities.Producto", "Producto")
+                        .WithMany()
+                        .HasForeignKey("IdProducto");
+
+                    b.HasOne("Domain.Entities.UnidadMedida", "UnidadMedidaRendimiento")
+                        .WithMany()
+                        .HasForeignKey("IdUnidadMedidaRendimiento")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.VarianteProducto", "Variante")
+                        .WithMany()
+                        .HasForeignKey("IdVariante");
+
+                    b.Navigation("OpcionModificador");
+
+                    b.Navigation("Producto");
+
+                    b.Navigation("UnidadMedidaRendimiento");
+
+                    b.Navigation("Variante");
+                });
+
+            modelBuilder.Entity("Domain.Entities.RecetaDetalle", b =>
+                {
+                    b.HasOne("Domain.Entities.Insumo", "Insumo")
+                        .WithMany()
+                        .HasForeignKey("IdInsumo")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Domain.Entities.Receta", "Receta")
+                        .WithMany("Detalles")
+                        .HasForeignKey("IdReceta")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.Receta", "SubReceta")
+                        .WithMany()
+                        .HasForeignKey("IdSubReceta")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Domain.Entities.UnidadMedida", "UnidadMedida")
+                        .WithMany()
+                        .HasForeignKey("IdUnidadMedida")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Insumo");
+
+                    b.Navigation("Receta");
+
+                    b.Navigation("SubReceta");
+
+                    b.Navigation("UnidadMedida");
+                });
+
             modelBuilder.Entity("Domain.Entities.RolAccesoRuta", b =>
                 {
                     b.HasOne("Domain.Entities.AccesoRuta", "AccesoRuta")
@@ -2956,6 +4814,59 @@ namespace Persistence.Migrations
                     b.Navigation("Ticket");
                 });
 
+            modelBuilder.Entity("Domain.Entities.TraspasoAlmacen", b =>
+                {
+                    b.HasOne("Domain.Entities.Almacen", "AlmacenDestino")
+                        .WithMany()
+                        .HasForeignKey("IdAlmacenDestino")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.Almacen", "AlmacenOrigen")
+                        .WithMany()
+                        .HasForeignKey("IdAlmacenOrigen")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.Usuario", "UsuarioRecibe")
+                        .WithMany()
+                        .HasForeignKey("IdUsuarioRecibe")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Domain.Entities.Usuario", "UsuarioSolicita")
+                        .WithMany()
+                        .HasForeignKey("IdUsuarioSolicita")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("AlmacenDestino");
+
+                    b.Navigation("AlmacenOrigen");
+
+                    b.Navigation("UsuarioRecibe");
+
+                    b.Navigation("UsuarioSolicita");
+                });
+
+            modelBuilder.Entity("Domain.Entities.TraspasoAlmacenDetalle", b =>
+                {
+                    b.HasOne("Domain.Entities.Insumo", "Insumo")
+                        .WithMany()
+                        .HasForeignKey("IdInsumo")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.TraspasoAlmacen", "TraspasoAlmacen")
+                        .WithMany("Detalles")
+                        .HasForeignKey("IdTraspasoAlmacen")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Insumo");
+
+                    b.Navigation("TraspasoAlmacen");
+                });
+
             modelBuilder.Entity("Domain.Entities.Turno", b =>
                 {
                     b.HasOne("Domain.Entities.Sucursal", "Sucursal")
@@ -3021,6 +4932,11 @@ namespace Persistence.Migrations
                     b.Navigation("RolesConAcceso");
                 });
 
+            modelBuilder.Entity("Domain.Entities.Almacen", b =>
+                {
+                    b.Navigation("Existencias");
+                });
+
             modelBuilder.Entity("Domain.Entities.Area", b =>
                 {
                     b.Navigation("Mesas");
@@ -3036,12 +4952,22 @@ namespace Persistence.Migrations
                     b.Navigation("Pedidos");
                 });
 
+            modelBuilder.Entity("Domain.Entities.CompraFactura", b =>
+                {
+                    b.Navigation("Detalles");
+                });
+
             modelBuilder.Entity("Domain.Entities.Cuenta", b =>
                 {
                     b.Navigation("Descuentos");
 
                     b.Navigation("Detalles");
 
+                    b.Navigation("Pagos");
+                });
+
+            modelBuilder.Entity("Domain.Entities.CuentaPorPagar", b =>
+                {
                     b.Navigation("Pagos");
                 });
 
@@ -3069,6 +4995,13 @@ namespace Persistence.Migrations
             modelBuilder.Entity("Domain.Entities.GrupoModificador", b =>
                 {
                     b.Navigation("Opciones");
+                });
+
+            modelBuilder.Entity("Domain.Entities.Insumo", b =>
+                {
+                    b.Navigation("Existencias");
+
+                    b.Navigation("MovimientosKardex");
                 });
 
             modelBuilder.Entity("Domain.Entities.Menu", b =>
@@ -3124,6 +5057,18 @@ namespace Persistence.Migrations
                     b.Navigation("Variantes");
                 });
 
+            modelBuilder.Entity("Domain.Entities.Proveedor", b =>
+                {
+                    b.Navigation("Compras");
+
+                    b.Navigation("Mapeos");
+                });
+
+            modelBuilder.Entity("Domain.Entities.Receta", b =>
+                {
+                    b.Navigation("Detalles");
+                });
+
             modelBuilder.Entity("Domain.Entities.Rol", b =>
                 {
                     b.Navigation("AccesosRuta");
@@ -3149,6 +5094,11 @@ namespace Persistence.Migrations
                 });
 
             modelBuilder.Entity("Domain.Entities.TicketCocina", b =>
+                {
+                    b.Navigation("Detalles");
+                });
+
+            modelBuilder.Entity("Domain.Entities.TraspasoAlmacen", b =>
                 {
                     b.Navigation("Detalles");
                 });

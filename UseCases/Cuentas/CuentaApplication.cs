@@ -331,4 +331,124 @@ public class CuentaApplication : ICuentaApplication
     }
 
     #endregion
+
+    public async Task<Response<CuentaDTO>> GenerarCuentaAsync(int idPedido)
+    {
+        var response = new Response<CuentaDTO>();
+        try
+        {
+            var pedido = await _unitOfWork.Pedidos.GetAsync(idPedido);
+            if (pedido == null) throw new Exception("Pedido no encontrado");
+
+            var detallesAll = await _unitOfWork.PedidoDetalles.GetAllAsync();
+            var detalles = detallesAll.Where(d => d.IdPedido == idPedido && !d.Cancelado).ToList();
+
+            decimal total = detalles.Sum(d => d.PrecioUnitario * d.Cantidad);
+            decimal impuestoTotal = detalles.Sum(d => d.MontoImpuesto);
+            if (impuestoTotal == 0) impuestoTotal = total - (total / 1.16m);
+            decimal subtotal = total - impuestoTotal;
+
+            // Buscar si ya existe una cuenta abierta para este pedido (IdEstadoCuenta == 2)
+            var cuentasAll = await _unitOfWork.Cuentas.GetAllAsync();
+            var cuentaExistente = cuentasAll
+                .Where(c => c.IdPedido == idPedido && c.IdEstadoCuenta == 2 && c.IsActive)
+                .OrderByDescending(c => c.CreatedAt)
+                .FirstOrDefault();
+
+            Cuenta cuenta;
+            if (cuentaExistente != null)
+            {
+                cuenta = cuentaExistente;
+                cuenta.Subtotal = subtotal;
+                cuenta.ImpuestoTotal = impuestoTotal;
+                cuenta.Total = total;
+                cuenta.UpdatedAt = DateTime.UtcNow;
+                cuenta.UpdatedBy = "System";
+                await _unitOfWork.Cuentas.UpdateAsync(cuenta);
+            }
+            else
+            {
+                cuenta = new Cuenta
+                {
+                    IdPedido = idPedido,
+                    Subtotal = subtotal,
+                    ImpuestoTotal = impuestoTotal,
+                    Total = total,
+                    IdEstadoCuenta = 2, // Abierta
+                    IsActive = true,
+                    CreatedBy = "System",
+                    CreatedAt = DateTime.UtcNow
+                };
+                await _unitOfWork.Cuentas.InsertAsync(cuenta);
+            }
+
+            // Consultar los pagos registrados para esta cuenta
+            var pagosAll = await _unitOfWork.Pagos.GetAllAsync();
+            var pagosCuenta = pagosAll.Where(p => p.IdCuenta == cuenta.Id && p.IsActive).OrderBy(p => p.PagadoEn).ToList();
+
+            decimal totalPagado = pagosCuenta.Sum(p => p.Monto);
+            decimal saldoRestante = Math.Max(0, cuenta.Total - totalPagado);
+
+            var dto = _mapper.Map<CuentaDTO>(cuenta);
+            dto.TotalPagado = totalPagado;
+            dto.SaldoRestante = saldoRestante;
+            dto.PagosRealizados = pagosCuenta.Select(p => new PagoResumenDTO
+            {
+                Id = p.Id,
+                Monto = p.Monto,
+                Propina = p.Propina,
+                MetodoDePago = p.IdMetodoDePago == 1 ? "Efectivo" : "Tarjeta",
+                PagadoEn = p.PagadoEn
+            }).ToList();
+
+            // Metadatos de Mesa y Sucursal
+            if (pedido.IdMesa.HasValue)
+            {
+                var mesa = await _unitOfWork.Mesas.GetAsync(pedido.IdMesa.Value);
+                if (mesa != null)
+                {
+                    dto.MesaNombre = mesa.Codigo;
+                }
+            }
+
+            var sucursal = await _unitOfWork.Sucursales.GetAsync(pedido.IdSucursal);
+            if (sucursal != null)
+            {
+                dto.SucursalNombre = sucursal.Nombre;
+            }
+
+            // Desglose de ítems activos del pedido
+            var modificadoresAll = await _unitOfWork.PedidoModificadores.GetAllAsync();
+            var detallesIds = detalles.Select(d => d.Id).ToHashSet();
+            var modifsPedido = modificadoresAll.Where(m => detallesIds.Contains(m.IdDetalle)).ToList();
+
+            dto.Items = detalles.Select(d => new CuentaItemDTO
+            {
+                ProductoNombre = string.IsNullOrWhiteSpace(d.ProductoNombre) ? "Producto" : d.ProductoNombre,
+                VarianteNombre = d.VarianteNombre,
+                Cantidad = d.Cantidad,
+                PrecioUnitario = d.PrecioUnitario,
+                Modificadores = modifsPedido
+                    .Where(m => m.IdDetalle == d.Id)
+                    .Select(m => m.OpcionNombre)
+                    .Where(n => !string.IsNullOrWhiteSpace(n))
+                    .ToList()
+            }).ToList();
+
+            response.Data = dto;
+            response.isSuccess = true;
+            response.Message = "Cuenta generada exitosamente";
+        }
+        catch (Exception ex)
+        {
+            response.Message = ex.Message;
+            _logger.LogError(ex.Message);
+        }
+        return response;
+    }
+
+    public Response<CuentaDTO> GenerarCuenta(int idPedido)
+    {
+        return GenerarCuentaAsync(idPedido).GetAwaiter().GetResult();
+    }
 }

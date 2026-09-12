@@ -8,9 +8,10 @@ Cada nueva funcionalidad, historia de usuario o corrección de error se consider
 - [ ] **Documentación:** Se actualizaron modelos Mermaid y este set de documentación si hubo cambios arquitectónicos o de modelo de dominio.
 - [ ] **Migraciones DB:** Si hubo cambios en el modelo de dominio (`Domain/Entities`), se generó la respectiva migración en `Persistence` y fue probada localmente.
 
-## Checklist de Pruebas (Cuando aplique)
-- [ ] **Tests de UseCases:** Existe prueba unitaria para los casos de éxito y de fallo (regla de negocio no cumplida) del UseCase creado o modificado.
-- [ ] **Validaciones:** Se probó (vía Postman/Scalar y tests unitarios) que FluentValidation rechaza requests mal formados apropiadamente devolviendo HTTP 400.
+## Checklist de Pruebas Unitarias (Obligatorio según ADR-004)
+- [ ] **Tests de UseCases:** Existe prueba unitaria para los casos de éxito y de fallo (regla de negocio no cumplida, excepciones) del UseCase creado o modificado en `MesaFacil.API.UnitTests`.
+- [ ] **Validadores:** Cada DTO con reglas de validación en `Validator` cuenta con pruebas unitarias que cubren casos borde, datos requeridos y formatos inválidos.
+- [ ] **Ejecución Local en Verde:** La suite de pruebas completa `dotnet test` se ejecuta localmente y pasa al 100% (0 tests fallidos) antes de abrir un Pull Request o dar por finalizada la tarea.
 
 ## Checklist de Integración
 - [ ] **Inyección de Dependencias:** Todos los nuevos repositorios, servicios y casos de uso están registrados apropiadamente (vía Scrutor u explícitamente) y no generan errores de resolución en el arranque del servidor.
