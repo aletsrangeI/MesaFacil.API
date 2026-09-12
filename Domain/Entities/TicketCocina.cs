@@ -12,6 +12,8 @@ public class TicketCocina : BaseAuditableEntity // Asume que hereda IdTicket
     public int IdEstadoTicketCocina { get; set; }
     
     public DateTime? CompletadoEn { get; set; }
+    public DateTime? FechaRecuperacion { get; set; }
+    public string? UsuarioRecuperacion { get; set; }
 
     // ==========================================
     // PROPIEDADES DE NAVEGACIÓN

@@ -10,6 +10,5 @@ public class PagoDTO
     public DateTime PagadoEn { get; set; }
     public string? Referencia { get; set; }
     public int? RecibidoPor { get; set; }
-    public int MetodoCatalogId { get; set; }
-    public int MetodoItemId { get; set; }
+    public int IdMetodoDePago { get; set; }
 }

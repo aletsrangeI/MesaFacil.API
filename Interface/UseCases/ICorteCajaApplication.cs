@@ -27,5 +27,9 @@ public interface ICorteCajaApplication
     Task<ResponsePagination<IEnumerable<CorteCajaDTO>>> GetAllWithPaginationAsync(int page, int pageSize);
     Task<Response<int>> CountAsync();
 
+    Task<Response<ResumenCorteDTO>> ObtenerResumenActualAsync(int? idSucursal, int? idTurno);
+    Task<Response<CorteCajaDTO>> RealizarCorteAsync(RealizarCorteRequestDTO dto, int? idUsuario);
+    Task<Response<ResumenHistorialCortesDTO>> ObtenerHistorialAsync(DateTime? fechaInicio, DateTime? fechaFin, int? idSucursal);
+
     #endregion
 }

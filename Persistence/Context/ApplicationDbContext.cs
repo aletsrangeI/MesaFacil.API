@@ -68,6 +68,37 @@ public class ApplicationDbContext : DbContext
     public DbSet<CatMoneda>              CatMonedas              { get; set; }
     public DbSet<CatTipoDescuento>       CatTiposDescuento       { get; set; }
     public DbSet<CatTipoPedido>          CatTiposPedido          { get; set; }
+    public DbSet<CatMotivoMovimientoInventario> CatMotivosMovimientoInventario { get; set; }
+    public DbSet<CatTipoAlmacen>         CatTiposAlmacen         { get; set; }
+    public DbSet<CatConceptoMovimientoCaja> CatConceptosMovimientoCaja { get; set; }
+    public DbSet<CatMotivoCancelacionPedido> CatMotivosCancelacionPedido { get; set; }
+    public DbSet<CatCanalVenta>          CatCanalesVenta         { get; set; }
+    public DbSet<CatRegimenFiscal>       CatRegimenesFiscales    { get; set; }
+
+    // Spec 014: Inventarios, Insumos, Almacenes y Kárdex
+    public DbSet<UnidadMedida>           UnidadesMedida          { get; set; }
+    public DbSet<FactorConversion>       FactoresConversion      { get; set; }
+    public DbSet<CategoriaInsumo>        CategoriasInsumo        { get; set; }
+    public DbSet<Insumo>                 Insumos                 { get; set; }
+    public DbSet<Almacen>                Almacenes               { get; set; }
+    public DbSet<InventarioExistencia>   InventarioExistencias   { get; set; }
+    public DbSet<KardexMovimiento>       KardexMovimientos       { get; set; }
+    public DbSet<TraspasoAlmacen>        TraspasosAlmacen        { get; set; }
+    public DbSet<TraspasoAlmacenDetalle> TraspasoAlmacenDetalles { get; set; }
+
+    // Spec 015: Recetas (Escandallos) y Sub-recetas
+    public DbSet<Receta>                 Recetas                 { get; set; }
+    public DbSet<RecetaDetalle>          RecetaDetalles          { get; set; }
+
+    // Spec 016: Proveedores, Entradas de Compra y Facturas CFDI
+    public DbSet<Proveedor>              Proveedores             { get; set; }
+    public DbSet<MapeoInsumoProveedor>   MapeosInsumoProveedor   { get; set; }
+    public DbSet<CompraFactura>          ComprasFactura          { get; set; }
+    public DbSet<CompraFacturaDetalle>   CompraFacturaDetalles   { get; set; }
+
+    // Spec 017: Cuentas por Pagar (CxP), Programación de Pagos y Egresos
+    public DbSet<CuentaPorPagar>         CuentasPorPagar         { get; set; }
+    public DbSet<PagoCuentaPorPagar>     PagosCuentaPorPagar     { get; set; }
 
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -75,6 +106,177 @@ public class ApplicationDbContext : DbContext
         modelBuilder.Ignore<FormValidation>();
         modelBuilder.Ignore<SelectFormOption>();
         modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
+
+        // Spec 014: Configuración de Inventario
+        modelBuilder.Entity<InventarioExistencia>()
+            .HasIndex(e => new { e.IdAlmacen, e.IdInsumo })
+            .IsUnique();
+
+        modelBuilder.Entity<KardexMovimiento>()
+            .HasIndex(k => new { k.IdAlmacen, k.IdInsumo, k.FechaHora });
+
+        modelBuilder.Entity<TraspasoAlmacen>()
+            .HasOne(t => t.AlmacenOrigen)
+            .WithMany()
+            .HasForeignKey(t => t.IdAlmacenOrigen)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<TraspasoAlmacen>()
+            .HasOne(t => t.AlmacenDestino)
+            .WithMany()
+            .HasForeignKey(t => t.IdAlmacenDestino)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<TraspasoAlmacen>()
+            .HasOne(t => t.UsuarioSolicita)
+            .WithMany()
+            .HasForeignKey(t => t.IdUsuarioSolicita)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<TraspasoAlmacen>()
+            .HasOne(t => t.UsuarioRecibe)
+            .WithMany()
+            .HasForeignKey(t => t.IdUsuarioRecibe)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // Spec 015: Configuración de Recetas
+        modelBuilder.Entity<Receta>()
+            .HasIndex(r => r.IdProducto);
+
+        modelBuilder.Entity<Receta>()
+            .HasIndex(r => r.IdVariante);
+
+        modelBuilder.Entity<Receta>()
+            .HasIndex(r => r.IdOpcionModificador);
+
+        modelBuilder.Entity<Receta>()
+            .HasIndex(r => r.EsSubReceta);
+
+        modelBuilder.Entity<RecetaDetalle>()
+            .HasOne(d => d.Receta)
+            .WithMany(r => r.Detalles)
+            .HasForeignKey(d => d.IdReceta)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<RecetaDetalle>()
+            .HasOne(d => d.Insumo)
+            .WithMany()
+            .HasForeignKey(d => d.IdInsumo)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<RecetaDetalle>()
+            .HasOne(d => d.SubReceta)
+            .WithMany()
+            .HasForeignKey(d => d.IdSubReceta)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // Spec 016: Configuración de Proveedores, Compras y Facturas CFDI
+        modelBuilder.Entity<Proveedor>()
+            .HasIndex(p => new { p.IdEmpresa, p.RFC });
+
+        modelBuilder.Entity<MapeoInsumoProveedor>()
+            .HasIndex(m => new { m.IdProveedor, m.ClaveProdServ, m.DescripcionSAT });
+
+        modelBuilder.Entity<MapeoInsumoProveedor>()
+            .HasOne(m => m.Proveedor)
+            .WithMany(p => p.Mapeos)
+            .HasForeignKey(m => m.IdProveedor)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<MapeoInsumoProveedor>()
+            .HasOne(m => m.Insumo)
+            .WithMany()
+            .HasForeignKey(m => m.IdInsumo)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<CompraFactura>()
+            .HasIndex(c => c.UUID);
+
+        modelBuilder.Entity<CompraFactura>()
+            .HasIndex(c => new { c.IdEmpresa, c.IdSucursal, c.FechaEmision });
+
+        modelBuilder.Entity<CompraFactura>()
+            .HasOne(c => c.Proveedor)
+            .WithMany(p => p.Compras)
+            .HasForeignKey(c => c.IdProveedor)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<CompraFactura>()
+            .HasOne(c => c.Almacen)
+            .WithMany()
+            .HasForeignKey(c => c.IdAlmacen)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<CompraFactura>()
+            .HasOne(c => c.Sucursal)
+            .WithMany()
+            .HasForeignKey(c => c.IdSucursal)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<CompraFacturaDetalle>()
+            .HasOne(d => d.CompraFactura)
+            .WithMany(c => c.Detalles)
+            .HasForeignKey(d => d.IdCompraFactura)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<CompraFacturaDetalle>()
+            .HasOne(d => d.Insumo)
+            .WithMany()
+            .HasForeignKey(d => d.IdInsumo)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // Spec 017: Configuración de Cuentas por Pagar (CxP)
+        modelBuilder.Entity<CuentaPorPagar>()
+            .HasIndex(c => new { c.IdEmpresa, c.IdSucursal, c.Estado, c.FechaVencimiento });
+
+        modelBuilder.Entity<CuentaPorPagar>()
+            .HasOne(c => c.Empresa)
+            .WithMany()
+            .HasForeignKey(c => c.IdEmpresa)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<CuentaPorPagar>()
+            .HasOne(c => c.Sucursal)
+            .WithMany()
+            .HasForeignKey(c => c.IdSucursal)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<CuentaPorPagar>()
+            .HasOne(c => c.Proveedor)
+            .WithMany()
+            .HasForeignKey(c => c.IdProveedor)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<CuentaPorPagar>()
+            .HasOne(c => c.CompraFactura)
+            .WithMany()
+            .HasForeignKey(c => c.IdCompraFactura)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<PagoCuentaPorPagar>()
+            .HasOne(p => p.CuentaPorPagar)
+            .WithMany(c => c.Pagos)
+            .HasForeignKey(p => p.IdCuentaPorPagar)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<PagoCuentaPorPagar>()
+            .HasOne(p => p.MetodoPago)
+            .WithMany()
+            .HasForeignKey(p => p.IdMetodoPago)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<PagoCuentaPorPagar>()
+            .HasOne(p => p.MovimientoCaja)
+            .WithMany()
+            .HasForeignKey(p => p.IdMovimientoCaja)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        modelBuilder.Entity<PagoCuentaPorPagar>()
+            .HasOne(p => p.Usuario)
+            .WithMany()
+            .HasForeignKey(p => p.IdUsuario)
+            .OnDelete(DeleteBehavior.Restrict);
+
         base.OnModelCreating(modelBuilder);
     }
 

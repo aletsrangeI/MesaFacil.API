@@ -48,6 +48,22 @@ public static class ConfigureServices
         RegisterGenericCatalog<CatMoneda>             (services, "monedas");
         RegisterGenericCatalog<CatTipoDescuento>      (services, "tipos-descuento");
         RegisterGenericCatalog<CatTipoPedido>         (services, "tipos-pedido");
+        RegisterGenericCatalog<CatTipoAlmacen>        (services, "tipos-almacen");
+        RegisterGenericCatalog<CatMotivoMovimientoInventario>(services, "motivos-movimiento-inventario");
+        RegisterGenericCatalog<CatConceptoMovimientoCaja>(services, "conceptos-movimiento-caja");
+        RegisterGenericCatalog<CatMotivoCancelacionPedido>(services, "motivos-cancelacion-pedido");
+        RegisterGenericCatalog<CatCanalVenta>         (services, "canales-venta");
+        RegisterGenericCatalog<CatRegimenFiscal>      (services, "regimenes-fiscales");
+
+        // Spec 015: Servicio de Descuento de Inventario por Liquidación en POS
+        services.AddScoped<IDescuentoInventarioService, Inventario.DescuentoInventarioService>();
+
+        // Spec 016: Servicios de CFDI SAT y Recepción de Compras
+        services.AddScoped<Compras.ICfdiXmlParserService, Compras.CfdiXmlParserService>();
+        services.AddScoped<Compras.IRecepcionCompraService, Compras.RecepcionCompraService>();
+
+        // Spec 017: Servicio de Cuentas por Pagar (CxP), Programación de Pagos y Egresos
+        services.AddScoped<CxP.ICxPService, CxP.CxPService>();
 
         return services;
     }

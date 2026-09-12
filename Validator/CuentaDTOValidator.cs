@@ -13,11 +13,9 @@ public class CuentaDTOValidator : AbstractValidator<CuentaDTO>
         RuleFor(x => x.IdPedido)
             .GreaterThan(0).WithMessage("IdPedido es requerido y debe ser mayor a 0.");
 
-        RuleFor(x => x.EstadoCatalogId)
-            .GreaterThan(0).WithMessage("EstadoCatalogId es requerido y debe ser mayor a 0.");
-
-        RuleFor(x => x.EstadoItemId)
-            .GreaterThan(0).WithMessage("EstadoItemId es requerido y debe ser mayor a 0.");
+        RuleFor(x => x.IdEstadoCuenta)
+            .GreaterThan(0)
+            .WithMessage("El estado de la cuenta es obligatorio.");
 
         // Montos no negativos
         RuleFor(x => x.Subtotal)
@@ -44,9 +42,11 @@ public class CuentaDTOValidator : AbstractValidator<CuentaDTO>
         // (Opcional) Enforzar 2 decimales máximo
         // Descomenta si quieres restringir escala a 2 decimales.
 
-        RuleForEach(x => new[] { x.Subtotal, x.DescuentoTotal, x.CargoServicio, x.ImpuestoTotal, x.Total })
-            .Must(v => HasMaxTwoDecimals(v))
-            .WithMessage("Los importes deben tener como máximo 2 decimales.");
+        RuleFor(x => x.Subtotal).Must(HasMaxTwoDecimals).WithMessage("Subtotal debe tener como máximo 2 decimales.");
+        RuleFor(x => x.DescuentoTotal).Must(HasMaxTwoDecimals).WithMessage("DescuentoTotal debe tener como máximo 2 decimales.");
+        RuleFor(x => x.CargoServicio).Must(HasMaxTwoDecimals).WithMessage("CargoServicio debe tener como máximo 2 decimales.");
+        RuleFor(x => x.ImpuestoTotal).Must(HasMaxTwoDecimals).WithMessage("ImpuestoTotal debe tener como máximo 2 decimales.");
+        RuleFor(x => x.Total).Must(HasMaxTwoDecimals).WithMessage("Total debe tener como máximo 2 decimales.");
     }
 
     private static bool HasMaxTwoDecimals(decimal value)
