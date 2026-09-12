@@ -6,6 +6,9 @@ using Microsoft.AspNetCore.Mvc;
 using Persistence.Context;
 using Microsoft.EntityFrameworkCore;
 
+using Microsoft.AspNetCore.SignalR;
+using WebApi.Hubs;
+
 namespace WebApi.Controllers;
 
 [Authorize]
@@ -15,11 +18,13 @@ public class TicketsCocinaController : ControllerBase
 {
     private readonly ITicketCocinaApplication _ticketCocinaApplication;
     private readonly ApplicationDbContext _db;
+    private readonly IHubContext<KdsHub> _kdsHub;
 
-    public TicketsCocinaController(ITicketCocinaApplication ticketCocinaApplication, ApplicationDbContext db)
+    public TicketsCocinaController(ITicketCocinaApplication ticketCocinaApplication, ApplicationDbContext db, IHubContext<KdsHub> kdsHub)
     {
         _ticketCocinaApplication = ticketCocinaApplication;
         _db = db;
+        _kdsHub = kdsHub;
     }
 
     #region Metodos sincronos
@@ -74,22 +79,33 @@ public class TicketsCocinaController : ControllerBase
     }
 
     [HttpGet("GetKdsBoard")]
-    public async Task<IActionResult> GetKdsBoard()
+    public async Task<IActionResult> GetKdsBoard([FromQuery] int? idEstacion = null)
     {
         // Custom query to get all active tickets with their details, product names, and modifiers
-        var tickets = await _db.TicketsCocina
-            .Where(t => t.IdEstadoTicketCocina == 1 || t.IdEstadoTicketCocina == 2) // Pending or Preparing
+        var query = _db.TicketsCocina
+            .Where(t => t.IdEstadoTicketCocina == 1 || t.IdEstadoTicketCocina == 2); // Pending or Preparing
+
+        if (idEstacion.HasValue && idEstacion.Value > 0)
+        {
+            query = query.Where(t => t.IdEstacion == idEstacion.Value);
+        }
+
+        var tickets = await query
             .Select(t => new
             {
                 t.Id,
                 t.IdPedido,
+                MesaNombre = t.Pedido.Mesa != null ? t.Pedido.Mesa.Codigo : null,
+                AreaNombre = t.Pedido.Mesa != null && t.Pedido.Mesa.Area != null ? t.Pedido.Mesa.Area.Nombre : null,
                 t.IdEstacion,
+                EstacionNombre = t.Estacion != null ? t.Estacion.Nombre : null,
                 t.IdEstadoTicketCocina,
                 t.CreatedAt,
                 Detalles = t.Detalles.Select(d => new
                 {
                     d.Id,
                     d.IdEstadoItemKDS,
+                    IsCancelado = d.DetallePedido != null && d.DetallePedido.IdEstadoPedidoDetalle == 5,
                     d.DetallePedido.Cantidad,
                     ProductoNombre = d.DetallePedido.Producto.Nombre,
                     Notas = d.DetallePedido.Notas,
@@ -101,13 +117,125 @@ public class TicketsCocinaController : ControllerBase
         return Ok(new Response<object> { Data = tickets, isSuccess = true });
     }
 
+    [HttpGet("GetKdsHistory")]
+    public async Task<IActionResult> GetKdsHistory([FromQuery] int? idEstacion = null)
+    {
+        var query = _db.TicketsCocina
+            .Where(t => t.IdEstadoTicketCocina == 3); // Completed / Despachado
+
+        if (idEstacion.HasValue && idEstacion.Value > 0)
+        {
+            query = query.Where(t => t.IdEstacion == idEstacion.Value);
+        }
+
+        var tickets = await query
+            .OrderByDescending(t => t.CompletadoEn ?? t.UpdatedAt)
+            .Take(30)
+            .Select(t => new
+            {
+                t.Id,
+                t.IdPedido,
+                MesaNombre = t.Pedido.Mesa != null ? t.Pedido.Mesa.Codigo : null,
+                AreaNombre = t.Pedido.Mesa != null && t.Pedido.Mesa.Area != null ? t.Pedido.Mesa.Area.Nombre : null,
+                t.IdEstacion,
+                EstacionNombre = t.Estacion != null ? t.Estacion.Nombre : null,
+                t.IdEstadoTicketCocina,
+                t.CreatedAt,
+                t.CompletadoEn,
+                t.FechaRecuperacion,
+                t.UsuarioRecuperacion,
+                Detalles = t.Detalles.Select(d => new
+                {
+                    d.Id,
+                    d.IdEstadoItemKDS,
+                    IsCancelado = d.DetallePedido != null && d.DetallePedido.IdEstadoPedidoDetalle == 5,
+                    d.DetallePedido.Cantidad,
+                    ProductoNombre = d.DetallePedido.Producto.Nombre,
+                    Notas = d.DetallePedido.Notas,
+                    Modificadores = d.DetallePedido.Modificadores.Select(m => m.Opcion.Nombre).ToList()
+                }).ToList()
+            })
+            .ToListAsync();
+
+        return Ok(new Response<object> { Data = tickets, isSuccess = true });
+    }
+
+    [HttpPut("RecuperarTicket/{id}")]
+    public async Task<IActionResult> RecuperarTicket(int id)
+    {
+        var ticket = await _db.TicketsCocina.FindAsync(id);
+        if (ticket == null) return NotFound();
+
+        // Transición de Despachado (3) a En Preparación (2)
+        ticket.IdEstadoTicketCocina = 2;
+        ticket.FechaRecuperacion = DateTime.UtcNow;
+        ticket.UsuarioRecuperacion = User.Identity?.Name ?? "Supervisor";
+        await _db.SaveChangesAsync();
+
+        // Notificar por SignalR a la estación y a expo
+        await _kdsHub.Clients.Group($"estacion-{ticket.IdEstacion}").SendAsync("ReceiveNewTicket", ticket.Id);
+        await _kdsHub.Clients.Group("expo").SendAsync("ReceiveNewTicket", ticket.Id);
+
+        return Ok(new Response<bool> { Data = true, isSuccess = true, Message = "Ticket recuperado exitosamente." });
+    }
+
+    [HttpPut("UpdateEstacionRushConfig/{idEstacion}")]
+    public async Task<IActionResult> UpdateEstacionRushConfig(int idEstacion, [FromQuery] int minutosAmbar = 5, [FromQuery] int minutosRojo = 10)
+    {
+        var estacion = await _db.EstacionesCocina.FindAsync(idEstacion);
+        if (estacion == null) return NotFound();
+
+        estacion.MinutosAmbar = minutosAmbar;
+        estacion.MinutosRojo = minutosRojo;
+        await _db.SaveChangesAsync();
+
+        return Ok(new Response<bool> { Data = true, isSuccess = true, Message = "Configuración RUSH actualizada." });
+    }
+
     [HttpPut("ChangeTicketStatus/{id}/{status}")]
     public async Task<IActionResult> ChangeTicketStatus(int id, int status)
     {
         var ticket = await _db.TicketsCocina.FindAsync(id);
         if (ticket == null) return NotFound();
         ticket.IdEstadoTicketCocina = status;
+        if (status == 3)
+        {
+            ticket.CompletadoEn = DateTime.UtcNow;
+
+            // Verificar si todos los tickets del pedido están completados
+            var ticketsPedido = await _db.TicketsCocina
+                .Where(t => t.IdPedido == ticket.IdPedido && t.Id != ticket.Id)
+                .ToListAsync();
+
+            if (ticketsPedido.All(t => t.IdEstadoTicketCocina == 3))
+            {
+                var pedido = await _db.Pedidos.FindAsync(ticket.IdPedido);
+                if (pedido != null && pedido.IdEstadoPedido < 3) // Menor que "Listo"
+                {
+                    pedido.IdEstadoPedido = 3; // Listo
+                    pedido.UpdatedAt = DateTime.UtcNow;
+
+                    _db.EventosPedido.Add(new Domain.Entities.EventoPedido
+                    {
+                        IdPedido = pedido.Id,
+                        TipoEvento = "PedidoListo",
+                        Payload = System.Text.Json.JsonSerializer.Serialize(new { IdPedido = pedido.Id, ListoEn = DateTime.UtcNow }),
+                        IsActive = true,
+                        CreatedAt = DateTime.UtcNow,
+                        CreatedBy = User.Identity?.Name ?? "KDS"
+                    });
+                }
+            }
+        }
         await _db.SaveChangesAsync();
+
+        await _kdsHub.Clients.Group($"estacion-{ticket.IdEstacion}").SendAsync("ReceiveNewTicket", ticket.Id);
+        await _kdsHub.Clients.Group("expo").SendAsync("ReceiveNewTicket", ticket.Id);
+        if (status == 3)
+        {
+            await _kdsHub.Clients.All.SendAsync("OrderReadyForDispatch", ticket.IdPedido);
+        }
+
         return Ok(new Response<bool> { Data = true, isSuccess = true });
     }
 

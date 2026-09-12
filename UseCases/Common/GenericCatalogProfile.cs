@@ -26,6 +26,12 @@ public class GenericCatalogProfile : Profile
         CreateCatalogMap<CatMoneda>();
         CreateCatalogMap<CatTipoDescuento>();
         CreateCatalogMap<CatTipoPedido>();
+        CreateCatalogMap<CatTipoAlmacen>();
+        CreateCatalogMap<CatMotivoMovimientoInventario>();
+        CreateCatalogMap<CatConceptoMovimientoCaja>();
+        CreateCatalogMap<CatMotivoCancelacionPedido>();
+        CreateCatalogMap<CatCanalVenta>();
+        CreateCatalogMap<CatRegimenFiscal>();
     }
 
     private void CreateCatalogMap<TEntity>()

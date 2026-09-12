@@ -28,8 +28,12 @@ pipeline {
     stage('Tests') {
       when { branch 'Development' }
       steps {
-        sh 'dotnet test -c Release --no-build --logger trx || true'
-        junit allowEmptyResults: true, testResults: '**/TestResults/*.trx'
+        sh 'dotnet test -c Release --no-build --logger trx'
+      }
+      post {
+        always {
+          junit allowEmptyResults: true, testResults: '**/TestResults/*.trx'
+        }
       }
     }
 
