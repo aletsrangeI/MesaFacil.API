@@ -6,6 +6,19 @@ public class Usuario : BaseAuditableEntity
     public string? NombreCompleto { get; set; }
     public string? Correo { get; set; }
 
+    // ==========================================
+    // Spec 024: Candado de Supervisor (PIN de 4 dígitos)
+    // ==========================================
+    // Reutiliza el mismo esquema de hashing (Pbkdf2PasswordHasher / IPasswordHasher) que ya usa
+    // el proyecto para contraseñas y PINs de login rápido (Credencial), en vez de agregar una
+    // dependencia nueva (BCrypt). Se agrega PinSupervisorSalt junto a PinSupervisorHash porque
+    // IPasswordHasher.Verify requiere hash + salt por separado (no estaba contemplado en el
+    // draft original del spec, que sólo mencionaba el campo de hash).
+    public string? PinSupervisorHash { get; set; }
+    public string? PinSupervisorSalt { get; set; }
+    public int PinIntentosFallidos { get; set; } = 0;
+    public DateTime? PinBloqueadoHasta { get; set; }
+
     public Empresa Empresa { get; set; } = null!;
     public ICollection<UsuarioRol> UsuarioRoles { get; set; } = new List<UsuarioRol>();
     public ICollection<Credencial> Credenciales { get; set; } = new List<Credencial>();

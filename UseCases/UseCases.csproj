@@ -13,6 +13,14 @@
       <PackageReference Include="Scrutor" Version="7.0.0" />
       <PackageReference Include="QuestPDF" Version="2025.7.0" />
       <PackageReference Include="Microsoft.Extensions.Http" Version="9.0.9" />
+      <!-- Spec 024: SupervisorPinSecurityService construye el JWT efímero (60s) de autorización
+           reutilizando el mismo esquema HMAC/claims que WebApi.Modules.Authentication.JwtTokenService,
+           leyendo la misma sección "Jwt" de configuración (sin depender del tipo JwtOptions de WebApi
+           para no invertir la dirección de referencias entre proyectos). -->
+      <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.14.0" />
+      <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="8.14.0" />
+      <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="9.0.9" />
+      <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="9.0.9" />
     </ItemGroup>
 
     <ItemGroup>

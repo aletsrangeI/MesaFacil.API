@@ -32,6 +32,7 @@ public class GenericCatalogProfile : Profile
         CreateCatalogMap<CatMotivoCancelacionPedido>();
         CreateCatalogMap<CatCanalVenta>();
         CreateCatalogMap<CatRegimenFiscal>();
+        CreateCatalogMap<CatMotivoCancelacion>();
     }
 
     private void CreateCatalogMap<TEntity>()

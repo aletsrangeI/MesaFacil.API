@@ -96,6 +96,11 @@ public static class ConfigureServices
         services.AddScoped<Impresoras.IConfiguracionImpresoraService, Impresoras.ConfiguracionImpresoraService>();
         services.AddScoped<Impresoras.IImpresoraDiagnosticService, Impresoras.ImpresoraDiagnosticService>();
 
+        // Spec 024: Candado de Supervisor (PIN 4 dígitos) y Alerta de Cancelaciones Sospechosas
+        services.AddScoped<Interface.UseCases.ISupervisorPinSecurityService, Seguridad.SupervisorPinSecurityService>();
+        services.AddScoped<Interface.UseCases.IAuditoriaCancelacionesService, Auditoria.AuditoriaCancelacionesService>();
+        RegisterGenericCatalog<CatMotivoCancelacion>(services, "motivos-cancelacion");
+
         return services;
     }
 
