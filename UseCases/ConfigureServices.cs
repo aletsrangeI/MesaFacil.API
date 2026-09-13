@@ -65,6 +65,24 @@ public static class ConfigureServices
         // Spec 017: Servicio de Cuentas por Pagar (CxP), Programación de Pagos y Egresos
         services.AddScoped<CxP.ICxPService, CxP.CxPService>();
 
+        // Spec 020: Facturación CFDI 4.0 a Comensales, Autofacturación QR y Bolsa de Timbres
+        services.AddScoped<Facturacion.IGeneradorXmlCfdi40Service, Facturacion.GeneradorXmlCfdi40Service>();
+        services.AddScoped<Facturacion.ISelloDigitalService, Facturacion.SelloDigitalService>();
+        services.AddScoped<Facturacion.IFacturaVentaService, Facturacion.FacturaVentaService>();
+        services.AddScoped<Facturacion.IAutofacturacionComensalService, Facturacion.AutofacturacionComensalService>();
+
+        services.AddHttpClient();
+
+        // IPACTimbradoService es agnóstico de proveedor: MockPacService es la implementación
+        // DEFAULT (funciona end-to-end sin credenciales externas). Finkok/Facturama se resuelven
+        // por nombre (servicio con clave) cuando EmpresaConfiguracionPAC.ProveedorPAC lo indique.
+        services.AddScoped<Interface.PAC.IPACTimbradoService, Facturacion.MockPacService>();
+        services.AddKeyedScoped<Interface.PAC.IPACTimbradoService, Facturacion.MockPacService>(Domain.Entities.ProveedorPacNombres.Mock);
+        services.AddKeyedScoped<Interface.PAC.IPACTimbradoService>(Domain.Entities.ProveedorPacNombres.Finkok,
+            (sp, _) => new Facturacion.FinkokPacAdapter(sp.GetRequiredService<IHttpClientFactory>().CreateClient(nameof(Facturacion.FinkokPacAdapter))));
+        services.AddKeyedScoped<Interface.PAC.IPACTimbradoService>(Domain.Entities.ProveedorPacNombres.Facturama,
+            (sp, _) => new Facturacion.FacturamaPacAdapter(sp.GetRequiredService<IHttpClientFactory>().CreateClient(nameof(Facturacion.FacturamaPacAdapter))));
+
         return services;
     }
 
