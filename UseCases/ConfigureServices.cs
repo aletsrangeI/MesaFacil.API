@@ -91,6 +91,11 @@ public static class ConfigureServices
         // (registrado en WebApi/Program.cs) para guardar el análisis del preview por 15 minutos.
         services.AddScoped<Importacion.IImportadorMenuService, Importacion.ImportadorMenuService>();
 
+        // Spec 024: Candado de Supervisor (PIN 4 dígitos) y Alerta de Cancelaciones Sospechosas
+        services.AddScoped<Interface.UseCases.ISupervisorPinSecurityService, Seguridad.SupervisorPinSecurityService>();
+        services.AddScoped<Interface.UseCases.IAuditoriaCancelacionesService, Auditoria.AuditoriaCancelacionesService>();
+        RegisterGenericCatalog<CatMotivoCancelacion>(services, "motivos-cancelacion");
+
         return services;
     }
 
