@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Persistence.Context;
 using UseCases.Inventario;
+using WebApi.Attributes;
 
 namespace WebApi.Controllers;
 
@@ -439,6 +440,10 @@ public class RecetasController : ControllerBase
 
     #region Creación, Edición y Eliminación
 
+    // Spec 021: demostración funcional de [RequireFeature]. Con FeatureGating:Enabled = false
+    // (valor por defecto en demos/pilotos) este atributo es un no-op transparente y la creación
+    // de recetas sigue funcionando exactamente igual que antes.
+    [RequireFeature(UseCases.Suscripciones.FeatureNames.ModuloRecetas)]
     [HttpPost]
     public async Task<ActionResult<Response<RecetaDTO>>> CrearReceta([FromBody] CrearRecetaDTO dto)
     {

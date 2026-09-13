@@ -83,6 +83,10 @@ public static class ConfigureServices
         services.AddKeyedScoped<Interface.PAC.IPACTimbradoService>(Domain.Entities.ProveedorPacNombres.Facturama,
             (sp, _) => new Facturacion.FacturamaPacAdapter(sp.GetRequiredService<IHttpClientFactory>().CreateClient(nameof(Facturacion.FacturamaPacAdapter))));
 
+        // Spec 021: SaaS Packaging, Tiers y Feature Gating Desacoplado. Con FeatureGating:Enabled
+        // en false (valor por defecto) el servicio concede acceso total sin tocar la BD.
+        services.AddScoped<Interface.Suscripciones.IFeatureGateService, Suscripciones.FeatureGateService>();
+
         return services;
     }
 
