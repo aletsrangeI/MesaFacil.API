@@ -91,6 +91,11 @@ public static class ConfigureServices
         // (registrado en WebApi/Program.cs) para guardar el análisis del preview por 15 minutos.
         services.AddScoped<Importacion.IImportadorMenuService, Importacion.ImportadorMenuService>();
 
+        // Spec 023: Asistente de Autodiagnóstico y Auto-Recuperación de Impresoras Térmicas
+        // (ESC/POS vía socket TCP 9100, timeout estricto de 1.5s).
+        services.AddScoped<Impresoras.IConfiguracionImpresoraService, Impresoras.ConfiguracionImpresoraService>();
+        services.AddScoped<Impresoras.IImpresoraDiagnosticService, Impresoras.ImpresoraDiagnosticService>();
+
         return services;
     }
 
