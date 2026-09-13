@@ -1,8 +1,8 @@
 namespace Domain.Entities;
 
-public class PedidoAsiento : BaseAuditableEntity
+public class PedidoAsiento : BaseAuditableGuidEntity // Spec 019: Id Guid/UUIDv7
 {
-    public int IdPedido { get; set; }
+    public Guid IdPedido { get; set; }
     public int NumeroAsiento { get; set; }
 
     public Pedido Pedido { get; set; } = null!;

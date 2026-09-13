@@ -30,7 +30,7 @@ public class TicketsCocinaController : ControllerBase
     #region Metodos sincronos
 
     [HttpPost("Insert")]
-    public ActionResult<Response<int>> Insert([FromBody] TicketCocinaDTO dto)
+    public ActionResult<Response<Guid>> Insert([FromBody] TicketCocinaDTO dto)
     {
         var response = _ticketCocinaApplication.Insert(dto);
         return Ok(response);
@@ -43,8 +43,8 @@ public class TicketsCocinaController : ControllerBase
         return Ok(response);
     }
 
-    [HttpGet("GetById/{id}")]
-    public ActionResult<Response<TicketCocinaDTO>> GetById(int id)
+    [HttpGet("GetById/{id:guid}")]
+    public ActionResult<Response<TicketCocinaDTO>> GetById(Guid id)
     {
         var response = _ticketCocinaApplication.Get(id);
         return Ok(response);
@@ -57,8 +57,8 @@ public class TicketsCocinaController : ControllerBase
         return Ok(response);
     }
 
-    [HttpDelete("Delete/{id}")]
-    public ActionResult<Response<bool>> Delete(int id)
+    [HttpDelete("Delete/{id:guid}")]
+    public ActionResult<Response<bool>> Delete(Guid id)
     {
         var response = _ticketCocinaApplication.Delete(id);
         return Ok(response);
@@ -160,8 +160,8 @@ public class TicketsCocinaController : ControllerBase
         return Ok(new Response<object> { Data = tickets, isSuccess = true });
     }
 
-    [HttpPut("RecuperarTicket/{id}")]
-    public async Task<IActionResult> RecuperarTicket(int id)
+    [HttpPut("RecuperarTicket/{id:guid}")]
+    public async Task<IActionResult> RecuperarTicket(Guid id)
     {
         var ticket = await _db.TicketsCocina.FindAsync(id);
         if (ticket == null) return NotFound();
@@ -192,8 +192,8 @@ public class TicketsCocinaController : ControllerBase
         return Ok(new Response<bool> { Data = true, isSuccess = true, Message = "Configuración RUSH actualizada." });
     }
 
-    [HttpPut("ChangeTicketStatus/{id}/{status}")]
-    public async Task<IActionResult> ChangeTicketStatus(int id, int status)
+    [HttpPut("ChangeTicketStatus/{id:guid}/{status}")]
+    public async Task<IActionResult> ChangeTicketStatus(Guid id, int status)
     {
         var ticket = await _db.TicketsCocina.FindAsync(id);
         if (ticket == null) return NotFound();
@@ -254,7 +254,7 @@ public class TicketsCocinaController : ControllerBase
     #region Metodos asincronos
 
     [HttpPost("InsertAsync")]
-    public async Task<ActionResult<Response<int>>> InsertAsync([FromBody] TicketCocinaDTO dto)
+    public async Task<ActionResult<Response<Guid>>> InsertAsync([FromBody] TicketCocinaDTO dto)
     {
         var response = await _ticketCocinaApplication.InsertAsync(dto);
         return Ok(response);
@@ -267,8 +267,8 @@ public class TicketsCocinaController : ControllerBase
         return Ok(response);
     }
 
-    [HttpGet("GetByIdAsync/{id}")]
-    public async Task<ActionResult<Response<TicketCocinaDTO>>> GetByIdAsync(int id)
+    [HttpGet("GetByIdAsync/{id:guid}")]
+    public async Task<ActionResult<Response<TicketCocinaDTO>>> GetByIdAsync(Guid id)
     {
         var response = await _ticketCocinaApplication.GetAsync(id);
         return Ok(response);
@@ -281,8 +281,8 @@ public class TicketsCocinaController : ControllerBase
         return Ok(response);
     }
 
-    [HttpDelete("DeleteAsync/{id}")]
-    public async Task<ActionResult<Response<bool>>> DeleteAsync(int id)
+    [HttpDelete("DeleteAsync/{id:guid}")]
+    public async Task<ActionResult<Response<bool>>> DeleteAsync(Guid id)
     {
         var response = await _ticketCocinaApplication.DeleteAsync(id);
         return Ok(response);

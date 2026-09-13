@@ -11,7 +11,7 @@ public class CuentaDTOValidator : AbstractValidator<CuentaDTO>
     {
         // FK requeridas
         RuleFor(x => x.IdPedido)
-            .GreaterThan(0).WithMessage("IdPedido es requerido y debe ser mayor a 0.");
+            .NotEqual(Guid.Empty).WithMessage("IdPedido es requerido.");
 
         RuleFor(x => x.IdEstadoCuenta)
             .GreaterThan(0)

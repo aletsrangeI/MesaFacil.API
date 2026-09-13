@@ -1626,8 +1626,8 @@ namespace Persistence.Migrations
                     b.Property<int>("IdEstadoCuenta")
                         .HasColumnType("integer");
 
-                    b.Property<int>("IdPedido")
-                        .HasColumnType("integer");
+                    b.Property<Guid>("IdPedido")
+                        .HasColumnType("uuid");
 
                     b.Property<decimal>("ImpuestoTotal")
                         .ValueGeneratedOnAdd()
@@ -1932,8 +1932,8 @@ namespace Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<int>("IdPedido")
-                        .HasColumnType("integer");
+                    b.Property<Guid>("IdPedido")
+                        .HasColumnType("uuid");
 
                     b.Property<int?>("IdUsuario")
                         .HasColumnType("integer");
@@ -1991,6 +1991,36 @@ namespace Persistence.Migrations
                     b.HasIndex("IdUnidadOrigen");
 
                     b.ToTable("FactoresConversion");
+                });
+
+            modelBuilder.Entity("Domain.Entities.FoliadorSucursal", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateOnly>("Fecha")
+                        .HasColumnType("date");
+
+                    b.Property<int>("IdSucursal")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("UltimoFolio")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("IdSucursal", "Fecha")
+                        .IsUnique();
+
+                    b.ToTable("FoliadorSucursal", (string)null);
                 });
 
             modelBuilder.Entity("Domain.Entities.FormField", b =>
@@ -2486,11 +2516,9 @@ namespace Persistence.Migrations
 
             modelBuilder.Entity("Domain.Entities.MovimientoCaja", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                        .HasColumnType("uuid");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp without time zone");
@@ -2580,13 +2608,61 @@ namespace Persistence.Migrations
                     b.ToTable("OpcionModificador", (string)null);
                 });
 
+            modelBuilder.Entity("Domain.Entities.OutboxEvent", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AggregateId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AggregateType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("EventType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("PayloadJson")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("RetryCount")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
+
+                    b.Property<string>("SyncStatus")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasDefaultValue("Pending");
+
+                    b.Property<DateTime?>("SyncedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AggregateId");
+
+                    b.HasIndex("SyncStatus", "CreatedAt");
+
+                    b.ToTable("OutboxEvents", (string)null);
+                });
+
             modelBuilder.Entity("Domain.Entities.Pago", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                        .HasColumnType("uuid");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp without time zone");
@@ -2682,8 +2758,8 @@ namespace Persistence.Migrations
                     b.Property<int>("IdMetodoPago")
                         .HasColumnType("integer");
 
-                    b.Property<int?>("IdMovimientoCaja")
-                        .HasColumnType("integer");
+                    b.Property<Guid?>("IdMovimientoCaja")
+                        .HasColumnType("uuid");
 
                     b.Property<int?>("IdUsuario")
                         .HasColumnType("integer");
@@ -2724,11 +2800,9 @@ namespace Persistence.Migrations
 
             modelBuilder.Entity("Domain.Entities.Pedido", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                        .HasColumnType("uuid");
 
                     b.Property<DateTime>("AbiertoEn")
                         .ValueGeneratedOnAdd()
@@ -2768,6 +2842,9 @@ namespace Persistence.Migrations
 
                     b.Property<DateTime?>("EntregadoEn")
                         .HasColumnType("timestamp without time zone");
+
+                    b.Property<int>("FolioDiario")
+                        .HasColumnType("integer");
 
                     b.Property<int?>("IdCliente")
                         .HasColumnType("integer");
@@ -2852,11 +2929,9 @@ namespace Persistence.Migrations
 
             modelBuilder.Entity("Domain.Entities.PedidoAsiento", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                        .HasColumnType("uuid");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp without time zone");
@@ -2865,8 +2940,8 @@ namespace Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<int>("IdPedido")
-                        .HasColumnType("integer");
+                    b.Property<Guid>("IdPedido")
+                        .HasColumnType("uuid");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
@@ -2891,11 +2966,9 @@ namespace Persistence.Migrations
 
             modelBuilder.Entity("Domain.Entities.PedidoDetalle", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                        .HasColumnType("uuid");
 
                     b.Property<bool>("Cancelado")
                         .ValueGeneratedOnAdd()
@@ -2920,8 +2993,8 @@ namespace Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<int?>("IdAsiento")
-                        .HasColumnType("integer");
+                    b.Property<Guid?>("IdAsiento")
+                        .HasColumnType("uuid");
 
                     b.Property<int>("IdEstadoPedidoDetalle")
                         .HasColumnType("integer");
@@ -2929,8 +3002,8 @@ namespace Persistence.Migrations
                     b.Property<int>("IdImpuesto")
                         .HasColumnType("integer");
 
-                    b.Property<int>("IdPedido")
-                        .HasColumnType("integer");
+                    b.Property<Guid>("IdPedido")
+                        .HasColumnType("uuid");
 
                     b.Property<int>("IdProducto")
                         .HasColumnType("integer");
@@ -2996,11 +3069,9 @@ namespace Persistence.Migrations
 
             modelBuilder.Entity("Domain.Entities.PedidoModificador", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                        .HasColumnType("uuid");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp without time zone");
@@ -3009,8 +3080,8 @@ namespace Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<int>("IdDetalle")
-                        .HasColumnType("integer");
+                    b.Property<Guid>("IdDetalle")
+                        .HasColumnType("uuid");
 
                     b.Property<int>("IdOpcion")
                         .HasColumnType("integer");
@@ -3537,11 +3608,9 @@ namespace Persistence.Migrations
 
             modelBuilder.Entity("Domain.Entities.TicketCocina", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                        .HasColumnType("uuid");
 
                     b.Property<DateTime?>("CompletadoEn")
                         .HasColumnType("timestamp without time zone");
@@ -3562,8 +3631,8 @@ namespace Persistence.Migrations
                     b.Property<int>("IdEstadoTicketCocina")
                         .HasColumnType("integer");
 
-                    b.Property<int>("IdPedido")
-                        .HasColumnType("integer");
+                    b.Property<Guid>("IdPedido")
+                        .HasColumnType("uuid");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
@@ -3604,14 +3673,14 @@ namespace Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<int>("IdDetalle")
-                        .HasColumnType("integer");
+                    b.Property<Guid>("IdDetalle")
+                        .HasColumnType("uuid");
 
                     b.Property<int>("IdEstadoItemKDS")
                         .HasColumnType("integer");
 
-                    b.Property<int>("IdTicket")
-                        .HasColumnType("integer");
+                    b.Property<Guid>("IdTicket")
+                        .HasColumnType("uuid");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
@@ -4222,6 +4291,17 @@ namespace Persistence.Migrations
                     b.Navigation("UnidadDestino");
 
                     b.Navigation("UnidadOrigen");
+                });
+
+            modelBuilder.Entity("Domain.Entities.FoliadorSucursal", b =>
+                {
+                    b.HasOne("Domain.Entities.Sucursal", "Sucursal")
+                        .WithMany()
+                        .HasForeignKey("IdSucursal")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Sucursal");
                 });
 
             modelBuilder.Entity("Domain.Entities.FormField", b =>

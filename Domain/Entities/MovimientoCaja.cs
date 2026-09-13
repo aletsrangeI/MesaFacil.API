@@ -1,6 +1,6 @@
 namespace Domain.Entities;
 
-public class MovimientoCaja : BaseAuditableEntity
+public class MovimientoCaja : BaseAuditableGuidEntity // Spec 019: Id Guid/UUIDv7
 {
     public int IdTurno { get; set; }
     public string Tipo { get; set; } = null!; // 'Egreso' | 'Ingreso' | 'Deposito' ...

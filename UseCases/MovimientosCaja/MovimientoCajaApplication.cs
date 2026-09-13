@@ -1,4 +1,4 @@
-using AutoMapper;
+﻿using AutoMapper;
 using Common;
 using Domain.Entities;
 using DTO.MovimientoCaja;
@@ -73,7 +73,7 @@ public class MovimientoCajaApplication : IMovimientoCajaApplication
         return response;
     }
 
-    public Response<bool> Delete(int id)
+    public Response<bool> Delete(Guid id)
     {
         var response = new Response<bool>();
         try
@@ -94,7 +94,7 @@ public class MovimientoCajaApplication : IMovimientoCajaApplication
         return response;
     }
 
-    public Response<MovimientoCajaDTO> Get(int id)
+    public Response<MovimientoCajaDTO> Get(Guid id)
     {
         var response = new Response<MovimientoCajaDTO>();
         try
@@ -223,7 +223,7 @@ public class MovimientoCajaApplication : IMovimientoCajaApplication
         return response;
     }
 
-    public async Task<Response<bool>> DeleteAsync(int id)
+    public async Task<Response<bool>> DeleteAsync(Guid id)
     {
         var response = new Response<bool>();
         try
@@ -244,7 +244,7 @@ public class MovimientoCajaApplication : IMovimientoCajaApplication
         return response;
     }
 
-    public async Task<Response<MovimientoCajaDTO>> GetAsync(int id)
+    public async Task<Response<MovimientoCajaDTO>> GetAsync(Guid id)
     {
         var response = new Response<MovimientoCajaDTO>();
         try

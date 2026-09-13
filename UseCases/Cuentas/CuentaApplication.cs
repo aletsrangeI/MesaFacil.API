@@ -332,7 +332,7 @@ public class CuentaApplication : ICuentaApplication
 
     #endregion
 
-    public async Task<Response<CuentaDTO>> GenerarCuentaAsync(int idPedido)
+    public async Task<Response<CuentaDTO>> GenerarCuentaAsync(Guid idPedido)
     {
         var response = new Response<CuentaDTO>();
         try
@@ -447,7 +447,7 @@ public class CuentaApplication : ICuentaApplication
         return response;
     }
 
-    public Response<CuentaDTO> GenerarCuenta(int idPedido)
+    public Response<CuentaDTO> GenerarCuenta(Guid idPedido)
     {
         return GenerarCuentaAsync(idPedido).GetAwaiter().GetResult();
     }

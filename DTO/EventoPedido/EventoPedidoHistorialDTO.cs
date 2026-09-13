@@ -3,7 +3,7 @@ namespace DTO.EventoPedido;
 public class EventoPedidoHistorialDTO
 {
     public int Id { get; set; }
-    public int IdPedido { get; set; }
+    public Guid IdPedido { get; set; }
     public int? IdUsuario { get; set; }
     public string? UsuarioNombre { get; set; }
     public string? TipoEvento { get; set; }

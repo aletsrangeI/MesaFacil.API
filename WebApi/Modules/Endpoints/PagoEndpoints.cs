@@ -1,4 +1,4 @@
-using Common;
+﻿using Common;
 using DTO.Pago;
 using Interface.UseCases;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -37,8 +37,8 @@ public static class PagoEndpoints
         // UPDATE
         // =========================================================
 
-        group.MapPut("/update/{id:int}",
-                (int id, PagoDTO dto, IPagoApplication svc, CancellationToken ct) =>
+        group.MapPut("/update/{id:guid}",
+                (Guid id, PagoDTO dto, IPagoApplication svc, CancellationToken ct) =>
                 {
                     try { dto.Id = id; } catch { }
                     Response<bool> result = svc.Update(dto);
@@ -46,8 +46,8 @@ public static class PagoEndpoints
                 })
             .WithName("Pago_Update");
 
-        group.MapPut("/update-async/{id:int}",
-                async (int id, PagoDTO dto, IPagoApplication svc, CancellationToken ct) =>
+        group.MapPut("/update-async/{id:guid}",
+                async (Guid id, PagoDTO dto, IPagoApplication svc, CancellationToken ct) =>
                 {
                     try { dto.Id = id; } catch { }
                     Response<bool> result = await svc.UpdateAsync(dto);
@@ -59,16 +59,16 @@ public static class PagoEndpoints
         // DELETE
         // =========================================================
 
-        group.MapDelete("/delete/{id:int}",
-                (int id, IPagoApplication svc, CancellationToken ct) =>
+        group.MapDelete("/delete/{id:guid}",
+                (Guid id, IPagoApplication svc, CancellationToken ct) =>
                 {
                     Response<bool> result = svc.Delete(id);
                     return TypedResults.Ok(result);
                 })
             .WithName("Pago_Delete");
 
-        group.MapDelete("/delete-async/{id:int}",
-                async (int id, IPagoApplication svc, CancellationToken ct) =>
+        group.MapDelete("/delete-async/{id:guid}",
+                async (Guid id, IPagoApplication svc, CancellationToken ct) =>
                 {
                     Response<bool> result = await svc.DeleteAsync(id);
                     return TypedResults.Ok(result);
@@ -99,9 +99,9 @@ public static class PagoEndpoints
         // GET BY ID
         // =========================================================
 
-        group.MapGet("/getbyid/{id:int}",
+        group.MapGet("/getbyid/{id:guid}",
                 Results<Ok<Response<PagoDTO>>, NotFound<Response<PagoDTO>>>
-                    (int id, IPagoApplication svc, CancellationToken ct) =>
+                    (Guid id, IPagoApplication svc, CancellationToken ct) =>
                 {
                     Response<PagoDTO>? result = svc.Get(id);
                     if (result is null || result.Data is null)
@@ -119,9 +119,9 @@ public static class PagoEndpoints
                 })
             .WithName("Pago_GetById");
 
-        group.MapGet("/getbyid-async/{id:int}",
+        group.MapGet("/getbyid-async/{id:guid}",
                 async Task<Results<Ok<Response<PagoDTO>>, NotFound<Response<PagoDTO>>>>
-                    (int id, IPagoApplication svc, CancellationToken ct) =>
+                    (Guid id, IPagoApplication svc, CancellationToken ct) =>
                 {
                     Response<PagoDTO>? result = await svc.GetAsync(id);
                     if (result is null || result.Data is null)

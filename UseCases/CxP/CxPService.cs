@@ -313,7 +313,7 @@ public class CxPService : ICxPService
                 return response;
             }
 
-            int? idMovimientoCaja = null;
+            Guid? idMovimientoCaja = null;
 
             // Integración con Caja Chica si se solicitó pagar en efectivo desde el turno activo
             if (dto.PagarDesdeCajaChica)

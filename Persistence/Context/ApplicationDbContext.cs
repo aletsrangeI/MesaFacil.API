@@ -8,11 +8,14 @@ namespace Persistence.Context;
 public class ApplicationDbContext : DbContext
 {
     public readonly AuditableEntitySaveChangesInterceptor _auditableEntitySaveChangesInterceptor;
+    public readonly OutboxSaveChangesInterceptor _outboxSaveChangesInterceptor;
 
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options,
-        AuditableEntitySaveChangesInterceptor auditableEntitySaveChangesInterceptor) : base(options)
+        AuditableEntitySaveChangesInterceptor auditableEntitySaveChangesInterceptor,
+        OutboxSaveChangesInterceptor outboxSaveChangesInterceptor) : base(options)
     {
         _auditableEntitySaveChangesInterceptor = auditableEntitySaveChangesInterceptor;
+        _outboxSaveChangesInterceptor = outboxSaveChangesInterceptor;
     }
 
     static ApplicationDbContext()
@@ -29,6 +32,8 @@ public class ApplicationDbContext : DbContext
     public DbSet<DescuentoAplicado> DescuentosAplicados { get; set; }
     public DbSet<DetalleCuenta> DetalleCuentas { get; set; }
     public DbSet<Empresa> Empresas { get; set; }
+    public DbSet<FoliadorSucursal> FoliadoresSucursal { get; set; }
+    public DbSet<OutboxEvent> OutboxEvents { get; set; }
     public DbSet<EstacionCocina> EstacionesCocina { get; set; }
     public DbSet<EventoPedido> EventosPedido { get; set; }
     public DbSet<GrupoModificador> GruposModificador { get; set; }
@@ -282,7 +287,7 @@ public class ApplicationDbContext : DbContext
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
-        optionsBuilder.AddInterceptors(_auditableEntitySaveChangesInterceptor);
+        optionsBuilder.AddInterceptors(_auditableEntitySaveChangesInterceptor, _outboxSaveChangesInterceptor);
         optionsBuilder.EnableSensitiveDataLogging();
     }
 
