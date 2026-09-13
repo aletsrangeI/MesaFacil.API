@@ -80,6 +80,9 @@ public class ApplicationDbContext : DbContext
     public DbSet<CatCanalVenta>          CatCanalesVenta         { get; set; }
     public DbSet<CatRegimenFiscal>       CatRegimenesFiscales    { get; set; }
 
+    // Spec 024: Candado de Supervisor (PIN 4 dígitos) y Auditoría de Cancelaciones
+    public DbSet<CatMotivoCancelacion>   CatMotivosCancelacion   { get; set; }
+
     // Spec 014: Inventarios, Insumos, Almacenes y Kárdex
     public DbSet<UnidadMedida>           UnidadesMedida          { get; set; }
     public DbSet<FactorConversion>       FactoresConversion      { get; set; }
