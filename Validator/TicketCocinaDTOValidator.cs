@@ -11,7 +11,7 @@ public class TicketCocinaDTOValidator : AbstractValidator<TicketCocinaDTO>
             .GreaterThan(0).WithMessage("El campo IdEstacion es requerido y debe ser mayor a 0.");
 
         RuleFor(x => x.IdPedido)
-            .GreaterThan(0).WithMessage("El campo IdPedido es requerido y debe ser mayor a 0.");
+            .NotEqual(Guid.Empty).WithMessage("El campo IdPedido es requerido.");
 
         // Estado requerido
         RuleFor(x => x.IdEstadoTicketCocina)

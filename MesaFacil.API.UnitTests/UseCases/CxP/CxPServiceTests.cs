@@ -19,7 +19,8 @@ public class CxPServiceTests
             .Options;
 
         var interceptor = new AuditableEntitySaveChangesInterceptor();
-        var context = new ApplicationDbContext(options, interceptor);
+        var outboxInterceptor = new OutboxSaveChangesInterceptor();
+        var context = new ApplicationDbContext(options, interceptor, outboxInterceptor);
         return context;
     }
 

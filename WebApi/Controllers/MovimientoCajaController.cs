@@ -40,8 +40,8 @@ public class MovimientoCajaController : ControllerBase
         return Ok(response);
     }
 
-    [HttpGet("GetById/{id}")]
-    public ActionResult<Response<MovimientoCajaDTO>> GetById(int id)
+    [HttpGet("GetById/{id:guid}")]
+    public ActionResult<Response<MovimientoCajaDTO>> GetById(Guid id)
     {
         var response = _movimientoCajaApplication.Get(id);
         return Ok(response);
@@ -54,8 +54,8 @@ public class MovimientoCajaController : ControllerBase
         return Ok(response);
     }
 
-    [HttpDelete("Delete/{id}")]
-    public ActionResult<Response<bool>> Delete(int id)
+    [HttpDelete("Delete/{id:guid}")]
+    public ActionResult<Response<bool>> Delete(Guid id)
     {
         var response = _movimientoCajaApplication.Delete(id);
         return Ok(response);
@@ -95,26 +95,26 @@ public class MovimientoCajaController : ControllerBase
         return Ok(response);
     }
 
-    [HttpGet("getbyid-async/{id}")]
-    [HttpGet("GetByIdAsync/{id}")]
-    public async Task<ActionResult<Response<MovimientoCajaDTO>>> GetByIdAsync(int id)
+    [HttpGet("getbyid-async/{id:guid}")]
+    [HttpGet("GetByIdAsync/{id:guid}")]
+    public async Task<ActionResult<Response<MovimientoCajaDTO>>> GetByIdAsync(Guid id)
     {
         var response = await _movimientoCajaApplication.GetAsync(id);
         return Ok(response);
     }
 
-    [HttpPut("update-async/{id}")]
+    [HttpPut("update-async/{id:guid}")]
     [HttpPut("UpdateAsync")]
-    public async Task<ActionResult<Response<bool>>> UpdateAsync([FromBody] MovimientoCajaDTO dto, int? id = null)
+    public async Task<ActionResult<Response<bool>>> UpdateAsync([FromBody] MovimientoCajaDTO dto, Guid? id = null)
     {
         if (id.HasValue) dto.Id = id.Value;
         var response = await _movimientoCajaApplication.UpdateAsync(dto);
         return Ok(response);
     }
 
-    [HttpDelete("delete-async/{id}")]
-    [HttpDelete("DeleteAsync/{id}")]
-    public async Task<ActionResult<Response<bool>>> DeleteAsync(int id)
+    [HttpDelete("delete-async/{id:guid}")]
+    [HttpDelete("DeleteAsync/{id:guid}")]
+    public async Task<ActionResult<Response<bool>>> DeleteAsync(Guid id)
     {
         var response = await _movimientoCajaApplication.DeleteAsync(id);
         return Ok(response);

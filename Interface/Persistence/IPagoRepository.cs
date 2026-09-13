@@ -1,4 +1,4 @@
-using Domain.Entities;
+﻿using Domain.Entities;
 
 namespace Interface.Persistence;
 
@@ -7,8 +7,8 @@ public interface IPagoRepository
     #region Metodos sincronos
     bool Insert(Pago entity);
     bool Update(Pago entity);
-    bool Delete(int id);
-    Pago Get(int id);
+    bool Delete(Guid id);
+    Pago Get(Guid id);
     IEnumerable<Pago> GetAll();
     IEnumerable<Pago> GetAllWithPagination(int page, int pageSize);
     int Count();
@@ -17,8 +17,8 @@ public interface IPagoRepository
     #region Metodos asincronos
     Task<bool> InsertAsync(Pago entity);
     Task<bool> UpdateAsync(Pago entity);
-    Task<bool> DeleteAsync(int id);
-    Task<Pago> GetAsync(int id);
+    Task<bool> DeleteAsync(Guid id);
+    Task<Pago> GetAsync(Guid id);
     Task<IEnumerable<Pago>> GetAllAsync();
     Task<IEnumerable<Pago>> GetAllWithPaginationAsync(int page, int pageSize);
     Task<int> CountAsync();

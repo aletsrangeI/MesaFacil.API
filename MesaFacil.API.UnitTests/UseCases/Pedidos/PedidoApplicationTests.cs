@@ -16,6 +16,7 @@ public class PedidoApplicationTests
     private readonly Mock<IUnitOfWork> _unitOfWorkMock;
     private readonly Mock<IMapper> _mapperMock;
     private readonly Mock<IAppLogger<PedidoApplication>> _loggerMock;
+    private readonly Mock<IFoliadorSucursalService> _foliadorMock;
     private readonly PedidoApplication _sut;
 
     public PedidoApplicationTests()
@@ -23,12 +24,16 @@ public class PedidoApplicationTests
         _unitOfWorkMock = new Mock<IUnitOfWork>();
         _mapperMock = new Mock<IMapper>();
         _loggerMock = new Mock<IAppLogger<PedidoApplication>>();
+        _foliadorMock = new Mock<IFoliadorSucursalService>();
+        _foliadorMock.Setup(f => f.ObtenerSiguienteFolioAsync(It.IsAny<int>(), It.IsAny<DateOnly?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(1);
 
         _sut = new PedidoApplication(
             _unitOfWorkMock.Object,
             _mapperMock.Object,
             new PedidoDTOValidator(),
-            _loggerMock.Object
+            _loggerMock.Object,
+            _foliadorMock.Object
         );
     }
 
@@ -36,7 +41,7 @@ public class PedidoApplicationTests
     public async Task GetAsync_CuandoPedidoExiste_RetornaExitoYDto()
     {
         // Arrange
-        int pedidoId = 12;
+        Guid pedidoId = Guid.NewGuid();
         var pedidoEntity = new Pedido
         {
             Id = pedidoId,
@@ -125,11 +130,11 @@ public class PedidoApplicationTests
 
         var pedidoEntity = new Pedido
         {
-            Id = 42,
             IdEmpresa = 1,
             IdSucursal = 1,
             IdMesa = 2
         };
+        var expectedId = pedidoEntity.Id;
 
         _mapperMock.Setup(m => m.Map<Pedido>(requestDto)).Returns(pedidoEntity);
         _unitOfWorkMock.Setup(u => u.Pedidos.InsertAsync(pedidoEntity)).ReturnsAsync(true);
@@ -140,7 +145,7 @@ public class PedidoApplicationTests
         // Assert
         result.Should().NotBeNull();
         result.isSuccess.Should().BeTrue();
-        result.Data.Should().Be(42);
+        result.Data.Should().Be(expectedId);
         result.Message.Should().Be("Pedido con detalles creado correctamente");
     }
 }

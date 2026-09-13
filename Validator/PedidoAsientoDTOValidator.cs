@@ -9,8 +9,8 @@ public class PedidoAsientoDTOValidator : AbstractValidator<PedidoAsientoDTO>
     {
         // Pedido requerido
         RuleFor(x => x.IdPedido)
-            .GreaterThan(0)
-            .WithMessage("El campo IdPedido es requerido y debe ser mayor a 0.");
+            .NotEqual(Guid.Empty)
+            .WithMessage("El campo IdPedido es requerido.");
 
         // Número de asiento requerido y mayor a 0
         RuleFor(x => x.NumeroAsiento)

@@ -45,7 +45,7 @@ public class DescuentoInventarioService : IDescuentoInventarioService
         }
     }
 
-    public async Task<bool> DescontarPorPedidoAsync(int idPedido)
+    public async Task<bool> DescontarPorPedidoAsync(Guid idPedido)
     {
         try
         {

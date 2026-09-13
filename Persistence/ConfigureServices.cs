@@ -47,6 +47,10 @@ public static class ConfigureServices
         
         services.AddScoped<IDatabaseInitializer, DatabaseInitializer>();
 
+        // Spec 019: foliador atómico por sucursal/día y outbox de sincronización Edge-Cloud
+        services.AddScoped<IFoliadorSucursalService, Persistence.Services.FoliadorSucursalService>();
+        services.AddScoped<OutboxSaveChangesInterceptor>();
+
         // Repositorio genérico para todos los catálogos simples (Cat*).
         // Al registrar el tipo abierto, el DI resuelve IGenericRepository<CatMoneda>
         // → GenericCatalogRepository<CatMoneda> automáticamente.

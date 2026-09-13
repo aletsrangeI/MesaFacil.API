@@ -1,4 +1,4 @@
-using Common;
+﻿using Common;
 using DTO.PedidoModificador;
 
 namespace Interface.UseCases;
@@ -9,8 +9,8 @@ public interface IPedidoModificadorApplication
 
     Response<bool> Insert(PedidoModificadorDTO dto);
     Response<bool> Update(PedidoModificadorDTO dto);
-    Response<bool> Delete(int id);
-    Response<PedidoModificadorDTO> Get(int id);
+    Response<bool> Delete(Guid id);
+    Response<PedidoModificadorDTO> Get(Guid id);
     Response<IEnumerable<PedidoModificadorDTO>> GetAll();
     ResponsePagination<IEnumerable<PedidoModificadorDTO>> GetAllWithPagination(int page, int pageSize);
     Response<int> Count();
@@ -21,8 +21,8 @@ public interface IPedidoModificadorApplication
 
     Task<Response<bool>> InsertAsync(PedidoModificadorDTO dto);
     Task<Response<bool>> UpdateAsync(PedidoModificadorDTO dto);
-    Task<Response<bool>> DeleteAsync(int id);
-    Task<Response<PedidoModificadorDTO>> GetAsync(int id);
+    Task<Response<bool>> DeleteAsync(Guid id);
+    Task<Response<PedidoModificadorDTO>> GetAsync(Guid id);
     Task<Response<IEnumerable<PedidoModificadorDTO>>> GetAllAsync();
     Task<ResponsePagination<IEnumerable<PedidoModificadorDTO>>> GetAllWithPaginationAsync(int page, int pageSize);
     Task<Response<int>> CountAsync();

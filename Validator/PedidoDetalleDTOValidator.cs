@@ -9,12 +9,12 @@ public class PedidoDetalleDTOValidator : AbstractValidator<PedidoDetalleDTO>
     {
         // FKs requeridas / opcionales válidas
         RuleFor(x => x.IdPedido)
-            .GreaterThan(0).WithMessage("IdPedido es requerido y debe ser mayor a 0.");
+            .NotEqual(Guid.Empty).WithMessage("IdPedido es requerido.");
 
         RuleFor(x => x.IdAsiento)
-            .GreaterThan(0)
+            .NotEqual(Guid.Empty)
             .When(x => x.IdAsiento.HasValue)
-            .WithMessage("IdAsiento debe ser mayor a 0 cuando se especifique.");
+            .WithMessage("IdAsiento debe ser válido cuando se especifique.");
 
         RuleFor(x => x.IdProducto)
             .GreaterThan(0).WithMessage("IdProducto es requerido y debe ser mayor a 0.");

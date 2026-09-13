@@ -3,10 +3,10 @@ using System.Collections.Generic;
 
 namespace Domain.Entities;
 
-public class TicketCocina : BaseAuditableEntity // Asume que hereda IdTicket
+public class TicketCocina : BaseAuditableGuidEntity // Spec 019: Id Guid/UUIDv7
 {
     public int IdEstacion { get; set; }
-    public int IdPedido { get; set; }
+    public Guid IdPedido { get; set; }
 
     // [CORREGIDO] - Eliminamos el catálogo universal y usamos el tipado
     public int IdEstadoTicketCocina { get; set; }

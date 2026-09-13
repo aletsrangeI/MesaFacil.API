@@ -1,8 +1,8 @@
 namespace Domain.Entities;
 
-public class EventoPedido : BaseAuditableEntity
+public class EventoPedido : BaseAuditableEntity // Id propio permanece int; FK a Pedido es Guid (Spec 019)
 {
-    public int IdPedido { get; set; }
+    public Guid IdPedido { get; set; }
     public int? IdUsuario { get; set; }
     public string? TipoEvento { get; set; }
     public string? Payload { get; set; }

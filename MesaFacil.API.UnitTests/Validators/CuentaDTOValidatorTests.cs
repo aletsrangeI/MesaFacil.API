@@ -22,7 +22,7 @@ public class CuentaDTOValidatorTests
         // Subtotal: 100, Descuento: 10, CargoServicio: 0, Impuestos: 16 -> Total esperado = 106
         var model = new CuentaDTO
         {
-            IdPedido = 1,
+            IdPedido = Guid.NewGuid(),
             IdEstadoCuenta = 1,
             Subtotal = 100m,
             DescuentoTotal = 10m,
@@ -44,7 +44,7 @@ public class CuentaDTOValidatorTests
         // Arrange
         var model = new CuentaDTO
         {
-            IdPedido = 1,
+            IdPedido = Guid.NewGuid(),
             IdEstadoCuenta = 1,
             Subtotal = 100.123m, // 3 decimales
             DescuentoTotal = 0m,
@@ -66,7 +66,7 @@ public class CuentaDTOValidatorTests
         // Arrange: 100 - 10 + 5 + 16 = 111.00
         var model = new CuentaDTO
         {
-            IdPedido = 5,
+            IdPedido = Guid.NewGuid(),
             IdEstadoCuenta = 2,
             Subtotal = 100.00m,
             DescuentoTotal = 10.00m,
