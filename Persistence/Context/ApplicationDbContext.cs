@@ -117,6 +117,9 @@ public class ApplicationDbContext : DbContext
     public DbSet<CatPlanSuscripcion>      CatPlanesSuscripcion      { get; set; }
     public DbSet<EmpresaSuscripcion>      EmpresasSuscripcion       { get; set; }
 
+    // Spec 023: Asistente de Autodiagnóstico y Auto-Recuperación de Impresoras Térmicas
+    public DbSet<ConfiguracionImpresora>  ConfiguracionesImpresora  { get; set; }
+
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
