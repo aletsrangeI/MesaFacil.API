@@ -64,6 +64,9 @@ builder.Services.AddScoped<IPasswordHasher, Pbkdf2PasswordHasher>();
 
 builder.Services.AddSignalR();
 
+// Spec 022: cache en memoria para el token de preview del Importador de Menú (15 min de vida).
+builder.Services.AddMemoryCache();
+
 // Spec 019: motor de sincronización Edge-Cloud en segundo plano (ver limitaciones documentadas
 // en CloudSyncWorker: en este entorno de un solo nodo no hay un Edge físico separado).
 builder.Services.AddHostedService<WebApi.BackgroundServices.CloudSyncWorker>();
