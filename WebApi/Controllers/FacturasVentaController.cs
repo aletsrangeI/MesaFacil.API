@@ -23,6 +23,17 @@ public class FacturasVentaController : ControllerBase
     }
 
     /// <summary>
+    /// Lista las facturas emitidas por la Empresa del usuario autenticado, con filtros opcionales.
+    /// </summary>
+    [HttpGet]
+    public async Task<ActionResult<Response<List<FacturaVentaDTO>>>> Listar(
+        [FromQuery] int idEmpresa, [FromQuery] DateTime? fechaInicio, [FromQuery] DateTime? fechaFin, [FromQuery] string? rfc)
+    {
+        var result = await _facturaVentaService.ListarAsync(idEmpresa, fechaInicio, fechaFin, rfc);
+        return Ok(result);
+    }
+
+    /// <summary>
     /// Timbra un pedido ya cobrado con los datos fiscales del receptor proporcionados por el cajero.
     /// </summary>
     [HttpPost("timbrar-pedido")]

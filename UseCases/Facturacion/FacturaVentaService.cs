@@ -17,6 +17,7 @@ public interface IFacturaVentaService
     Task<Response<bool>> EnviarCorreoAsync(int facturaVentaId);
     Task<Response<FacturaVentaDTO>> CancelarAsync(int facturaVentaId, CancelarFacturaRequestDTO request);
     Task<Response<BolsaTimbresDTO>> ObtenerBolsaTimbresAsync(int idEmpresa);
+    Task<Response<List<FacturaVentaDTO>>> ListarAsync(int idEmpresa, DateTime? fechaInicio, DateTime? fechaFin, string? rfc);
 }
 
 /// <summary>
@@ -432,6 +433,28 @@ public class FacturaVentaService : IFacturaVentaService
     {
         var servicio = _serviceProvider.GetKeyedService<IPACTimbradoService>(nombreProveedor);
         return servicio ?? _serviceProvider.GetRequiredService<IPACTimbradoService>(); // fallback: MockPac por defecto
+    }
+
+    public async Task<Response<List<FacturaVentaDTO>>> ListarAsync(int idEmpresa, DateTime? fechaInicio, DateTime? fechaFin, string? rfc)
+    {
+        var query = _context.Set<FacturaVenta>().Where(f => f.IdEmpresa == idEmpresa);
+
+        if (fechaInicio.HasValue)
+            query = query.Where(f => f.FechaTimbrado >= fechaInicio.Value);
+        if (fechaFin.HasValue)
+            query = query.Where(f => f.FechaTimbrado <= fechaFin.Value);
+        if (!string.IsNullOrWhiteSpace(rfc))
+            query = query.Where(f => f.RfcReceptor.Contains(rfc));
+
+        var facturas = await query
+            .OrderByDescending(f => f.FechaTimbrado)
+            .ToListAsync();
+
+        return new Response<List<FacturaVentaDTO>>
+        {
+            isSuccess = true,
+            Data = facturas.Select(MapToDto).ToList()
+        };
     }
 
     private static FacturaVentaDTO MapToDto(FacturaVenta f) => new()
