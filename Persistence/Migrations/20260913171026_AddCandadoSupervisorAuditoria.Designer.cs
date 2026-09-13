@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Persistence.Context;
@@ -11,9 +12,11 @@ using Persistence.Context;
 namespace Persistence.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260913171026_AddCandadoSupervisorAuditoria")]
+    partial class AddCandadoSupervisorAuditoria
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1620,74 +1623,6 @@ namespace Persistence.Migrations
                     b.HasIndex("IdUnidadMedida");
 
                     b.ToTable("CompraFacturaDetalles");
-                });
-
-            modelBuilder.Entity("Domain.Entities.ConfiguracionImpresora", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("AnchoPapel")
-                        .IsRequired()
-                        .HasMaxLength(10)
-                        .HasColumnType("character varying(10)");
-
-                    b.Property<bool>("AperturaCajon")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("Autocorte")
-                        .HasColumnType("boolean");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp without time zone");
-
-                    b.Property<string>("CreatedBy")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("DireccionIp")
-                        .HasMaxLength(45)
-                        .HasColumnType("character varying(45)");
-
-                    b.Property<string>("EstacionAsociada")
-                        .HasMaxLength(80)
-                        .HasColumnType("character varying(80)");
-
-                    b.Property<int>("IdSucursal")
-                        .HasColumnType("integer");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("Nombre")
-                        .HasMaxLength(120)
-                        .HasColumnType("character varying(120)");
-
-                    b.Property<int>("Puerto")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasDefaultValue(9100);
-
-                    b.Property<string>("TipoConexion")
-                        .IsRequired()
-                        .HasMaxLength(30)
-                        .HasColumnType("character varying(30)");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp without time zone");
-
-                    b.Property<string>("UpdatedBy")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("IdSucursal");
-
-                    b.ToTable("ConfiguracionImpresora", (string)null);
                 });
 
             modelBuilder.Entity("Domain.Entities.ConsumoTimbreHistorial", b =>
@@ -4863,17 +4798,6 @@ namespace Persistence.Migrations
                     b.Navigation("Insumo");
 
                     b.Navigation("UnidadMedida");
-                });
-
-            modelBuilder.Entity("Domain.Entities.ConfiguracionImpresora", b =>
-                {
-                    b.HasOne("Domain.Entities.Sucursal", "Sucursal")
-                        .WithMany()
-                        .HasForeignKey("IdSucursal")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Sucursal");
                 });
 
             modelBuilder.Entity("Domain.Entities.ConsumoTimbreHistorial", b =>
