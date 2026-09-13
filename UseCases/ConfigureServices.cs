@@ -87,6 +87,10 @@ public static class ConfigureServices
         // en false (valor por defecto) el servicio concede acceso total sin tocar la BD.
         services.AddScoped<Interface.Suscripciones.IFeatureGateService, Suscripciones.FeatureGateService>();
 
+        // Spec 022: Importador Inteligente de Menú y Catálogos (Excel / CSV). Requiere IMemoryCache
+        // (registrado en WebApi/Program.cs) para guardar el análisis del preview por 15 minutos.
+        services.AddScoped<Importacion.IImportadorMenuService, Importacion.ImportadorMenuService>();
+
         return services;
     }
 
