@@ -112,6 +112,11 @@ public class ApplicationDbContext : DbContext
     public DbSet<FacturaVenta>            FacturasVenta             { get; set; }
     public DbSet<FacturaVentaDetalle>     FacturaVentaDetalles      { get; set; }
 
+    // Spec 021: SaaS Packaging, Tiers y Feature Gating Desacoplado (infraestructura apagada
+    // por defecto vía FeatureGating:Enabled = false mientras dure la etapa de demos/pilotos).
+    public DbSet<CatPlanSuscripcion>      CatPlanesSuscripcion      { get; set; }
+    public DbSet<EmpresaSuscripcion>      EmpresasSuscripcion       { get; set; }
+
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

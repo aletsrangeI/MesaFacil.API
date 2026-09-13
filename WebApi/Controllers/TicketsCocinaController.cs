@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 using Microsoft.AspNetCore.SignalR;
 using WebApi.Hubs;
+using WebApi.Attributes;
 
 namespace WebApi.Controllers;
 
@@ -78,6 +79,10 @@ public class TicketsCocinaController : ControllerBase
         return Ok(response);
     }
 
+    // Spec 021: demostración funcional de [RequireFeature]. Con FeatureGating:Enabled = false
+    // (valor por defecto en demos/pilotos) este atributo es un no-op transparente y el tablero
+    // KDS sigue funcionando exactamente igual que antes.
+    [RequireFeature(UseCases.Suscripciones.FeatureNames.ModuloKds)]
     [HttpGet("GetKdsBoard")]
     public async Task<IActionResult> GetKdsBoard([FromQuery] int? idEstacion = null)
     {
