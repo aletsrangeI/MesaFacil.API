@@ -105,6 +105,13 @@ public class ApplicationDbContext : DbContext
     public DbSet<CuentaPorPagar>         CuentasPorPagar         { get; set; }
     public DbSet<PagoCuentaPorPagar>     PagosCuentaPorPagar     { get; set; }
 
+    // Spec 020: Facturación CFDI 4.0 a Comensales, Autofacturación QR y Bolsa de Timbres
+    public DbSet<EmpresaConfiguracionPAC> EmpresaConfiguracionesPAC { get; set; }
+    public DbSet<EmpresaBolsaTimbres>     EmpresaBolsasTimbres      { get; set; }
+    public DbSet<ConsumoTimbreHistorial>  ConsumosTimbreHistorial   { get; set; }
+    public DbSet<FacturaVenta>            FacturasVenta             { get; set; }
+    public DbSet<FacturaVentaDetalle>     FacturaVentaDetalles      { get; set; }
+
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
