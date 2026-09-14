@@ -342,26 +342,41 @@ public class CorteCajaApplication : ICorteCajaApplication
         var response = new Response<ResumenCorteDTO>();
         try
         {
-            int sucursalId = idSucursal ?? 1;
-
             Turno? turno = null;
             if (idTurno.HasValue && idTurno.Value > 0)
             {
                 turno = await _context.Turnos.FirstOrDefaultAsync(t => t.Id == idTurno.Value);
             }
+            else if (idSucursal.HasValue && idSucursal.Value > 0)
+            {
+                turno = await _context.Turnos
+                    .Where(t => t.IdSucursal == idSucursal.Value && t.Cierre == null)
+                    .OrderByDescending(t => t.Apertura)
+                    .FirstOrDefaultAsync();
+
+                if (turno == null)
+                {
+                    turno = await _context.Turnos
+                        .Where(t => t.Cierre == null)
+                        .OrderByDescending(t => t.Apertura)
+                        .FirstOrDefaultAsync();
+                }
+            }
             else
             {
                 turno = await _context.Turnos
-                    .Where(t => t.IdSucursal == sucursalId && t.Cierre == null)
+                    .Where(t => t.Cierre == null)
                     .OrderByDescending(t => t.Apertura)
                     .FirstOrDefaultAsync();
             }
+
+            int sucursalId = turno?.IdSucursal ?? idSucursal ?? 1;
 
             DateTime fechaInicio;
             decimal cajaInicial = 0;
             if (turno != null)
             {
-                fechaInicio = turno.Apertura;
+                fechaInicio = DateTime.SpecifyKind(turno.Apertura, DateTimeKind.Utc);
                 cajaInicial = turno.CajaInicial;
             }
             else
@@ -371,10 +386,12 @@ public class CorteCajaApplication : ICorteCajaApplication
                     .OrderByDescending(c => c.FechaFin)
                     .FirstOrDefaultAsync();
 
-                fechaInicio = ultimoCorte?.FechaFin ?? DateTime.UtcNow.Date;
+                fechaInicio = DateTime.SpecifyKind(ultimoCorte?.FechaFin ?? DateTime.UtcNow.Date, DateTimeKind.Utc);
             }
 
-            DateTime fechaFin = DateTime.UtcNow;
+            DateTime fechaFin = turno?.Cierre.HasValue == true
+                ? DateTime.SpecifyKind(turno.Cierre.Value, DateTimeKind.Utc)
+                : DateTime.UtcNow.AddMinutes(5);
 
             // Sincronizar automáticamente pedidos de delivery/mostrador entregados sin pago registrado en este turno
             var pedidosSinPago = await _context.Pedidos

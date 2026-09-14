@@ -177,14 +177,37 @@ public class PedidosController : ControllerBase
                 dbContext.EventosPedido.Add(evento);
                 await dbContext.SaveChangesAsync();
 
-                // Creación de tickets de cocina agrupados por estación
+                // Creación de tickets de cocina agrupados por estación física
                 var insertedDetalles = await dbContext.PedidoDetalles
                     .Include(d => d.Producto)
+                        .ThenInclude(p => p.EstacionCocina)
                     .Where(d => d.IdPedido == response.Data)
                     .ToListAsync();
 
+                var estacionesSucursal = await dbContext.EstacionesCocina
+                    .Where(e => e.IdSucursal == pedido.IdSucursal)
+                    .ToListAsync();
+                var estacionDefaultId = estacionesSucursal.FirstOrDefault()?.Id ?? 1;
+
+                int ResolverEstacionFisica(Domain.Entities.Producto? p)
+                {
+                    if (p == null || !p.IdEstacionCocina.HasValue) return estacionDefaultId;
+                    var matchId = estacionesSucursal.FirstOrDefault(e => e.Id == p.IdEstacionCocina.Value);
+                    if (matchId != null) return matchId.Id;
+                    if (p.EstacionCocina?.Descripcion != null)
+                    {
+                        var matchNombre = estacionesSucursal.FirstOrDefault(e =>
+                            e.Nombre != null && (
+                                e.Nombre.Contains(p.EstacionCocina.Descripcion, StringComparison.OrdinalIgnoreCase) ||
+                                p.EstacionCocina.Descripcion.Contains(e.Nombre, StringComparison.OrdinalIgnoreCase)
+                            ));
+                        if (matchNombre != null) return matchNombre.Id;
+                    }
+                    return estacionDefaultId;
+                }
+
                 var stationGroups = insertedDetalles
-                    .GroupBy(d => d.Producto?.IdEstacionCocina ?? 1)
+                    .GroupBy(d => ResolverEstacionFisica(d.Producto))
                     .ToList();
 
                 foreach (var group in stationGroups)
@@ -412,11 +435,34 @@ public class PedidosController : ControllerBase
         var idsNuevos = nuevosDetalles.Select(d => d.Id).ToList();
         var detallesConProducto = await dbContext.PedidoDetalles
             .Include(d => d.Producto)
+                .ThenInclude(p => p.EstacionCocina)
             .Where(d => idsNuevos.Contains(d.Id))
             .ToListAsync();
 
+        var estacionesSucursal = await dbContext.EstacionesCocina
+            .Where(e => e.IdSucursal == pedido.IdSucursal)
+            .ToListAsync();
+        var estacionDefaultId = estacionesSucursal.FirstOrDefault()?.Id ?? 1;
+
+        int ResolverEstacionFisica(Domain.Entities.Producto? p)
+        {
+            if (p == null || !p.IdEstacionCocina.HasValue) return estacionDefaultId;
+            var matchId = estacionesSucursal.FirstOrDefault(e => e.Id == p.IdEstacionCocina.Value);
+            if (matchId != null) return matchId.Id;
+            if (p.EstacionCocina?.Descripcion != null)
+            {
+                var matchNombre = estacionesSucursal.FirstOrDefault(e =>
+                    e.Nombre != null && (
+                        e.Nombre.Contains(p.EstacionCocina.Descripcion, StringComparison.OrdinalIgnoreCase) ||
+                        p.EstacionCocina.Descripcion.Contains(e.Nombre, StringComparison.OrdinalIgnoreCase)
+                    ));
+                if (matchNombre != null) return matchNombre.Id;
+            }
+            return estacionDefaultId;
+        }
+
         var gruposEstacion = detallesConProducto
-            .GroupBy(d => d.Producto?.IdEstacionCocina ?? 1)
+            .GroupBy(d => ResolverEstacionFisica(d.Producto))
             .ToList();
 
         foreach (var grupo in gruposEstacion)

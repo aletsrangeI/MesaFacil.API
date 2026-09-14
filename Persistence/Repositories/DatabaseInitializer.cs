@@ -80,6 +80,7 @@ public sealed class DatabaseInitializer : IDatabaseInitializer
         await SeedCoffeeModifiersAsync(ct);
 
         // 16) KDS Catalogs
+        await SeedCatEstacionesCocinaAsync(ct);
         await SeedEstacionCocinaAsync(ct);
         await SeedCatEstadoTicketCocinaAsync(ct);
         await SeedCatEstadoItemKDSAsync(ct);
@@ -160,6 +161,26 @@ public sealed class DatabaseInitializer : IDatabaseInitializer
         }
         await _db.SaveChangesAsync(ct);
         _logger.LogInformation("Seed: asegurados estados base en CatEstadoMesa.");
+    }
+
+    private async Task SeedCatEstacionesCocinaAsync(CancellationToken ct)
+    {
+        var estaciones = new[] { "Parrilla & Brasa", "Cocina Caliente & Fría", "Barra & Coctelería" };
+        foreach (var est in estaciones)
+        {
+            var exists = await _db.Set<CatEstacionesCocina>().AnyAsync(e => e.Descripcion == est, ct);
+            if (!exists)
+            {
+                _db.Add(new CatEstacionesCocina
+                {
+                    Descripcion = est,
+                    IsActive = true,
+                    CreatedBy = "seed"
+                });
+            }
+        }
+        await _db.SaveChangesAsync(ct);
+        _logger.LogInformation("Seed: aseguradas estaciones base en CatEstacionesCocina.");
     }
 
     private async Task SeedEstacionCocinaAsync(CancellationToken ct)
