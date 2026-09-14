@@ -65,6 +65,7 @@ public class CrearRecetaDTO
     public bool EsSubReceta { get; set; } = false;
     public decimal Rendimiento { get; set; } = 1m;
     public int IdUnidadMedidaRendimiento { get; set; }
+    public decimal? PrecioVentaActual { get; set; }
     public List<CrearRecetaDetalleDTO> Detalles { get; set; } = new();
 }
 
