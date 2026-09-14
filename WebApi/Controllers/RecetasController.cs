@@ -465,13 +465,39 @@ public class RecetasController : ControllerBase
                 return BadRequest(response);
             }
 
+            // Spec 026: Asegurar variante default "Estándar" si el platillo no tiene una asignada
+            int? idVarianteFinal = dto.EsSubReceta ? null : dto.IdVariante;
+            if (!dto.EsSubReceta && dto.IdProducto.HasValue && dto.IdProducto.Value > 0)
+            {
+                if (!idVarianteFinal.HasValue || idVarianteFinal.Value <= 0)
+                {
+                    var varDefault = await _context.VarianteProductos
+                        .FirstOrDefaultAsync(v => v.IdProducto == dto.IdProducto.Value && v.EsDefault)
+                        ?? await _context.VarianteProductos
+                        .FirstOrDefaultAsync(v => v.IdProducto == dto.IdProducto.Value);
+
+                    if (varDefault == null)
+                    {
+                        varDefault = new Domain.Entities.VarianteProducto
+                        {
+                            IdProducto = dto.IdProducto.Value,
+                            Nombre = "Estándar",
+                            EsDefault = true
+                        };
+                        _context.VarianteProductos.Add(varDefault);
+                        await _context.SaveChangesAsync();
+                    }
+                    idVarianteFinal = varDefault.Id;
+                }
+            }
+
             var receta = new Receta
             {
                 Nombre = dto.Nombre.Trim(),
                 Descripcion = dto.Descripcion?.Trim(),
                 EsSubReceta = dto.EsSubReceta,
                 IdProducto = dto.EsSubReceta ? null : dto.IdProducto,
-                IdVariante = dto.EsSubReceta ? null : dto.IdVariante,
+                IdVariante = idVarianteFinal,
                 IdOpcionModificador = dto.EsSubReceta ? null : dto.IdOpcionModificador,
                 Rendimiento = dto.Rendimiento,
                 IdUnidadMedidaRendimiento = dto.IdUnidadMedidaRendimiento,
@@ -491,6 +517,12 @@ public class RecetasController : ControllerBase
             // Recalcular costo unitario
             receta.CostoEstimadoUnitario = await CalcularCostoUnitarioAsync(receta.Id);
             await _context.SaveChangesAsync();
+
+            // Spec 026: Sincronizar PVP directamente con la administración de precios para visualización en POS
+            if (idVarianteFinal.HasValue && dto.PrecioVentaActual.HasValue && dto.PrecioVentaActual.Value > 0)
+            {
+                await SincronizarPrecioVarianteAsync(idVarianteFinal.Value, dto.PrecioVentaActual.Value);
+            }
 
             return await GetRecetaById(receta.Id);
         }
@@ -523,10 +555,36 @@ public class RecetasController : ControllerBase
             if (!string.IsNullOrWhiteSpace(dto.Nombre))
                 receta.Nombre = dto.Nombre.Trim();
 
+            // Spec 026: Resolver variante default si se asignó un producto y no tenía variante
+            int? idVarianteFinal = dto.EsSubReceta ? null : dto.IdVariante;
+            if (!dto.EsSubReceta && dto.IdProducto.HasValue && dto.IdProducto.Value > 0)
+            {
+                if (!idVarianteFinal.HasValue || idVarianteFinal.Value <= 0)
+                {
+                    var varDefault = await _context.VarianteProductos
+                        .FirstOrDefaultAsync(v => v.IdProducto == dto.IdProducto.Value && v.EsDefault)
+                        ?? await _context.VarianteProductos
+                        .FirstOrDefaultAsync(v => v.IdProducto == dto.IdProducto.Value);
+
+                    if (varDefault == null)
+                    {
+                        varDefault = new Domain.Entities.VarianteProducto
+                        {
+                            IdProducto = dto.IdProducto.Value,
+                            Nombre = "Estándar",
+                            EsDefault = true
+                        };
+                        _context.VarianteProductos.Add(varDefault);
+                        await _context.SaveChangesAsync();
+                    }
+                    idVarianteFinal = varDefault.Id;
+                }
+            }
+
             receta.Descripcion = dto.Descripcion?.Trim();
             receta.EsSubReceta = dto.EsSubReceta;
             receta.IdProducto = dto.EsSubReceta ? null : dto.IdProducto;
-            receta.IdVariante = dto.EsSubReceta ? null : dto.IdVariante;
+            receta.IdVariante = idVarianteFinal ?? receta.IdVariante;
             receta.IdOpcionModificador = dto.EsSubReceta ? null : dto.IdOpcionModificador;
             receta.Rendimiento = dto.Rendimiento > 0 ? dto.Rendimiento : 1m;
             receta.IdUnidadMedidaRendimiento = dto.IdUnidadMedidaRendimiento;
@@ -543,6 +601,13 @@ public class RecetasController : ControllerBase
             receta.CostoEstimadoUnitario = await CalcularCostoUnitarioAsync(receta.Id);
             await _context.SaveChangesAsync();
 
+            // Spec 026: Sincronizar PVP actualizado directamente en Precios
+            int? idVarParaPrecio = receta.IdVariante ?? idVarianteFinal;
+            if (idVarParaPrecio.HasValue && dto.PrecioVentaActual.HasValue && dto.PrecioVentaActual.Value > 0)
+            {
+                await SincronizarPrecioVarianteAsync(idVarParaPrecio.Value, dto.PrecioVentaActual.Value);
+            }
+
             return await GetRecetaById(receta.Id);
         }
         catch (Exception ex)
@@ -551,6 +616,44 @@ public class RecetasController : ControllerBase
             response.Message = $"Error al actualizar receta: {ex.Message}";
             return StatusCode(500, response);
         }
+    }
+
+    private async Task SincronizarPrecioVarianteAsync(int idVariante, decimal nuevoMonto)
+    {
+        var catImpuestos = await _context.CatImpuestos.ToListAsync();
+        int idImpuestoIva = catImpuestos.FirstOrDefault(i => i.Descripcion != null && i.Descripcion.ToLower().Contains("iva"))?.Id ?? 1;
+
+        var catMonedas = await _context.CatMonedas.ToListAsync();
+        int idMonedaMxn = catMonedas.FirstOrDefault(m => m.Descripcion != null && (m.Descripcion.ToUpper().Contains("MXN") || m.Descripcion.ToLower().Contains("peso")))?.Id ?? 1;
+
+        var precioExistente = await _context.Precios
+            .FirstOrDefaultAsync(p => p.IdVariante == idVariante && p.IsActive);
+
+        if (precioExistente != null)
+        {
+            precioExistente.Monto = nuevoMonto;
+            precioExistente.UpdatedAt = DateTime.UtcNow;
+            precioExistente.UpdatedBy = GetCurrentUserName();
+        }
+        else
+        {
+            var nuevoPrecio = new Precio
+            {
+                IdVariante = idVariante,
+                Monto = nuevoMonto,
+                Moneda = "MXN",
+                IdImpuesto = idImpuestoIva,
+                IdMoneda = idMonedaMxn,
+                ValidoDesde = DateTime.UtcNow,
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow,
+                CreatedBy = GetCurrentUserName(),
+                UpdatedAt = DateTime.UtcNow,
+                UpdatedBy = GetCurrentUserName()
+            };
+            _context.Precios.Add(nuevoPrecio);
+        }
+        await _context.SaveChangesAsync();
     }
 
     [HttpDelete("{id}")]
