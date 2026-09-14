@@ -493,5 +493,336 @@ public class Specs19to26DatabaseVerificationTests
 
         _output.WriteLine($"[Spec 026] Transaccional OK: Producto + Variante 'Estándar' + Precio ($95.00) creados atómicamente y validados.");
     }
+
+    [Fact]
+    public void GenerateAndValidateAllXmlTestInvoices()
+    {
+        var parser = new global::UseCases.Compras.CfdiXmlParserService();
+        var dir = @"c:\OrionSys\MesaFacil\Facturas_XML_Prueba";
+        Directory.CreateDirectory(dir);
+
+        var invoices = new Dictionary<string, string>
+        {
+            ["FAC_01_Carnes_Sonora.xml"] = @"<?xml version=""1.0"" encoding=""utf-8""?>
+<cfdi:Comprobante xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"" xmlns:cfdi=""http://www.sat.gob.mx/cfd/4"" xsi:schemaLocation=""http://www.sat.gob.mx/cfd/4 http://www.sat.gob.mx/sitio_internet/cfd/4/cfdv40.xsd"" Version=""4.0"" Serie=""FAC"" Folio=""84521"" Fecha=""2026-09-13T10:15:00"" FormaPago=""03"" SubTotal=""14850.00"" Descuento=""0.00"" Moneda=""MXN"" Total=""17226.00"" TipoDeComprobante=""I"" Exportacion=""01"" MetodoPago=""PPD"" CondicionesDePago=""Credito 15 dias"" LugarExpedicion=""83000"">
+  <cfdi:Emisor Rfc=""BME8808116B1"" Nombre=""CARNES SELECTAS DE SONORA SA DE CV"" RegimenFiscal=""601"" />
+  <cfdi:Receptor Rfc=""BBC240911001"" Nombre=""BISTRO Y BRASA LA CENTRAL"" DomicilioFiscalReceptor=""06000"" RegimenFiscalReceptor=""601"" UsoCFDI=""G01"" />
+  <cfdi:Conceptos>
+    <cfdi:Concepto ClaveProdServ=""50111515"" NoIdentificacion=""CAR-001"" Cantidad=""25.0000"" ClaveUnidad=""KGM"" Unidad=""KILOGRAMO"" Descripcion=""Corte Rib Eye Sonora Premium Choice"" ValorUnitario=""220.00"" Importe=""5500.00"" ObjetoImp=""02"">
+      <cfdi:Impuestos>
+        <cfdi:Traslados>
+          <cfdi:Traslado Base=""5500.00"" Impuesto=""002"" TipoFactor=""Tasa"" TasaOCuota=""0.160000"" Importe=""880.00"" />
+        </cfdi:Traslados>
+      </cfdi:Impuestos>
+    </cfdi:Concepto>
+    <cfdi:Concepto ClaveProdServ=""50111515"" NoIdentificacion=""CAR-002"" Cantidad=""15.0000"" ClaveUnidad=""KGM"" Unidad=""KILOGRAMO"" Descripcion=""Picanha de Res Calidad Angus"" ValorUnitario=""180.00"" Importe=""2700.00"" ObjetoImp=""02"">
+      <cfdi:Impuestos>
+        <cfdi:Traslados>
+          <cfdi:Traslado Base=""2700.00"" Impuesto=""002"" TipoFactor=""Tasa"" TasaOCuota=""0.160000"" Importe=""432.00"" />
+        </cfdi:Traslados>
+      </cfdi:Impuestos>
+    </cfdi:Concepto>
+    <cfdi:Concepto ClaveProdServ=""50111515"" NoIdentificacion=""CAR-003"" Cantidad=""12.0000"" ClaveUnidad=""KGM"" Unidad=""KILOGRAMO"" Descripcion=""Corte Vacio de Res Fresco"" ValorUnitario=""160.00"" Importe=""1920.00"" ObjetoImp=""02"">
+      <cfdi:Impuestos>
+        <cfdi:Traslados>
+          <cfdi:Traslado Base=""1920.00"" Impuesto=""002"" TipoFactor=""Tasa"" TasaOCuota=""0.160000"" Importe=""307.20"" />
+        </cfdi:Traslados>
+      </cfdi:Impuestos>
+    </cfdi:Concepto>
+    <cfdi:Concepto ClaveProdServ=""50111515"" NoIdentificacion=""CAR-004"" Cantidad=""30.0000"" ClaveUnidad=""KGM"" Unidad=""KILOGRAMO"" Descripcion=""Carne Molida de Res Angus 80/20"" ValorUnitario=""110.00"" Importe=""3300.00"" ObjetoImp=""02"">
+      <cfdi:Impuestos>
+        <cfdi:Traslados>
+          <cfdi:Traslado Base=""3300.00"" Impuesto=""002"" TipoFactor=""Tasa"" TasaOCuota=""0.160000"" Importe=""528.00"" />
+        </cfdi:Traslados>
+      </cfdi:Impuestos>
+    </cfdi:Concepto>
+    <cfdi:Concepto ClaveProdServ=""50111515"" NoIdentificacion=""CAR-005"" Cantidad=""15.0000"" ClaveUnidad=""KGM"" Unidad=""KILOGRAMO"" Descripcion=""Hueso con Tuetano Canoa Seleccionado"" ValorUnitario=""95.00"" Importe=""1430.00"" ObjetoImp=""02"">
+      <cfdi:Impuestos>
+        <cfdi:Traslados>
+          <cfdi:Traslado Base=""1430.00"" Impuesto=""002"" TipoFactor=""Tasa"" TasaOCuota=""0.160000"" Importe=""228.80"" />
+        </cfdi:Traslados>
+      </cfdi:Impuestos>
+    </cfdi:Concepto>
+  </cfdi:Conceptos>
+  <cfdi:Impuestos TotalImpuestosTrasladados=""2376.00"">
+    <cfdi:Traslados>
+      <cfdi:Traslado Base=""14850.00"" Impuesto=""002"" TipoFactor=""Tasa"" TasaOCuota=""0.160000"" Importe=""2376.00"" />
+    </cfdi:Traslados>
+  </cfdi:Impuestos>
+  <cfdi:Complemento>
+    <tfd:TimbreFiscalDigital xmlns:tfd=""http://www.sat.gob.mx/TimbreFiscalDigital"" xsi:schemaLocation=""http://www.sat.gob.mx/TimbreFiscalDigital http://www.sat.gob.mx/sitio_internet/cfd/TimbreFiscalDigital/TimbreFiscalDigitalv11.xsd"" Version=""1.1"" UUID=""A1B2C3D4-E5F6-47A1-89B0-1234567890AB"" FechaTimbrado=""2026-09-13T10:16:02"" RfcProvCertif=""SAT970701NN3"" SelloCFD=""aBcDeF1234567890=="" NoCertificadoSAT=""00001000000504465028"" SelloSAT=""XyZ987654321=="" />
+  </cfdi:Complemento>
+</cfdi:Comprobante>",
+
+            ["FAC_02_Lacteos_Embutidos_Gourmet.xml"] = @"<?xml version=""1.0"" encoding=""utf-8""?>
+<cfdi:Comprobante xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"" xmlns:cfdi=""http://www.sat.gob.mx/cfd/4"" xsi:schemaLocation=""http://www.sat.gob.mx/cfd/4 http://www.sat.gob.mx/sitio_internet/cfd/4/cfdv40.xsd"" Version=""4.0"" Serie=""INV"" Folio=""10492"" Fecha=""2026-09-13T11:00:00"" FormaPago=""03"" SubTotal=""11350.00"" Descuento=""0.00"" Moneda=""MXN"" Total=""13166.00"" TipoDeComprobante=""I"" Exportacion=""01"" MetodoPago=""PPD"" CondicionesDePago=""Credito 30 dias"" LugarExpedicion=""06000"">
+  <cfdi:Emisor Rfc=""DGS190412AA1"" Nombre=""DISTRIBUIDORA GASTRONOMICA SAN JUAN SA DE CV"" RegimenFiscal=""601"" />
+  <cfdi:Receptor Rfc=""BBC240911001"" Nombre=""BISTRO Y BRASA LA CENTRAL"" DomicilioFiscalReceptor=""06000"" RegimenFiscalReceptor=""601"" UsoCFDI=""G01"" />
+  <cfdi:Conceptos>
+    <cfdi:Concepto ClaveProdServ=""50131800"" NoIdentificacion=""LAC-001"" Cantidad=""6.0000"" ClaveUnidad=""KGM"" Unidad=""KILOGRAMO"" Descripcion=""Queso Parmigiano Reggiano DOP Curado 24 Meses"" ValorUnitario=""480.00"" Importe=""2880.00"" ObjetoImp=""02"">
+      <cfdi:Impuestos>
+        <cfdi:Traslados>
+          <cfdi:Traslado Base=""2880.00"" Impuesto=""002"" TipoFactor=""Tasa"" TasaOCuota=""0.160000"" Importe=""460.80"" />
+        </cfdi:Traslados>
+      </cfdi:Impuestos>
+    </cfdi:Concepto>
+    <cfdi:Concepto ClaveProdServ=""50111500"" NoIdentificacion=""EMB-001"" Cantidad=""5.0000"" ClaveUnidad=""KGM"" Unidad=""KILOGRAMO"" Descripcion=""Jamon Serrano Reserva Etiqueta Oro Rebanado"" ValorUnitario=""420.00"" Importe=""2100.00"" ObjetoImp=""02"">
+      <cfdi:Impuestos>
+        <cfdi:Traslados>
+          <cfdi:Traslado Base=""2100.00"" Impuesto=""002"" TipoFactor=""Tasa"" TasaOCuota=""0.160000"" Importe=""336.00"" />
+        </cfdi:Traslados>
+      </cfdi:Impuestos>
+    </cfdi:Concepto>
+    <cfdi:Concepto ClaveProdServ=""50131800"" NoIdentificacion=""LAC-002"" Cantidad=""8.0000"" ClaveUnidad=""KGM"" Unidad=""KILOGRAMO"" Descripcion=""Queso Cheddar Anyejo Rebanado Gourmet"" ValorUnitario=""195.00"" Importe=""1560.00"" ObjetoImp=""02"">
+      <cfdi:Impuestos>
+        <cfdi:Traslados>
+          <cfdi:Traslado Base=""1560.00"" Impuesto=""002"" TipoFactor=""Tasa"" TasaOCuota=""0.160000"" Importe=""249.60"" />
+        </cfdi:Traslados>
+      </cfdi:Impuestos>
+    </cfdi:Concepto>
+    <cfdi:Concepto ClaveProdServ=""50131800"" NoIdentificacion=""LAC-003"" Cantidad=""6.0000"" ClaveUnidad=""KGM"" Unidad=""KILOGRAMO"" Descripcion=""Queso Suizo Emmental Rebanado"" ValorUnitario=""220.00"" Importe=""1320.00"" ObjetoImp=""02"">
+      <cfdi:Impuestos>
+        <cfdi:Traslados>
+          <cfdi:Traslado Base=""1320.00"" Impuesto=""002"" TipoFactor=""Tasa"" TasaOCuota=""0.160000"" Importe=""211.20"" />
+        </cfdi:Traslados>
+      </cfdi:Impuestos>
+    </cfdi:Concepto>
+    <cfdi:Concepto ClaveProdServ=""50111500"" NoIdentificacion=""EMB-002"" Cantidad=""10.0000"" ClaveUnidad=""KGM"" Unidad=""KILOGRAMO"" Descripcion=""Tocino Ahumado de Cerdo Grueso"" ValorUnitario=""175.00"" Importe=""1750.00"" ObjetoImp=""02"">
+      <cfdi:Impuestos>
+        <cfdi:Traslados>
+          <cfdi:Traslado Base=""1750.00"" Impuesto=""002"" TipoFactor=""Tasa"" TasaOCuota=""0.160000"" Importe=""280.00"" />
+        </cfdi:Traslados>
+      </cfdi:Impuestos>
+    </cfdi:Concepto>
+    <cfdi:Concepto ClaveProdServ=""50131800"" NoIdentificacion=""LAC-004"" Cantidad=""12.0000"" ClaveUnidad=""KGM"" Unidad=""KILOGRAMO"" Descripcion=""Queso Crema Tipo New York Original"" ValorUnitario=""145.00"" Importe=""1740.00"" ObjetoImp=""02"">
+      <cfdi:Impuestos>
+        <cfdi:Traslados>
+          <cfdi:Traslado Base=""1740.00"" Impuesto=""002"" TipoFactor=""Tasa"" TasaOCuota=""0.160000"" Importe=""278.40"" />
+        </cfdi:Traslados>
+      </cfdi:Impuestos>
+    </cfdi:Concepto>
+  </cfdi:Conceptos>
+  <cfdi:Impuestos TotalImpuestosTrasladados=""1816.00"">
+    <cfdi:Traslados>
+      <cfdi:Traslado Base=""11350.00"" Impuesto=""002"" TipoFactor=""Tasa"" TasaOCuota=""0.160000"" Importe=""1816.00"" />
+    </cfdi:Traslados>
+  </cfdi:Impuestos>
+  <cfdi:Complemento>
+    <tfd:TimbreFiscalDigital xmlns:tfd=""http://www.sat.gob.mx/TimbreFiscalDigital"" xsi:schemaLocation=""http://www.sat.gob.mx/TimbreFiscalDigital http://www.sat.gob.mx/sitio_internet/cfd/TimbreFiscalDigital/TimbreFiscalDigitalv11.xsd"" Version=""1.1"" UUID=""B2C3D4E5-F6A1-47B2-90C1-2345678901CD"" FechaTimbrado=""2026-09-13T11:02:15"" RfcProvCertif=""SAT970701NN3"" SelloCFD=""bCdEfG2345678901=="" NoCertificadoSAT=""00001000000504465028"" SelloSAT=""ZaB123456789=="" />
+  </cfdi:Complemento>
+</cfdi:Comprobante>",
+
+            ["FAC_03_Licores_Destilados_Barra.xml"] = @"<?xml version=""1.0"" encoding=""utf-8""?>
+<cfdi:Comprobante xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"" xmlns:cfdi=""http://www.sat.gob.mx/cfd/4"" xsi:schemaLocation=""http://www.sat.gob.mx/cfd/4 http://www.sat.gob.mx/sitio_internet/cfd/4/cfdv40.xsd"" Version=""4.0"" Serie=""BAR"" Folio=""5520"" Fecha=""2026-09-13T12:30:00"" FormaPago=""03"" SubTotal=""9420.00"" Descuento=""0.00"" Moneda=""MXN"" Total=""10927.20"" TipoDeComprobante=""I"" Exportacion=""01"" MetodoPago=""PUE"" CondicionesDePago=""Contado"" LugarExpedicion=""44100"">
+  <cfdi:Emisor Rfc=""LDB150618MN2"" Nombre=""LICORES Y DESTILADOS PREMIUM DE OCCIDENTE SA DE CV"" RegimenFiscal=""601"" />
+  <cfdi:Receptor Rfc=""BBC240911001"" Nombre=""BISTRO Y BRASA LA CENTRAL"" DomicilioFiscalReceptor=""06000"" RegimenFiscalReceptor=""601"" UsoCFDI=""G01"" />
+  <cfdi:Conceptos>
+    <cfdi:Concepto ClaveProdServ=""50202203"" NoIdentificacion=""LIC-001"" Cantidad=""6.0000"" ClaveUnidad=""H87"" Unidad=""PIEZA"" Descripcion=""Mezcal Espadin Artesanal Oaxaquenyo Botella 750ml"" ValorUnitario=""420.00"" Importe=""2520.00"" ObjetoImp=""02"">
+      <cfdi:Impuestos>
+        <cfdi:Traslados>
+          <cfdi:Traslado Base=""2520.00"" Impuesto=""002"" TipoFactor=""Tasa"" TasaOCuota=""0.160000"" Importe=""403.20"" />
+        </cfdi:Traslados>
+      </cfdi:Impuestos>
+    </cfdi:Concepto>
+    <cfdi:Concepto ClaveProdServ=""50202202"" NoIdentificacion=""LIC-002"" Cantidad=""6.0000"" ClaveUnidad=""H87"" Unidad=""PIEZA"" Descripcion=""Ginebra London Dry Botanica Premium 750ml"" ValorUnitario=""450.00"" Importe=""2700.00"" ObjetoImp=""02"">
+      <cfdi:Impuestos>
+        <cfdi:Traslados>
+          <cfdi:Traslado Base=""2700.00"" Impuesto=""002"" TipoFactor=""Tasa"" TasaOCuota=""0.160000"" Importe=""432.00"" />
+        </cfdi:Traslados>
+      </cfdi:Impuestos>
+    </cfdi:Concepto>
+    <cfdi:Concepto ClaveProdServ=""50202200"" NoIdentificacion=""LIC-003"" Cantidad=""6.0000"" ClaveUnidad=""H87"" Unidad=""PIEZA"" Descripcion=""Licor 43 Espanol Original 750ml"" ValorUnitario=""410.00"" Importe=""2460.00"" ObjetoImp=""02"">
+      <cfdi:Impuestos>
+        <cfdi:Traslados>
+          <cfdi:Traslado Base=""2460.00"" Impuesto=""002"" TipoFactor=""Tasa"" TasaOCuota=""0.160000"" Importe=""393.60"" />
+        </cfdi:Traslados>
+      </cfdi:Impuestos>
+    </cfdi:Concepto>
+    <cfdi:Concepto ClaveProdServ=""50201708"" NoIdentificacion=""BEB-001"" Cantidad=""8.0000"" ClaveUnidad=""KGM"" Unidad=""KILOGRAMO"" Descripcion=""Cafe en Grano Tueste Italiano Gourmet Veracruz"" ValorUnitario=""217.50"" Importe=""1740.00"" ObjetoImp=""02"">
+      <cfdi:Impuestos>
+        <cfdi:Traslados>
+          <cfdi:Traslado Base=""1740.00"" Impuesto=""002"" TipoFactor=""Tasa"" TasaOCuota=""0.160000"" Importe=""278.40"" />
+        </cfdi:Traslados>
+      </cfdi:Impuestos>
+    </cfdi:Concepto>
+  </cfdi:Conceptos>
+  <cfdi:Impuestos TotalImpuestosTrasladados=""1507.20"">
+    <cfdi:Traslados>
+      <cfdi:Traslado Base=""9420.00"" Impuesto=""002"" TipoFactor=""Tasa"" TasaOCuota=""0.160000"" Importe=""1507.20"" />
+    </cfdi:Traslados>
+  </cfdi:Impuestos>
+  <cfdi:Complemento>
+    <tfd:TimbreFiscalDigital xmlns:tfd=""http://www.sat.gob.mx/TimbreFiscalDigital"" xsi:schemaLocation=""http://www.sat.gob.mx/TimbreFiscalDigital http://www.sat.gob.mx/sitio_internet/cfd/TimbreFiscalDigital/TimbreFiscalDigitalv11.xsd"" Version=""1.1"" UUID=""C3D4E5F6-A1B2-48C3-01D2-3456789012DE"" FechaTimbrado=""2026-09-13T12:31:05"" RfcProvCertif=""SAT970701NN3"" SelloCFD=""cDeFgH3456789012=="" NoCertificadoSAT=""00001000000504465028"" SelloSAT=""AbC987654321=="" />
+  </cfdi:Complemento>
+</cfdi:Comprobante>",
+
+            ["FAC_04_Abarrotes_Panaderia_Insumos.xml"] = @"<?xml version=""1.0"" encoding=""utf-8""?>
+<cfdi:Comprobante xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"" xmlns:cfdi=""http://www.sat.gob.mx/cfd/4"" xsi:schemaLocation=""http://www.sat.gob.mx/cfd/4 http://www.sat.gob.mx/sitio_internet/cfd/4/cfdv40.xsd"" Version=""4.0"" Serie=""AB"" Folio=""9941"" Fecha=""2026-09-13T13:10:00"" FormaPago=""03"" SubTotal=""7640.00"" Descuento=""0.00"" Moneda=""MXN"" Total=""8862.40"" TipoDeComprobante=""I"" Exportacion=""01"" MetodoPago=""PPD"" CondicionesDePago=""Credito 15 dias"" LugarExpedicion=""06000"">
+  <cfdi:Emisor Rfc=""APA080514KP9"" Nombre=""ABARROTERA Y PANIFICADORA DE LAS AMERICAS SA DE CV"" RegimenFiscal=""601"" />
+  <cfdi:Receptor Rfc=""BBC240911001"" Nombre=""BISTRO Y BRASA LA CENTRAL"" DomicilioFiscalReceptor=""06000"" RegimenFiscalReceptor=""601"" UsoCFDI=""G01"" />
+  <cfdi:Conceptos>
+    <cfdi:Concepto ClaveProdServ=""50181900"" NoIdentificacion=""PAN-001"" Cantidad=""80.0000"" ClaveUnidad=""H87"" Unidad=""PIEZA"" Descripcion=""Pan Brioche Artesanal con Ajonjoli Negro"" ValorUnitario=""14.50"" Importe=""1160.00"" ObjetoImp=""02"">
+      <cfdi:Impuestos>
+        <cfdi:Traslados>
+          <cfdi:Traslado Base=""1160.00"" Impuesto=""002"" TipoFactor=""Tasa"" TasaOCuota=""0.160000"" Importe=""185.60"" />
+        </cfdi:Traslados>
+      </cfdi:Impuestos>
+    </cfdi:Concepto>
+    <cfdi:Concepto ClaveProdServ=""50171800"" NoIdentificacion=""ABA-001"" Cantidad=""4.0000"" ClaveUnidad=""KGM"" Unidad=""KILOGRAMO"" Descripcion=""Aceite de Oliva Extra Virgen con Esencia de Trufa Negra"" ValorUnitario=""380.00"" Importe=""1520.00"" ObjetoImp=""02"">
+      <cfdi:Impuestos>
+        <cfdi:Traslados>
+          <cfdi:Traslado Base=""1520.00"" Impuesto=""002"" TipoFactor=""Tasa"" TasaOCuota=""0.160000"" Importe=""243.20"" />
+        </cfdi:Traslados>
+      </cfdi:Impuestos>
+    </cfdi:Concepto>
+    <cfdi:Concepto ClaveProdServ=""50202306"" NoIdentificacion=""BEB-002"" Cantidad=""48.0000"" ClaveUnidad=""H87"" Unidad=""PIEZA"" Descripcion=""Agua Tonica Artesanal Botella de Vidrio 200ml"" ValorUnitario=""22.50"" Importe=""1080.00"" ObjetoImp=""02"">
+      <cfdi:Impuestos>
+        <cfdi:Traslados>
+          <cfdi:Traslado Base=""1080.00"" Impuesto=""002"" TipoFactor=""Tasa"" TasaOCuota=""0.160000"" Importe=""172.80"" />
+        </cfdi:Traslados>
+      </cfdi:Impuestos>
+    </cfdi:Concepto>
+    <cfdi:Concepto ClaveProdServ=""50101500"" NoIdentificacion=""VER-001"" Cantidad=""10.0000"" ClaveUnidad=""KGM"" Unidad=""KILOGRAMO"" Descripcion=""Mix de Frutos Rojos Congelados Frambuesa Zarzamora Fresa"" ValorUnitario=""165.00"" Importe=""1650.00"" ObjetoImp=""02"">
+      <cfdi:Impuestos>
+        <cfdi:Traslados>
+          <cfdi:Traslado Base=""1650.00"" Impuesto=""002"" TipoFactor=""Tasa"" TasaOCuota=""0.160000"" Importe=""264.00"" />
+        </cfdi:Traslados>
+      </cfdi:Impuestos>
+    </cfdi:Concepto>
+    <cfdi:Concepto ClaveProdServ=""50161800"" NoIdentificacion=""ABA-002"" Cantidad=""12.0000"" ClaveUnidad=""KGM"" Unidad=""KILOGRAMO"" Descripcion=""Dulce de Leche Repostero Tradicional Tipo Argentino"" ValorUnitario=""185.00"" Importe=""2230.00"" ObjetoImp=""02"">
+      <cfdi:Impuestos>
+        <cfdi:Traslados>
+          <cfdi:Traslado Base=""2230.00"" Impuesto=""002"" TipoFactor=""Tasa"" TasaOCuota=""0.160000"" Importe=""356.80"" />
+        </cfdi:Traslados>
+      </cfdi:Impuestos>
+    </cfdi:Concepto>
+  </cfdi:Conceptos>
+  <cfdi:Impuestos TotalImpuestosTrasladados=""1222.40"">
+    <cfdi:Traslados>
+      <cfdi:Traslado Base=""7640.00"" Impuesto=""002"" TipoFactor=""Tasa"" TasaOCuota=""0.160000"" Importe=""1222.40"" />
+    </cfdi:Traslados>
+  </cfdi:Impuestos>
+  <cfdi:Complemento>
+    <tfd:TimbreFiscalDigital xmlns:tfd=""http://www.sat.gob.mx/TimbreFiscalDigital"" xsi:schemaLocation=""http://www.sat.gob.mx/TimbreFiscalDigital http://www.sat.gob.mx/sitio_internet/cfd/TimbreFiscalDigital/TimbreFiscalDigitalv11.xsd"" Version=""1.1"" UUID=""D4E5F6A1-B2C3-49D4-12E3-4567890123EF"" FechaTimbrado=""2026-09-13T13:12:44"" RfcProvCertif=""SAT970701NN3"" SelloCFD=""dEfGhI4567890123=="" NoCertificadoSAT=""00001000000504465028"" SelloSAT=""BcD123456789=="" />
+  </cfdi:Complemento>
+</cfdi:Comprobante>",
+
+            ["FAC_05_Mariscos_Pescados_NuevosPlatillos.xml"] = @"<?xml version=""1.0"" encoding=""utf-8""?>
+<cfdi:Comprobante xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"" xmlns:cfdi=""http://www.sat.gob.mx/cfd/4"" xsi:schemaLocation=""http://www.sat.gob.mx/cfd/4 http://www.sat.gob.mx/sitio_internet/cfd/4/cfdv40.xsd"" Version=""4.0"" Serie=""MAR"" Folio=""3301"" Fecha=""2026-09-13T14:00:00"" FormaPago=""03"" SubTotal=""16250.00"" Descuento=""0.00"" Moneda=""MXN"" Total=""18850.00"" TipoDeComprobante=""I"" Exportacion=""01"" MetodoPago=""PPD"" CondicionesDePago=""Credito 7 dias"" LugarExpedicion=""22800"">
+  <cfdi:Emisor Rfc=""PMP110220TU8"" Nombre=""PESCADOS Y MARISCOS DEL PACIFICO SA DE CV"" RegimenFiscal=""601"" />
+  <cfdi:Receptor Rfc=""BBC240911001"" Nombre=""BISTRO Y BRASA LA CENTRAL"" DomicilioFiscalReceptor=""06000"" RegimenFiscalReceptor=""601"" UsoCFDI=""G01"" />
+  <cfdi:Conceptos>
+    <cfdi:Concepto ClaveProdServ=""50121500"" NoIdentificacion=""MAR-001"" Cantidad=""15.0000"" ClaveUnidad=""KGM"" Unidad=""KILOGRAMO"" Descripcion=""Filete de Salmon Noruego Fresco Calidad Sashimi"" ValorUnitario=""340.00"" Importe=""5100.00"" ObjetoImp=""02"">
+      <cfdi:Impuestos>
+        <cfdi:Traslados>
+          <cfdi:Traslado Base=""5100.00"" Impuesto=""002"" TipoFactor=""Tasa"" TasaOCuota=""0.160000"" Importe=""816.00"" />
+        </cfdi:Traslados>
+      </cfdi:Impuestos>
+    </cfdi:Concepto>
+    <cfdi:Concepto ClaveProdServ=""50121600"" NoIdentificacion=""MAR-002"" Cantidad=""15.0000"" ClaveUnidad=""KGM"" Unidad=""KILOGRAMO"" Descripcion=""Camaron Azul Sinaloa U15 con Cabeza Fresco"" ValorUnitario=""280.00"" Importe=""4200.00"" ObjetoImp=""02"">
+      <cfdi:Impuestos>
+        <cfdi:Traslados>
+          <cfdi:Traslado Base=""4200.00"" Impuesto=""002"" TipoFactor=""Tasa"" TasaOCuota=""0.160000"" Importe=""672.00"" />
+        </cfdi:Traslados>
+      </cfdi:Impuestos>
+    </cfdi:Concepto>
+    <cfdi:Concepto ClaveProdServ=""50121700"" NoIdentificacion=""MAR-003"" Cantidad=""12.0000"" ClaveUnidad=""KGM"" Unidad=""KILOGRAMO"" Descripcion=""Pulpo Maya Limpio Precocido Congelado"" ValorUnitario=""295.00"" Importe=""3540.00"" ObjetoImp=""02"">
+      <cfdi:Impuestos>
+        <cfdi:Traslados>
+          <cfdi:Traslado Base=""3540.00"" Impuesto=""002"" TipoFactor=""Tasa"" TasaOCuota=""0.160000"" Importe=""566.40"" />
+        </cfdi:Traslados>
+      </cfdi:Impuestos>
+    </cfdi:Concepto>
+    <cfdi:Concepto ClaveProdServ=""50121500"" NoIdentificacion=""MAR-004"" Cantidad=""10.0000"" ClaveUnidad=""KGM"" Unidad=""KILOGRAMO"" Descripcion=""Lomo de Atun Aleta Amarilla Fresco"" ValorUnitario=""341.00"" Importe=""3410.00"" ObjetoImp=""02"">
+      <cfdi:Impuestos>
+        <cfdi:Traslados>
+          <cfdi:Traslado Base=""3410.00"" Impuesto=""002"" TipoFactor=""Tasa"" TasaOCuota=""0.160000"" Importe=""545.60"" />
+        </cfdi:Traslados>
+      </cfdi:Impuestos>
+    </cfdi:Concepto>
+  </cfdi:Conceptos>
+  <cfdi:Impuestos TotalImpuestosTrasladados=""2600.00"">
+    <cfdi:Traslados>
+      <cfdi:Traslado Base=""16250.00"" Impuesto=""002"" TipoFactor=""Tasa"" TasaOCuota=""0.160000"" Importe=""2600.00"" />
+    </cfdi:Traslados>
+  </cfdi:Impuestos>
+  <cfdi:Complemento>
+    <tfd:TimbreFiscalDigital xmlns:tfd=""http://www.sat.gob.mx/TimbreFiscalDigital"" xsi:schemaLocation=""http://www.sat.gob.mx/TimbreFiscalDigital http://www.sat.gob.mx/sitio_internet/cfd/TimbreFiscalDigital/TimbreFiscalDigitalv11.xsd"" Version=""1.1"" UUID=""E5F6A1B2-C3D4-50E5-23F4-5678901234FA"" FechaTimbrado=""2026-09-13T14:02:11"" RfcProvCertif=""SAT970701NN3"" SelloCFD=""eFgHiJ5678901234=="" NoCertificadoSAT=""00001000000504465028"" SelloSAT=""CdE123456789=="" />
+  </cfdi:Complemento>
+</cfdi:Comprobante>",
+
+            ["FAC_06_Verduras_Frescas_Botanica.xml"] = @"<?xml version=""1.0"" encoding=""utf-8""?>
+<cfdi:Comprobante xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"" xmlns:cfdi=""http://www.sat.gob.mx/cfd/4"" xsi:schemaLocation=""http://www.sat.gob.mx/cfd/4 http://www.sat.gob.mx/sitio_internet/cfd/4/cfdv40.xsd"" Version=""4.0"" Serie=""HUR"" Folio=""2084"" Fecha=""2026-09-13T14:40:00"" FormaPago=""03"" SubTotal=""4890.00"" Descuento=""0.00"" Moneda=""MXN"" Total=""4890.00"" TipoDeComprobante=""I"" Exportacion=""01"" MetodoPago=""PUE"" CondicionesDePago=""Contado"" LugarExpedicion=""58000"">
+  <cfdi:Emisor Rfc=""HAF160310KR2"" Nombre=""HUERTA AGRICOLA Y FRUTAS DEL VALLE SA DE CV"" RegimenFiscal=""601"" />
+  <cfdi:Receptor Rfc=""BBC240911001"" Nombre=""BISTRO Y BRASA LA CENTRAL"" DomicilioFiscalReceptor=""06000"" RegimenFiscalReceptor=""601"" UsoCFDI=""G01"" />
+  <cfdi:Conceptos>
+    <cfdi:Concepto ClaveProdServ=""50101500"" NoIdentificacion=""VER-002"" Cantidad=""20.0000"" ClaveUnidad=""KGM"" Unidad=""KILOGRAMO"" Descripcion=""Aguacate Hass Seleccionado de Michoacan"" ValorUnitario=""65.00"" Importe=""1300.00"" ObjetoImp=""01"" />
+    <cfdi:Concepto ClaveProdServ=""50101500"" NoIdentificacion=""VER-003"" Cantidad=""10.0000"" ClaveUnidad=""KGM"" Unidad=""KILOGRAMO"" Descripcion=""Hongo Portobello Fresco Gourmet"" ValorUnitario=""95.00"" Importe=""950.00"" ObjetoImp=""01"" />
+    <cfdi:Concepto ClaveProdServ=""50101500"" NoIdentificacion=""VER-004"" Cantidad=""6.0000"" ClaveUnidad=""KGM"" Unidad=""KILOGRAMO"" Descripcion=""Arugula Baby Fresca Hidroponica"" ValorUnitario=""110.00"" Importe=""660.00"" ObjetoImp=""01"" />
+    <cfdi:Concepto ClaveProdServ=""50101500"" NoIdentificacion=""VER-005"" Cantidad=""8.0000"" ClaveUnidad=""KGM"" Unidad=""KILOGRAMO"" Descripcion=""Esparragos Verdes Calibre Grueso Selecto"" ValorUnitario=""125.00"" Importe=""1000.00"" ObjetoImp=""01"" />
+    <cfdi:Concepto ClaveProdServ=""50101500"" NoIdentificacion=""VER-006"" Cantidad=""15.0000"" ClaveUnidad=""KGM"" Unidad=""KILOGRAMO"" Descripcion=""Pepino Persa Criollo Fresco"" ValorUnitario=""26.00"" Importe=""390.00"" ObjetoImp=""01"" />
+    <cfdi:Concepto ClaveProdServ=""50101500"" NoIdentificacion=""VER-007"" Cantidad=""20.0000"" ClaveUnidad=""KGM"" Unidad=""KILOGRAMO"" Descripcion=""Grano de Elote Amarillo Tierno Desgranado"" ValorUnitario=""29.50"" Importe=""590.00"" ObjetoImp=""01"" />
+  </cfdi:Conceptos>
+  <cfdi:Complemento>
+    <tfd:TimbreFiscalDigital xmlns:tfd=""http://www.sat.gob.mx/TimbreFiscalDigital"" xsi:schemaLocation=""http://www.sat.gob.mx/TimbreFiscalDigital http://www.sat.gob.mx/sitio_internet/cfd/TimbreFiscalDigital/TimbreFiscalDigitalv11.xsd"" Version=""1.1"" UUID=""F6A1B2C3-D4E5-51F6-34A5-6789012345AB"" FechaTimbrado=""2026-09-13T14:41:22"" RfcProvCertif=""SAT970701NN3"" SelloCFD=""fGhIjK6789012345=="" NoCertificadoSAT=""00001000000504465028"" SelloSAT=""DeF123456789=="" />
+  </cfdi:Complemento>
+</cfdi:Comprobante>",
+
+            ["FAC_07_Cervezas_Vinos_Bebidas.xml"] = @"<?xml version=""1.0"" encoding=""utf-8""?>
+<cfdi:Comprobante xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"" xmlns:cfdi=""http://www.sat.gob.mx/cfd/4"" xsi:schemaLocation=""http://www.sat.gob.mx/cfd/4 http://www.sat.gob.mx/sitio_internet/cfd/4/cfdv40.xsd"" Version=""4.0"" Serie=""CER"" Folio=""7192"" Fecha=""2026-09-13T15:20:00"" FormaPago=""03"" SubTotal=""8800.00"" Descuento=""0.00"" Moneda=""MXN"" Total=""10208.00"" TipoDeComprobante=""I"" Exportacion=""01"" MetodoPago=""PPD"" CondicionesDePago=""Credito 30 dias"" LugarExpedicion=""22000"">
+  <cfdi:Emisor Rfc=""CBR170921PQ4"" Nombre=""CERVECERIA Y VINOS DE LA FRONTERA SA DE CV"" RegimenFiscal=""601"" />
+  <cfdi:Receptor Rfc=""BBC240911001"" Nombre=""BISTRO Y BRASA LA CENTRAL"" DomicilioFiscalReceptor=""06000"" RegimenFiscalReceptor=""601"" UsoCFDI=""G01"" />
+  <cfdi:Conceptos>
+    <cfdi:Concepto ClaveProdServ=""50202201"" NoIdentificacion=""BEB-003"" Cantidad=""72.0000"" ClaveUnidad=""H87"" Unidad=""PIEZA"" Descripcion=""Cerveza Artesanal IPA India Pale Ale Botella 355ml"" ValorUnitario=""38.00"" Importe=""2736.00"" ObjetoImp=""02"">
+      <cfdi:Impuestos>
+        <cfdi:Traslados>
+          <cfdi:Traslado Base=""2736.00"" Impuesto=""002"" TipoFactor=""Tasa"" TasaOCuota=""0.160000"" Importe=""437.76"" />
+        </cfdi:Traslados>
+      </cfdi:Impuestos>
+    </cfdi:Concepto>
+    <cfdi:Concepto ClaveProdServ=""50202201"" NoIdentificacion=""BEB-004"" Cantidad=""96.0000"" ClaveUnidad=""H87"" Unidad=""PIEZA"" Descripcion=""Cerveza Clara Ultra Ligera Botella 355ml"" ValorUnitario=""26.50"" Importe=""2544.00"" ObjetoImp=""02"">
+      <cfdi:Impuestos>
+        <cfdi:Traslados>
+          <cfdi:Traslado Base=""2544.00"" Impuesto=""002"" TipoFactor=""Tasa"" TasaOCuota=""0.160000"" Importe=""407.04"" />
+        </cfdi:Traslados>
+      </cfdi:Impuestos>
+    </cfdi:Concepto>
+    <cfdi:Concepto ClaveProdServ=""50202203"" NoIdentificacion=""BEB-005"" Cantidad=""12.0000"" ClaveUnidad=""H87"" Unidad=""PIEZA"" Descripcion=""Vino Tinto Ensamble Cabernet-Merlot Valle de Guadalupe 750ml"" ValorUnitario=""293.33"" Importe=""3520.00"" ObjetoImp=""02"">
+      <cfdi:Impuestos>
+        <cfdi:Traslados>
+          <cfdi:Traslado Base=""3520.00"" Impuesto=""002"" TipoFactor=""Tasa"" TasaOCuota=""0.160000"" Importe=""563.20"" />
+        </cfdi:Traslados>
+      </cfdi:Impuestos>
+    </cfdi:Concepto>
+  </cfdi:Conceptos>
+  <cfdi:Impuestos TotalImpuestosTrasladados=""1408.00"">
+    <cfdi:Traslados>
+      <cfdi:Traslado Base=""8800.00"" Impuesto=""002"" TipoFactor=""Tasa"" TasaOCuota=""0.160000"" Importe=""1408.00"" />
+    </cfdi:Traslados>
+  </cfdi:Impuestos>
+  <cfdi:Complemento>
+    <tfd:TimbreFiscalDigital xmlns:tfd=""http://www.sat.gob.mx/TimbreFiscalDigital"" xsi:schemaLocation=""http://www.sat.gob.mx/TimbreFiscalDigital http://www.sat.gob.mx/sitio_internet/cfd/TimbreFiscalDigital/TimbreFiscalDigitalv11.xsd"" Version=""1.1"" UUID=""A2B3C4D5-E6F7-52A3-45B6-7890123456BC"" FechaTimbrado=""2026-09-13T15:22:15"" RfcProvCertif=""SAT970701NN3"" SelloCFD=""gHiJkL7890123456=="" NoCertificadoSAT=""00001000000504465028"" SelloSAT=""EfG123456789=="" />
+  </cfdi:Complemento>
+</cfdi:Comprobante>"
+        };
+
+        foreach (var (filename, xml) in invoices)
+        {
+            var path = Path.Combine(dir, filename);
+            File.WriteAllText(path, xml.Trim(), System.Text.Encoding.UTF8);
+
+            // Validar parseo con XDocument (regla estricta XML)
+            var xDoc = System.Xml.Linq.XDocument.Parse(xml);
+            xDoc.Root.Should().NotBeNull();
+
+            // Validar con el parser oficial de la app
+            var parsed = parser.ParsearCfdiAsync(xml).GetAwaiter().GetResult();
+            parsed.Should().NotBeNull();
+            parsed.Total.Should().BeGreaterThan(0);
+            parsed.Conceptos.Should().NotBeEmpty();
+
+            _output.WriteLine($"[CFDI OK] {filename} -> {parsed.Conceptos.Count} conceptos, Total: ${parsed.Total:N2} MXN");
+        }
+    }
 }
 
