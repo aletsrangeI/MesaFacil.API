@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Domain.Entities;
 
-public class Pedido : BaseAuditableEntity // Asumo que aquí heredas el Id (IdPedido) y campos de auditoría si los usas
+public class Pedido : BaseAuditableGuidEntity // Spec 019: Id (Guid/UUIDv7) generado en servidor/edge, no autoincremental
 {
     public int IdEmpresa { get; set; }
     public int IdSucursal { get; set; }
@@ -12,6 +12,9 @@ public class Pedido : BaseAuditableEntity // Asumo que aquí heredas el Id (IdPe
 
     // [NUEVO] - Campo para métricas de KPI (Ticket Promedio)
     public int Personas { get; set; } = 1;
+
+    // Spec 019: folio humano correlativo por sucursal/turno, generado atómicamente por FoliadorSucursal
+    public int FolioDiario { get; set; }
 
     public int? AbiertoPor { get; set; }
     public int? CerradoPor { get; set; }

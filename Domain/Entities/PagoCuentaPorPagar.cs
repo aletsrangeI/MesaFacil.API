@@ -17,8 +17,9 @@ public class PagoCuentaPorPagar : BaseAuditableEntity
 
     /// <summary>
     /// ID del movimiento de caja generado si el pago provino de la caja chica del turno activo.
+    /// Spec 019: MovimientoCaja.Id es Guid/UUIDv7.
     /// </summary>
-    public int? IdMovimientoCaja { get; set; }
+    public Guid? IdMovimientoCaja { get; set; }
 
     [MaxLength(100)]
     public string? ReferenciaBancaria { get; set; }

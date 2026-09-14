@@ -1,9 +1,9 @@
 namespace Domain.Entities;
 
-public class TicketDetalle : BaseAuditableEntity // Asume que hereda IdTicketDetalle
+public class TicketDetalle : BaseAuditableEntity // Id propio permanece int; FKs a Guid (Spec 019)
 {
-    public int IdTicket { get; set; }
-    public int IdDetalle { get; set; }
+    public Guid IdTicket { get; set; }
+    public Guid IdDetalle { get; set; }
 
     // [CORREGIDO] - Eliminamos las llaves genéricas y usamos el ID tipado
     public int IdEstadoItemKDS { get; set; }

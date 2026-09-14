@@ -2,9 +2,9 @@ using System.Collections.Generic;
 
 namespace Domain.Entities;
 
-public class Cuenta : BaseAuditableEntity // Asume que hereda Id (o IdCuenta)
+public class Cuenta : BaseAuditableEntity // Id propio permanece int; FK a Pedido es Guid (Spec 019)
 {
-    public int IdPedido { get; set; }
+    public Guid IdPedido { get; set; }
     public decimal Subtotal { get; set; }
     public decimal DescuentoTotal { get; set; }
     public decimal CargoServicio { get; set; }

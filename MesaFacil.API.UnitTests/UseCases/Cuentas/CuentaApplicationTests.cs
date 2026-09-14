@@ -36,7 +36,7 @@ public class CuentaApplicationTests
     public async Task GenerarCuentaAsync_ConPedidoYDetallesActivos_CalculaSubtotalImpuestoYTotal()
     {
         // Arrange
-        int pedidoId = 10;
+        Guid pedidoId = Guid.NewGuid();
         var pedido = new Pedido
         {
             Id = pedidoId,
@@ -51,7 +51,6 @@ public class CuentaApplicationTests
         {
             new PedidoDetalle
             {
-                Id = 101,
                 IdPedido = pedidoId,
                 ProductoNombre = "Hamburguesa Doble",
                 Cantidad = 2m,
@@ -61,7 +60,6 @@ public class CuentaApplicationTests
             },
             new PedidoDetalle
             {
-                Id = 102,
                 IdPedido = pedidoId,
                 ProductoNombre = "Refresco Cola",
                 Cantidad = 1m,
@@ -71,7 +69,6 @@ public class CuentaApplicationTests
             },
             new PedidoDetalle
             {
-                Id = 103,
                 IdPedido = pedidoId,
                 ProductoNombre = "Cerveza Cancelada",
                 Cantidad = 1m,
@@ -127,14 +124,13 @@ public class CuentaApplicationTests
     public async Task GenerarCuentaAsync_ConPagosPrevios_CalculaTotalPagadoYSaldoRestante()
     {
         // Arrange
-        int pedidoId = 20;
+        Guid pedidoId = Guid.NewGuid();
         var pedido = new Pedido { Id = pedidoId, IdSucursal = 1 };
 
         var detalles = new List<PedidoDetalle>
         {
             new PedidoDetalle
             {
-                Id = 201,
                 IdPedido = pedidoId,
                 ProductoNombre = "Pizza Familiar",
                 Cantidad = 1m,
@@ -157,7 +153,6 @@ public class CuentaApplicationTests
         {
             new Pago
             {
-                Id = 1,
                 IdCuenta = 55,
                 Monto = 100m,
                 Propina = 20m,
@@ -167,7 +162,6 @@ public class CuentaApplicationTests
             },
             new Pago
             {
-                Id = 2,
                 IdCuenta = 55,
                 Monto = 50m,
                 Propina = 10m,
@@ -210,7 +204,7 @@ public class CuentaApplicationTests
     public async Task GenerarCuentaAsync_PedidoNoExiste_RetornaError()
     {
         // Arrange
-        int pedidoIdInexistente = 9999;
+        Guid pedidoIdInexistente = Guid.NewGuid();
         _unitOfWorkMock.Setup(u => u.Pedidos.GetAsync(pedidoIdInexistente)).ReturnsAsync((Pedido?)null);
 
         // Act

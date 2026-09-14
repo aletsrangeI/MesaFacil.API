@@ -1,6 +1,6 @@
 namespace Domain.Entities;
 
-public class Pago : BaseAuditableEntity // Hereda Id y campos de auditoría
+public class Pago : BaseAuditableGuidEntity // Spec 019: Id Guid/UUIDv7
 {
     public int IdCuenta { get; set; }
     public decimal Monto { get; set; }

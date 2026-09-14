@@ -8,11 +8,14 @@ namespace Persistence.Context;
 public class ApplicationDbContext : DbContext
 {
     public readonly AuditableEntitySaveChangesInterceptor _auditableEntitySaveChangesInterceptor;
+    public readonly OutboxSaveChangesInterceptor _outboxSaveChangesInterceptor;
 
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options,
-        AuditableEntitySaveChangesInterceptor auditableEntitySaveChangesInterceptor) : base(options)
+        AuditableEntitySaveChangesInterceptor auditableEntitySaveChangesInterceptor,
+        OutboxSaveChangesInterceptor outboxSaveChangesInterceptor) : base(options)
     {
         _auditableEntitySaveChangesInterceptor = auditableEntitySaveChangesInterceptor;
+        _outboxSaveChangesInterceptor = outboxSaveChangesInterceptor;
     }
 
     static ApplicationDbContext()
@@ -29,6 +32,8 @@ public class ApplicationDbContext : DbContext
     public DbSet<DescuentoAplicado> DescuentosAplicados { get; set; }
     public DbSet<DetalleCuenta> DetalleCuentas { get; set; }
     public DbSet<Empresa> Empresas { get; set; }
+    public DbSet<FoliadorSucursal> FoliadoresSucursal { get; set; }
+    public DbSet<OutboxEvent> OutboxEvents { get; set; }
     public DbSet<EstacionCocina> EstacionesCocina { get; set; }
     public DbSet<EventoPedido> EventosPedido { get; set; }
     public DbSet<GrupoModificador> GruposModificador { get; set; }
@@ -75,6 +80,9 @@ public class ApplicationDbContext : DbContext
     public DbSet<CatCanalVenta>          CatCanalesVenta         { get; set; }
     public DbSet<CatRegimenFiscal>       CatRegimenesFiscales    { get; set; }
 
+    // Spec 024: Candado de Supervisor (PIN 4 dígitos) y Auditoría de Cancelaciones
+    public DbSet<CatMotivoCancelacion>   CatMotivosCancelacion   { get; set; }
+
     // Spec 014: Inventarios, Insumos, Almacenes y Kárdex
     public DbSet<UnidadMedida>           UnidadesMedida          { get; set; }
     public DbSet<FactorConversion>       FactoresConversion      { get; set; }
@@ -99,6 +107,21 @@ public class ApplicationDbContext : DbContext
     // Spec 017: Cuentas por Pagar (CxP), Programación de Pagos y Egresos
     public DbSet<CuentaPorPagar>         CuentasPorPagar         { get; set; }
     public DbSet<PagoCuentaPorPagar>     PagosCuentaPorPagar     { get; set; }
+
+    // Spec 020: Facturación CFDI 4.0 a Comensales, Autofacturación QR y Bolsa de Timbres
+    public DbSet<EmpresaConfiguracionPAC> EmpresaConfiguracionesPAC { get; set; }
+    public DbSet<EmpresaBolsaTimbres>     EmpresaBolsasTimbres      { get; set; }
+    public DbSet<ConsumoTimbreHistorial>  ConsumosTimbreHistorial   { get; set; }
+    public DbSet<FacturaVenta>            FacturasVenta             { get; set; }
+    public DbSet<FacturaVentaDetalle>     FacturaVentaDetalles      { get; set; }
+
+    // Spec 021: SaaS Packaging, Tiers y Feature Gating Desacoplado (infraestructura apagada
+    // por defecto vía FeatureGating:Enabled = false mientras dure la etapa de demos/pilotos).
+    public DbSet<CatPlanSuscripcion>      CatPlanesSuscripcion      { get; set; }
+    public DbSet<EmpresaSuscripcion>      EmpresasSuscripcion       { get; set; }
+
+    // Spec 023: Asistente de Autodiagnóstico y Auto-Recuperación de Impresoras Térmicas
+    public DbSet<ConfiguracionImpresora>  ConfiguracionesImpresora  { get; set; }
 
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -282,7 +305,7 @@ public class ApplicationDbContext : DbContext
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
-        optionsBuilder.AddInterceptors(_auditableEntitySaveChangesInterceptor);
+        optionsBuilder.AddInterceptors(_auditableEntitySaveChangesInterceptor, _outboxSaveChangesInterceptor);
         optionsBuilder.EnableSensitiveDataLogging();
     }
 

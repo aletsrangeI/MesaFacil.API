@@ -5,7 +5,7 @@ namespace DTO.Delivery;
 
 public class DeliveryHistorialItemDTO
 {
-    public int IdPedido { get; set; }
+    public Guid IdPedido { get; set; }
     public string Folio { get; set; } = string.Empty;
     public string TipoPedido { get; set; } = string.Empty;
     public string CanalOrigen { get; set; } = "POS";

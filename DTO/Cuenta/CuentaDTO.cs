@@ -3,7 +3,7 @@ namespace DTO.Cuenta;
 public class CuentaDTO
 {
     public int Id { get; set; }
-    public int IdPedido { get; set; }
+    public Guid IdPedido { get; set; }
     public decimal Subtotal { get; set; }
     public decimal DescuentoTotal { get; set; }
     public decimal CargoServicio { get; set; }
@@ -35,7 +35,7 @@ public class CuentaItemDTO
 
 public class PagoResumenDTO
 {
-    public int Id { get; set; }
+    public Guid Id { get; set; }
     public decimal Monto { get; set; }
     public decimal Propina { get; set; }
     public string? MetodoDePago { get; set; }

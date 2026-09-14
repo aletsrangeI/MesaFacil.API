@@ -41,7 +41,7 @@ public class PagoApplicationTests
     {
         // Arrange
         int cuentaId = 10;
-        int pedidoId = 5;
+        Guid pedidoId = Guid.NewGuid();
 
         var cuenta = new Cuenta
         {
@@ -96,7 +96,7 @@ public class PagoApplicationTests
     {
         // Arrange
         int cuentaId = 15;
-        int pedidoId = 8;
+        Guid pedidoId = Guid.NewGuid();
         int mesaId = 4;
 
         var cuenta = new Cuenta
@@ -122,7 +122,7 @@ public class PagoApplicationTests
 
         var pagosPrevios = new List<Pago>
         {
-            new Pago { Id = 1, IdCuenta = cuentaId, Monto = 100m }
+            new Pago { IdCuenta = cuentaId, Monto = 100m }
         };
 
         var pagoDto = new RegistrarPagoDTO

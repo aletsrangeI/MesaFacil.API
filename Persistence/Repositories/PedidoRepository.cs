@@ -28,7 +28,7 @@ public class PedidoRepository : IPedidoRepository
         return _context.SaveChanges() > 0;
     }
 
-    public bool Delete(int id)
+    public bool Delete(Guid id)
     {
         var entity = Get(id);
         if (entity == null) return false;
@@ -36,7 +36,7 @@ public class PedidoRepository : IPedidoRepository
         return _context.SaveChanges() > 0;
     }
 
-    public Pedido Get(int id)
+    public Pedido Get(Guid id)
     {
         return _context.Pedidos.Find(id);
     }
@@ -75,7 +75,7 @@ public class PedidoRepository : IPedidoRepository
         return await _context.SaveChangesAsync() > 0;
     }
 
-    public async Task<bool> DeleteAsync(int id)
+    public async Task<bool> DeleteAsync(Guid id)
     {
         var entity = await GetAsync(id);
         if (entity == null) return false;
@@ -83,7 +83,7 @@ public class PedidoRepository : IPedidoRepository
         return await _context.SaveChangesAsync() > 0;
     }
 
-    public async Task<Pedido> GetAsync(int id)
+    public async Task<Pedido> GetAsync(Guid id)
     {
         return await _context.Pedidos.FindAsync(id);
     }

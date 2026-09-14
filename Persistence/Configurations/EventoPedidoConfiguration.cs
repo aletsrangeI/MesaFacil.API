@@ -21,5 +21,14 @@ public class EventoPedidoConfiguration : IEntityTypeConfiguration<EventoPedido>
             .WithMany(x => x.EventosPedido)
             .HasForeignKey(x => x.IdUsuario)
             .OnDelete(DeleteBehavior.SetNull);
+
+        // Spec 024: quien autorizó con PIN de supervisor (Gerente/Administrador).
+        e.HasOne(x => x.UsuarioSupervisor)
+            .WithMany()
+            .HasForeignKey(x => x.IdUsuarioSupervisor)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        e.Property(x => x.MontoCancelado).HasPrecision(18, 2);
+        e.Property(x => x.PorcentajeDescuento).HasPrecision(5, 2);
     }
 }

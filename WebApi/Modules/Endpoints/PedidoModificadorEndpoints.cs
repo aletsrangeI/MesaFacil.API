@@ -1,4 +1,4 @@
-using Common;
+﻿using Common;
 using DTO.PedidoModificador;
 using Interface.UseCases;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -37,8 +37,8 @@ public static class PedidoModificadorEndpoints
         // UPDATE
         // =========================================================
 
-        group.MapPut("/update/{id:int}",
-                (int id, PedidoModificadorDTO dto, IPedidoModificadorApplication svc, CancellationToken ct) =>
+        group.MapPut("/update/{id:guid}",
+                (Guid id, PedidoModificadorDTO dto, IPedidoModificadorApplication svc, CancellationToken ct) =>
                 {
                     try { dto.Id = id; } catch { }
                     Response<bool> result = svc.Update(dto);
@@ -46,8 +46,8 @@ public static class PedidoModificadorEndpoints
                 })
             .WithName("PedidoModificador_Update");
 
-        group.MapPut("/update-async/{id:int}",
-                async (int id, PedidoModificadorDTO dto, IPedidoModificadorApplication svc, CancellationToken ct) =>
+        group.MapPut("/update-async/{id:guid}",
+                async (Guid id, PedidoModificadorDTO dto, IPedidoModificadorApplication svc, CancellationToken ct) =>
                 {
                     try { dto.Id = id; } catch { }
                     Response<bool> result = await svc.UpdateAsync(dto);
@@ -59,16 +59,16 @@ public static class PedidoModificadorEndpoints
         // DELETE
         // =========================================================
 
-        group.MapDelete("/delete/{id:int}",
-                (int id, IPedidoModificadorApplication svc, CancellationToken ct) =>
+        group.MapDelete("/delete/{id:guid}",
+                (Guid id, IPedidoModificadorApplication svc, CancellationToken ct) =>
                 {
                     Response<bool> result = svc.Delete(id);
                     return TypedResults.Ok(result);
                 })
             .WithName("PedidoModificador_Delete");
 
-        group.MapDelete("/delete-async/{id:int}",
-                async (int id, IPedidoModificadorApplication svc, CancellationToken ct) =>
+        group.MapDelete("/delete-async/{id:guid}",
+                async (Guid id, IPedidoModificadorApplication svc, CancellationToken ct) =>
                 {
                     Response<bool> result = await svc.DeleteAsync(id);
                     return TypedResults.Ok(result);
@@ -99,9 +99,9 @@ public static class PedidoModificadorEndpoints
         // GET BY ID
         // =========================================================
 
-        group.MapGet("/getbyid/{id:int}",
+        group.MapGet("/getbyid/{id:guid}",
                 Results<Ok<Response<PedidoModificadorDTO>>, NotFound<Response<PedidoModificadorDTO>>>
-                    (int id, IPedidoModificadorApplication svc, CancellationToken ct) =>
+                    (Guid id, IPedidoModificadorApplication svc, CancellationToken ct) =>
                 {
                     Response<PedidoModificadorDTO>? result = svc.Get(id);
                     if (result is null || result.Data is null)
@@ -119,9 +119,9 @@ public static class PedidoModificadorEndpoints
                 })
             .WithName("PedidoModificador_GetById");
 
-        group.MapGet("/getbyid-async/{id:int}",
+        group.MapGet("/getbyid-async/{id:guid}",
                 async Task<Results<Ok<Response<PedidoModificadorDTO>>, NotFound<Response<PedidoModificadorDTO>>>>
-                    (int id, IPedidoModificadorApplication svc, CancellationToken ct) =>
+                    (Guid id, IPedidoModificadorApplication svc, CancellationToken ct) =>
                 {
                     Response<PedidoModificadorDTO>? result = await svc.GetAsync(id);
                     if (result is null || result.Data is null)

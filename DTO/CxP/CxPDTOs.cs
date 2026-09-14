@@ -35,7 +35,7 @@ public class PagoCuentaPorPagarDTO
     public DateTime FechaPago { get; set; }
     public int IdMetodoPago { get; set; }
     public string MetodoPagoNombre { get; set; } = string.Empty;
-    public int? IdMovimientoCaja { get; set; }
+    public Guid? IdMovimientoCaja { get; set; }
     public string? TurnoUsuario { get; set; }
     public string? ReferenciaBancaria { get; set; }
     public string? ComprobanteUrl { get; set; }

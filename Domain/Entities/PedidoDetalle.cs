@@ -3,10 +3,10 @@ using System.Collections.Generic;
 
 namespace Domain.Entities;
 
-public class PedidoDetalle : BaseAuditableEntity // Asume que hereda IdDetalle
+public class PedidoDetalle : BaseAuditableGuidEntity // Spec 019: Id Guid/UUIDv7
 {
-    public int IdPedido { get; set; }
-    public int? IdAsiento { get; set; }
+    public Guid IdPedido { get; set; }
+    public Guid? IdAsiento { get; set; }
     
     public int IdProducto { get; set; }
     

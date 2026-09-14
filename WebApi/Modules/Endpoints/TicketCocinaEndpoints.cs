@@ -1,4 +1,4 @@
-using Common;
+﻿using Common;
 using DTO.TicketCocina;
 using Interface.UseCases;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -18,17 +18,17 @@ public static class TicketCocinaEndpoints
         // =========================================================
 
         group.MapPost("/insert",
-                Results<Ok<Response<int>>, BadRequest<Response<int>>> (TicketCocinaDTO dto, ITicketCocinaApplication svc, CancellationToken ct) =>
+                Results<Ok<Response<Guid>>, BadRequest<Response<Guid>>> (TicketCocinaDTO dto, ITicketCocinaApplication svc, CancellationToken ct) =>
                 {
-                    Response<int> result = svc.Insert(dto);
+                    Response<Guid> result = svc.Insert(dto);
                     return result.isSuccess ? TypedResults.Ok(result) : TypedResults.BadRequest(result);
                 })
             .WithName("TicketCocina_Insert");
 
         group.MapPost("/insert-async",
-                async Task<Results<Ok<Response<int>>, BadRequest<Response<int>>>> (TicketCocinaDTO dto, ITicketCocinaApplication svc, CancellationToken ct) =>
+                async Task<Results<Ok<Response<Guid>>, BadRequest<Response<Guid>>>> (TicketCocinaDTO dto, ITicketCocinaApplication svc, CancellationToken ct) =>
                 {
-                    Response<int> response = await svc.InsertAsync(dto);
+                    Response<Guid> response = await svc.InsertAsync(dto);
                     return response.isSuccess ? TypedResults.Ok(response) : TypedResults.BadRequest(response);
                 })
             .WithName("TicketCocina_Insert_Async");
@@ -37,8 +37,8 @@ public static class TicketCocinaEndpoints
         // UPDATE
         // =========================================================
 
-        group.MapPut("/update/{id:int}",
-                (int id, TicketCocinaDTO dto, ITicketCocinaApplication svc, CancellationToken ct) =>
+        group.MapPut("/update/{id:guid}",
+                (Guid id, TicketCocinaDTO dto, ITicketCocinaApplication svc, CancellationToken ct) =>
                 {
                     try { dto.Id = id; } catch { }
                     Response<bool> result = svc.Update(dto);
@@ -46,8 +46,8 @@ public static class TicketCocinaEndpoints
                 })
             .WithName("TicketCocina_Update");
 
-        group.MapPut("/update-async/{id:int}",
-                async (int id, TicketCocinaDTO dto, ITicketCocinaApplication svc, CancellationToken ct) =>
+        group.MapPut("/update-async/{id:guid}",
+                async (Guid id, TicketCocinaDTO dto, ITicketCocinaApplication svc, CancellationToken ct) =>
                 {
                     try { dto.Id = id; } catch { }
                     Response<bool> result = await svc.UpdateAsync(dto);
@@ -59,16 +59,16 @@ public static class TicketCocinaEndpoints
         // DELETE
         // =========================================================
 
-        group.MapDelete("/delete/{id:int}",
-                (int id, ITicketCocinaApplication svc, CancellationToken ct) =>
+        group.MapDelete("/delete/{id:guid}",
+                (Guid id, ITicketCocinaApplication svc, CancellationToken ct) =>
                 {
                     Response<bool> result = svc.Delete(id);
                     return TypedResults.Ok(result);
                 })
             .WithName("TicketCocina_Delete");
 
-        group.MapDelete("/delete-async/{id:int}",
-                async (int id, ITicketCocinaApplication svc, CancellationToken ct) =>
+        group.MapDelete("/delete-async/{id:guid}",
+                async (Guid id, ITicketCocinaApplication svc, CancellationToken ct) =>
                 {
                     Response<bool> result = await svc.DeleteAsync(id);
                     return TypedResults.Ok(result);
@@ -99,9 +99,9 @@ public static class TicketCocinaEndpoints
         // GET BY ID
         // =========================================================
 
-        group.MapGet("/getbyid/{id:int}",
+        group.MapGet("/getbyid/{id:guid}",
                 Results<Ok<Response<TicketCocinaDTO>>, NotFound<Response<TicketCocinaDTO>>>
-                    (int id, ITicketCocinaApplication svc, CancellationToken ct) =>
+                    (Guid id, ITicketCocinaApplication svc, CancellationToken ct) =>
                 {
                     Response<TicketCocinaDTO>? result = svc.Get(id);
                     if (result is null || result.Data is null)
@@ -119,9 +119,9 @@ public static class TicketCocinaEndpoints
                 })
             .WithName("TicketCocina_GetById");
 
-        group.MapGet("/getbyid-async/{id:int}",
+        group.MapGet("/getbyid-async/{id:guid}",
                 async Task<Results<Ok<Response<TicketCocinaDTO>>, NotFound<Response<TicketCocinaDTO>>>>
-                    (int id, ITicketCocinaApplication svc, CancellationToken ct) =>
+                    (Guid id, ITicketCocinaApplication svc, CancellationToken ct) =>
                 {
                     Response<TicketCocinaDTO>? result = await svc.GetAsync(id);
                     if (result is null || result.Data is null)
