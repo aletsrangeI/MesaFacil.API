@@ -2,7 +2,7 @@ namespace DTO.Pago;
 
 public class PagoDTO
 {
-    public int Id { get; set; }
+    public Guid Id { get; set; }
     public int IdCuenta { get; set; }
     public decimal Monto { get; set; }
     public string Moneda { get; set; }

@@ -5,7 +5,7 @@ namespace DTO.Delivery;
 
 public class DeliveryQueueItemDTO
 {
-    public int IdPedido { get; set; }
+    public Guid IdPedido { get; set; }
     public string Folio { get; set; } = string.Empty;
     public string TipoPedido { get; set; } = string.Empty; // "Para Llevar", "Delivery"
     public bool IsComedor { get; set; }
@@ -30,7 +30,7 @@ public class DeliveryQueueItemDTO
 
 public class DeliveryItemDetalleDTO
 {
-    public int IdDetalle { get; set; }
+    public Guid IdDetalle { get; set; }
     public string ProductoNombre { get; set; } = string.Empty;
     public string? VarianteNombre { get; set; }
     public decimal Cantidad { get; set; }

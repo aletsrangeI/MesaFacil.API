@@ -30,9 +30,10 @@ public class ApplicationDbContextFactory : IDesignTimeDbContextFactory<Applicati
 
         optionsBuilder.UseNpgsql(connectionString);
 
-        // 3. Interceptor (Instancia manual para diseño)
+        // 3. Interceptores (Instancia manual para diseño)
         var interceptor = new AuditableEntitySaveChangesInterceptor();
+        var outboxInterceptor = new OutboxSaveChangesInterceptor();
 
-        return new ApplicationDbContext(optionsBuilder.Options, interceptor);
+        return new ApplicationDbContext(optionsBuilder.Options, interceptor, outboxInterceptor);
     }
 }

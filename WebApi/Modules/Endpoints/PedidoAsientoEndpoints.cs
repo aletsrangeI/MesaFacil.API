@@ -1,4 +1,4 @@
-using Common;
+﻿using Common;
 using DTO.PedidoAsiento;
 using Interface.UseCases;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -37,8 +37,8 @@ public static class PedidoAsientoEndpoints
         // UPDATE
         // =========================================================
 
-        group.MapPut("/update/{id:int}",
-                (int id, PedidoAsientoDTO dto, IPedidoAsientoApplication svc, CancellationToken ct) =>
+        group.MapPut("/update/{id:guid}",
+                (Guid id, PedidoAsientoDTO dto, IPedidoAsientoApplication svc, CancellationToken ct) =>
                 {
                     try { dto.Id = id; } catch { }
                     Response<bool> result = svc.Update(dto);
@@ -46,8 +46,8 @@ public static class PedidoAsientoEndpoints
                 })
             .WithName("PedidoAsiento_Update");
 
-        group.MapPut("/update-async/{id:int}",
-                async (int id, PedidoAsientoDTO dto, IPedidoAsientoApplication svc, CancellationToken ct) =>
+        group.MapPut("/update-async/{id:guid}",
+                async (Guid id, PedidoAsientoDTO dto, IPedidoAsientoApplication svc, CancellationToken ct) =>
                 {
                     try { dto.Id = id; } catch { }
                     Response<bool> result = await svc.UpdateAsync(dto);
@@ -59,16 +59,16 @@ public static class PedidoAsientoEndpoints
         // DELETE
         // =========================================================
 
-        group.MapDelete("/delete/{id:int}",
-                (int id, IPedidoAsientoApplication svc, CancellationToken ct) =>
+        group.MapDelete("/delete/{id:guid}",
+                (Guid id, IPedidoAsientoApplication svc, CancellationToken ct) =>
                 {
                     Response<bool> result = svc.Delete(id);
                     return TypedResults.Ok(result);
                 })
             .WithName("PedidoAsiento_Delete");
 
-        group.MapDelete("/delete-async/{id:int}",
-                async (int id, IPedidoAsientoApplication svc, CancellationToken ct) =>
+        group.MapDelete("/delete-async/{id:guid}",
+                async (Guid id, IPedidoAsientoApplication svc, CancellationToken ct) =>
                 {
                     Response<bool> result = await svc.DeleteAsync(id);
                     return TypedResults.Ok(result);
@@ -99,9 +99,9 @@ public static class PedidoAsientoEndpoints
         // GET BY ID
         // =========================================================
 
-        group.MapGet("/getbyid/{id:int}",
+        group.MapGet("/getbyid/{id:guid}",
                 Results<Ok<Response<PedidoAsientoDTO>>, NotFound<Response<PedidoAsientoDTO>>>
-                    (int id, IPedidoAsientoApplication svc, CancellationToken ct) =>
+                    (Guid id, IPedidoAsientoApplication svc, CancellationToken ct) =>
                 {
                     Response<PedidoAsientoDTO>? result = svc.Get(id);
                     if (result is null || result.Data is null)
@@ -119,9 +119,9 @@ public static class PedidoAsientoEndpoints
                 })
             .WithName("PedidoAsiento_GetById");
 
-        group.MapGet("/getbyid-async/{id:int}",
+        group.MapGet("/getbyid-async/{id:guid}",
                 async Task<Results<Ok<Response<PedidoAsientoDTO>>, NotFound<Response<PedidoAsientoDTO>>>>
-                    (int id, IPedidoAsientoApplication svc, CancellationToken ct) =>
+                    (Guid id, IPedidoAsientoApplication svc, CancellationToken ct) =>
                 {
                     Response<PedidoAsientoDTO>? result = await svc.GetAsync(id);
                     if (result is null || result.Data is null)

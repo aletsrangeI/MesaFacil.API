@@ -95,6 +95,9 @@ public sealed class DatabaseInitializer : IDatabaseInitializer
         await SeedCatMotivoCancelacionPedidoAsync(ct);
         await SeedCatCanalVentaAsync(ct);
 
+        // 19) Spec 024: Candado de Supervisor y Auditoría de Cancelaciones
+        await SeedCatMotivoCancelacionAsync(ct);
+
         _logger.LogInformation("Inicialización completada con éxito.");
     }
 
@@ -1612,6 +1615,37 @@ public sealed class DatabaseInitializer : IDatabaseInitializer
         }
         await _db.SaveChangesAsync(ct);
         _logger.LogInformation("Seed: asegurados motivos de cancelación en CatMotivoCancelacionPedido.");
+    }
+
+    /// <summary>
+    /// Spec 024: los 4 motivos obligatorios (sección 2.2 del spec) para autorizar con PIN de
+    /// supervisor la cancelación de un platillo ya enviado a cocina.
+    /// </summary>
+    private async Task SeedCatMotivoCancelacionAsync(CancellationToken ct)
+    {
+        var motivos = new[]
+        {
+            "Error de captura del mesero",
+            "Platillo devuelto por el comensal",
+            "Mesa se retiró sin consumir",
+            "Cortesía de la casa autorizada"
+        };
+
+        foreach (var m in motivos)
+        {
+            var exists = await _db.Set<CatMotivoCancelacion>().AnyAsync(x => x.Descripcion == m, ct);
+            if (!exists)
+            {
+                _db.Add(new CatMotivoCancelacion
+                {
+                    Descripcion = m,
+                    IsActive = true,
+                    CreatedBy = "seed"
+                });
+            }
+        }
+        await _db.SaveChangesAsync(ct);
+        _logger.LogInformation("Seed: asegurados motivos base en CatMotivoCancelacion.");
     }
 
     private async Task SeedCatCanalVentaAsync(CancellationToken ct)

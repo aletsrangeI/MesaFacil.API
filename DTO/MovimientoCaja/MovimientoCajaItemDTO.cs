@@ -2,7 +2,7 @@
 
 public class MovimientoCajaItemDTO
 {
-    public int Id { get; set; }
+    public Guid Id { get; set; }
     public int IdTurno { get; set; }
     public int IdSucursal { get; set; }
     public string NombreSucursal { get; set; } = string.Empty;

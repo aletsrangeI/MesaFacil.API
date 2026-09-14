@@ -585,6 +585,33 @@ public class DemoController : ControllerBase
                 await _context.SaveChangesAsync();
             }
 
+            // 13. Spec 021: Suscripción de ejemplo en Tier3 (Multi-Sucursal) para la empresa demo.
+            // En demostraciones comerciales todo debe verse desbloqueado; se le asigna el tier
+            // más alto sin importar que FeatureGating:Enabled esté en false por defecto.
+            var planTier3 = await _context.CatPlanesSuscripcion.FirstOrDefaultAsync(p => p.Codigo == Domain.Entities.CodigosPlanSuscripcion.Tier3_Multi);
+            if (planTier3 != null)
+            {
+                var suscripcionDemo = await _context.EmpresasSuscripcion.FirstOrDefaultAsync(s => s.IdEmpresa == empresa.Id);
+                if (suscripcionDemo == null)
+                {
+                    suscripcionDemo = new Domain.Entities.EmpresaSuscripcion
+                    {
+                        IdEmpresa = empresa.Id,
+                        IdPlan = planTier3.Id,
+                        EsPagoAnual = false,
+                        FechaInicio = DateTime.UtcNow.AddMonths(-1),
+                        FechaFinVigencia = DateTime.UtcNow.AddMonths(1),
+                        EstadoSuscripcion = Domain.Entities.EstadoSuscripcionValores.Activa,
+                        KdsAddonsContratados = 0,
+                        ComanderosAddons = 0,
+                        EnPeriodoGracia = false,
+                        IsActive = true
+                    };
+                    _context.EmpresasSuscripcion.Add(suscripcionDemo);
+                    await _context.SaveChangesAsync();
+                }
+            }
+
             return Ok(new Response<object>
             {
                 isSuccess = true,

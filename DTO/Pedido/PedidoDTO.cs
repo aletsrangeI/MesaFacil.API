@@ -2,7 +2,8 @@ namespace DTO.Pedido;
 
 public class PedidoDTO
 {
-    public int Id { get; set; }
+    public Guid Id { get; set; }
+    public int FolioDiario { get; set; }
     public int IdEmpresa { get; set; }
     public int IdSucursal { get; set; }
     public int? IdMesa { get; set; }

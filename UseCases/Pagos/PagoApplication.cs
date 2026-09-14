@@ -1,4 +1,4 @@
-using AutoMapper;
+﻿using AutoMapper;
 using Common;
 using Domain.Entities;
 using DTO.Pago;
@@ -76,7 +76,7 @@ public class PagoApplication : IPagoApplication
         return response;
     }
 
-    public Response<bool> Delete(int id)
+    public Response<bool> Delete(Guid id)
     {
         var response = new Response<bool>();
         try
@@ -97,7 +97,7 @@ public class PagoApplication : IPagoApplication
         return response;
     }
 
-    public Response<PagoDTO> Get(int id)
+    public Response<PagoDTO> Get(Guid id)
     {
         var response = new Response<PagoDTO>();
         try
@@ -226,7 +226,7 @@ public class PagoApplication : IPagoApplication
         return response;
     }
 
-    public async Task<Response<bool>> DeleteAsync(int id)
+    public async Task<Response<bool>> DeleteAsync(Guid id)
     {
         var response = new Response<bool>();
         try
@@ -247,7 +247,7 @@ public class PagoApplication : IPagoApplication
         return response;
     }
 
-    public async Task<Response<PagoDTO>> GetAsync(int id)
+    public async Task<Response<PagoDTO>> GetAsync(Guid id)
     {
         var response = new Response<PagoDTO>();
         try
@@ -360,12 +360,12 @@ public class PagoApplication : IPagoApplication
 
             await _unitOfWork.Pagos.InsertAsync(pago);
 
-            // Validar si la cuenta ya se liquidó
+            // Validar si la cuenta ya se liquidÃ³
             var pagosAll = await _unitOfWork.Pagos.GetAllAsync();
             var pagosCuenta = pagosAll.Where(p => p.IdCuenta == dto.IdCuenta).ToList();
             var totalPagado = pagosCuenta.Sum(p => p.Monto) + dto.Monto;
 
-            // Registrar evento de auditoría de pago
+            // Registrar evento de auditorÃ­a de pago
             var eventoPago = new EventoPedido
             {
                 IdPedido = cuenta.IdPedido,
@@ -427,7 +427,7 @@ public class PagoApplication : IPagoApplication
                     await _unitOfWork.EventosPedido.InsertAsync(eventoCierre);
                 }
 
-                // Spec 015: Descuento automático de inventario y escandallos al liquidar la cuenta
+                // Spec 015: Descuento automÃ¡tico de inventario y escandallos al liquidar la cuenta
                 if (_descuentoInventarioService != null)
                 {
                     try

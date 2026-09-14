@@ -1,4 +1,4 @@
-using Domain.Entities;
+﻿using Domain.Entities;
 
 namespace Interface.Persistence;
 
@@ -7,8 +7,8 @@ public interface IPedidoModificadorRepository
     #region Metodos sincronos
     bool Insert(PedidoModificador entity);
     bool Update(PedidoModificador entity);
-    bool Delete(int id);
-    PedidoModificador Get(int id);
+    bool Delete(Guid id);
+    PedidoModificador Get(Guid id);
     IEnumerable<PedidoModificador> GetAll();
     IEnumerable<PedidoModificador> GetAllWithPagination(int page, int pageSize);
     int Count();
@@ -17,8 +17,8 @@ public interface IPedidoModificadorRepository
     #region Metodos asincronos
     Task<bool> InsertAsync(PedidoModificador entity);
     Task<bool> UpdateAsync(PedidoModificador entity);
-    Task<bool> DeleteAsync(int id);
-    Task<PedidoModificador> GetAsync(int id);
+    Task<bool> DeleteAsync(Guid id);
+    Task<PedidoModificador> GetAsync(Guid id);
     Task<IEnumerable<PedidoModificador>> GetAllAsync();
     Task<IEnumerable<PedidoModificador>> GetAllWithPaginationAsync(int page, int pageSize);
     Task<int> CountAsync();

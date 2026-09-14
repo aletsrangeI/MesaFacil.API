@@ -1,4 +1,4 @@
-using Domain.Entities;
+﻿using Domain.Entities;
 using Interface.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Persistence.Context;
@@ -28,7 +28,7 @@ public class PedidoDetalleRepository : IPedidoDetalleRepository
         return _context.SaveChanges() > 0;
     }
 
-    public bool Delete(int id)
+    public bool Delete(Guid id)
     {
         var entity = Get(id);
         if (entity == null) return false;
@@ -36,7 +36,7 @@ public class PedidoDetalleRepository : IPedidoDetalleRepository
         return _context.SaveChanges() > 0;
     }
 
-    public PedidoDetalle Get(int id)
+    public PedidoDetalle Get(Guid id)
     {
         return _context.PedidoDetalles.Find(id);
     }
@@ -75,7 +75,7 @@ public class PedidoDetalleRepository : IPedidoDetalleRepository
         return await _context.SaveChangesAsync() > 0;
     }
 
-    public async Task<bool> DeleteAsync(int id)
+    public async Task<bool> DeleteAsync(Guid id)
     {
         var entity = await GetAsync(id);
         if (entity == null) return false;
@@ -83,7 +83,7 @@ public class PedidoDetalleRepository : IPedidoDetalleRepository
         return await _context.SaveChangesAsync() > 0;
     }
 
-    public async Task<PedidoDetalle> GetAsync(int id)
+    public async Task<PedidoDetalle> GetAsync(Guid id)
     {
         return await _context.PedidoDetalles.FindAsync(id);
     }

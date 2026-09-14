@@ -14,17 +14,20 @@ public class PedidoApplication : IPedidoApplication
     private readonly IMapper _mapper;
     private readonly PedidoDTOValidator _validationRules;
     private readonly IAppLogger<PedidoApplication> _logger;
+    private readonly IFoliadorSucursalService _foliador;
 
     public PedidoApplication(
         IUnitOfWork unitOfWork,
         IMapper mapper,
         PedidoDTOValidator validationRules,
-        IAppLogger<PedidoApplication> logger)
+        IAppLogger<PedidoApplication> logger,
+        IFoliadorSucursalService foliador)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
         _validationRules = validationRules;
         _logger = logger;
+        _foliador = foliador;
     }
 
     #region Metodos sincronos
@@ -73,7 +76,7 @@ public class PedidoApplication : IPedidoApplication
         return response;
     }
 
-    public Response<bool> Delete(int id)
+    public Response<bool> Delete(Guid id)
     {
         var response = new Response<bool>();
         try
@@ -94,7 +97,7 @@ public class PedidoApplication : IPedidoApplication
         return response;
     }
 
-    public Response<PedidoDTO> Get(int id)
+    public Response<PedidoDTO> Get(Guid id)
     {
         var response = new Response<PedidoDTO>();
         try
@@ -201,12 +204,13 @@ public class PedidoApplication : IPedidoApplication
         return response;
     }
 
-    public async Task<Response<int>> InsertConDetallesAsync(CrearPedidoRequestDTO dto)
+    public async Task<Response<Guid>> InsertConDetallesAsync(CrearPedidoRequestDTO dto)
     {
-        var response = new Response<int>();
+        var response = new Response<Guid>();
         try
         {
             var entity = _mapper.Map<Pedido>(dto);
+            entity.FolioDiario = await _foliador.ObtenerSiguienteFolioAsync(dto.IdSucursal);
             var success = await _unitOfWork.Pedidos.InsertAsync(entity);
 
             if (success)
@@ -246,7 +250,7 @@ public class PedidoApplication : IPedidoApplication
         return response;
     }
 
-    public async Task<Response<bool>> DeleteAsync(int id)
+    public async Task<Response<bool>> DeleteAsync(Guid id)
     {
         var response = new Response<bool>();
         try
@@ -267,7 +271,7 @@ public class PedidoApplication : IPedidoApplication
         return response;
     }
 
-    public async Task<Response<PedidoDTO>> GetAsync(int id)
+    public async Task<Response<PedidoDTO>> GetAsync(Guid id)
     {
         var response = new Response<PedidoDTO>();
         try

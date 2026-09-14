@@ -18,8 +18,8 @@ public class CuentasController : ControllerBase
         _cuentaApplication = cuentaApplication;
     }
 
-    [HttpPost("Generar/{idPedido}")]
-    public async Task<ActionResult<Response<CuentaDTO>>> GenerarCuentaAsync(int idPedido)
+    [HttpPost("Generar/{idPedido:guid}")]
+    public async Task<ActionResult<Response<CuentaDTO>>> GenerarCuentaAsync(Guid idPedido)
     {
         var response = await _cuentaApplication.GenerarCuentaAsync(idPedido);
         return Ok(response);

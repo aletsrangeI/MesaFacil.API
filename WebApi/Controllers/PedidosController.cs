@@ -47,8 +47,8 @@ public class PedidosController : ControllerBase
         return Ok(response);
     }
 
-    [HttpGet("GetById/{id}")]
-    public ActionResult<Response<PedidoDTO>> GetById(int id)
+    [HttpGet("GetById/{id:guid}")]
+    public ActionResult<Response<PedidoDTO>> GetById(Guid id)
     {
         var response = _pedidoApplication.Get(id);
         return Ok(response);
@@ -61,8 +61,8 @@ public class PedidosController : ControllerBase
         return Ok(response);
     }
 
-    [HttpDelete("Delete/{id}")]
-    public ActionResult<Response<bool>> Delete(int id)
+    [HttpDelete("Delete/{id:guid}")]
+    public ActionResult<Response<bool>> Delete(Guid id)
     {
         var response = _pedidoApplication.Delete(id);
         return Ok(response);
@@ -94,7 +94,7 @@ public class PedidosController : ControllerBase
     }
 
     [HttpPost("InsertConDetallesAsync")]
-    public async Task<ActionResult<Response<int>>> InsertConDetallesAsync([FromBody] CrearPedidoRequestDTO pedido)
+    public async Task<ActionResult<Response<Guid>>> InsertConDetallesAsync([FromBody] CrearPedidoRequestDTO pedido)
     {
         var dbContext = HttpContext.RequestServices.GetService<Persistence.Context.ApplicationDbContext>();
         if (dbContext == null)
@@ -109,16 +109,16 @@ public class PedidosController : ControllerBase
                 .Where(p => p.IdempotencyKey == pedido.IdempotencyKey)
                 .Select(p => p.Id)
                 .FirstOrDefaultAsync();
-                
-            if (existingPedido > 0)
+
+            if (existingPedido != Guid.Empty)
             {
-                return Ok(new Response<int> { isSuccess = true, Data = existingPedido, Message = "Pedido procesado previamente." });
+                return Ok(new Response<Guid> { isSuccess = true, Data = existingPedido, Message = "Pedido procesado previamente." });
             }
         }
 
         // Lista de notificaciones SignalR a despachar solo tras el commit exitoso
-        var pendingKdsNotifications = new List<(int IdEstacion, int IdTicket)>();
-        Response<int> response;
+        var pendingKdsNotifications = new List<(int IdEstacion, Guid IdTicket)>();
+        Response<Guid> response;
 
         await using (var transaction = await dbContext.Database.BeginTransactionAsync())
         {
@@ -156,7 +156,7 @@ public class PedidosController : ControllerBase
 
                 response = await _pedidoApplication.InsertConDetallesAsync(pedido);
 
-                if (!response.isSuccess || response.Data <= 0)
+                if (!response.isSuccess || response.Data == Guid.Empty)
                 {
                     await transaction.RollbackAsync();
                     return BadRequest(response);
@@ -198,7 +198,7 @@ public class PedidosController : ControllerBase
                     };
                     var ticketRes = await _ticketCocinaApplication.InsertAsync(ticketDto);
                     
-                    if (ticketRes.isSuccess && ticketRes.Data > 0)
+                    if (ticketRes.isSuccess && ticketRes.Data != Guid.Empty)
                     {
                         foreach (var detalle in group)
                         {
@@ -222,7 +222,7 @@ public class PedidosController : ControllerBase
             catch (Exception ex)
             {
                 await transaction.RollbackAsync();
-                return StatusCode(500, new Response<int> { isSuccess = false, Message = $"Error al procesar el pedido: {ex.Message}" });
+                return StatusCode(500, new Response<Guid> { isSuccess = false, Message = $"Error al procesar el pedido: {ex.Message}" });
             }
         }
 
@@ -249,8 +249,8 @@ public class PedidosController : ControllerBase
         return Ok(response);
     }
 
-    [HttpGet("GetByIdAsync/{id}")]
-    public async Task<ActionResult<Response<PedidoDTO>>> GetByIdAsync(int id)
+    [HttpGet("GetByIdAsync/{id:guid}")]
+    public async Task<ActionResult<Response<PedidoDTO>>> GetByIdAsync(Guid id)
     {
         var response = await _pedidoApplication.GetAsync(id);
         return Ok(response);
@@ -263,8 +263,8 @@ public class PedidosController : ControllerBase
         return Ok(response);
     }
 
-    [HttpDelete("DeleteAsync/{id}")]
-    public async Task<ActionResult<Response<bool>>> DeleteAsync(int id)
+    [HttpDelete("DeleteAsync/{id:guid}")]
+    public async Task<ActionResult<Response<bool>>> DeleteAsync(Guid id)
     {
         var response = await _pedidoApplication.DeleteAsync(id);
         return Ok(response);
@@ -346,8 +346,8 @@ public class PedidosController : ControllerBase
         return Ok(new Response<object> { Data = pedido, isSuccess = true });
     }
 
-    [HttpPost("AgregarDetalles/{idPedido}")]
-    public async Task<ActionResult<Response<bool>>> AgregarDetalles(int idPedido, [FromBody] List<CrearPedidoDetalleDTO> detalles)
+    [HttpPost("AgregarDetalles/{idPedido:guid}")]
+    public async Task<ActionResult<Response<bool>>> AgregarDetalles(Guid idPedido, [FromBody] List<CrearPedidoDetalleDTO> detalles)
     {
         var dbContext = HttpContext.RequestServices.GetService<Persistence.Context.ApplicationDbContext>()!;
 
@@ -430,7 +430,7 @@ public class PedidosController : ControllerBase
                     t.IdEstacion == idEstacion &&
                     (t.IdEstadoTicketCocina == 1 || t.IdEstadoTicketCocina == 2));
 
-            int ticketId;
+            Guid ticketId;
 
             if (ticketExistente != null)
             {
@@ -488,8 +488,8 @@ public class PedidosController : ControllerBase
         return Ok(new Response<bool> { Data = true, isSuccess = true, Message = "Ítems agregados al pedido." });
     }
 
-    [HttpPut("CancelarDetalle/{idDetalle}")]
-    public async Task<ActionResult<Response<bool>>> CancelarDetalle(int idDetalle, [FromQuery] string? motivo = null)
+    [HttpPut("CancelarDetalle/{idDetalle:guid}")]
+    public async Task<ActionResult<Response<bool>>> CancelarDetalle(Guid idDetalle, [FromQuery] string? motivo = null)
     {
         var dbContext = HttpContext.RequestServices.GetService<Persistence.Context.ApplicationDbContext>()!;
 
@@ -520,7 +520,7 @@ public class PedidosController : ControllerBase
             .Include(td => td.Ticket)
             .FirstOrDefaultAsync(td => td.IdDetalle == idDetalle && td.IdEstadoItemKDS != 3);
 
-        int? ticketIdKds = null;
+        Guid? ticketIdKds = null;
         int? idEstacionKds = null;
 
         if (ticketDetalle != null)
@@ -553,8 +553,8 @@ public class PedidosController : ControllerBase
         return Ok(new Response<bool> { Data = true, isSuccess = true, Message = "Ítem cancelado." });
     }
 
-    [HttpGet("{idPedido}/Eventos")]
-    public async Task<ActionResult<Response<IEnumerable<DTO.EventoPedido.EventoPedidoHistorialDTO>>>> GetEventosByPedido(int idPedido)
+    [HttpGet("{idPedido:guid}/Eventos")]
+    public async Task<ActionResult<Response<IEnumerable<DTO.EventoPedido.EventoPedidoHistorialDTO>>>> GetEventosByPedido(Guid idPedido)
     {
         var dbContext = HttpContext.RequestServices.GetService<Persistence.Context.ApplicationDbContext>()!;
 
@@ -879,8 +879,8 @@ public class PedidosController : ControllerBase
         });
     }
 
-    [HttpPut("{id}/MarcarListo")]
-    public async Task<ActionResult<Response<bool>>> MarcarListo(int id)
+    [HttpPut("{id:guid}/MarcarListo")]
+    public async Task<ActionResult<Response<bool>>> MarcarListo(Guid id)
     {
         var dbContext = HttpContext.RequestServices.GetService<Persistence.Context.ApplicationDbContext>()!;
         var pedido = await dbContext.Pedidos.FindAsync(id);
@@ -920,13 +920,13 @@ public class PedidosController : ControllerBase
         await dbContext.SaveChangesAsync();
 
         await _kdsHub.Clients.All.SendAsync("OrderReadyForDispatch", pedido.Id);
-        await _kdsHub.Clients.Group("expo").SendAsync("ReceiveNewTicket", 0);
+        await _kdsHub.Clients.Group("expo").SendAsync("ReceiveNewTicket", Guid.Empty);
 
         return Ok(new Response<bool> { Data = true, isSuccess = true, Message = "Pedido marcado como listo para despacho." });
     }
 
-    [HttpPut("{id}/Despachar")]
-    public async Task<ActionResult<Response<bool>>> DespacharPedido(int id, [FromBody] DTO.Delivery.DespacharPedidoRequestDTO dto)
+    [HttpPut("{id:guid}/Despachar")]
+    public async Task<ActionResult<Response<bool>>> DespacharPedido(Guid id, [FromBody] DTO.Delivery.DespacharPedidoRequestDTO dto)
     {
         var dbContext = HttpContext.RequestServices.GetService<Persistence.Context.ApplicationDbContext>()!;
         var pedido = await dbContext.Pedidos.FindAsync(id);
@@ -971,8 +971,8 @@ public class PedidosController : ControllerBase
         return Ok(new Response<bool> { Data = true, isSuccess = true, Message = "Pedido marcado como despachado en camino." });
     }
 
-    [HttpPut("{id}/Entregar")]
-    public async Task<ActionResult<Response<bool>>> EntregarPedido(int id, [FromBody] DTO.Delivery.EntregarPedidoRequestDTO? dto = null)
+    [HttpPut("{id:guid}/Entregar")]
+    public async Task<ActionResult<Response<bool>>> EntregarPedido(Guid id, [FromBody] DTO.Delivery.EntregarPedidoRequestDTO? dto = null)
     {
         var dbContext = HttpContext.RequestServices.GetService<Persistence.Context.ApplicationDbContext>()!;
         var pedido = await dbContext.Pedidos
@@ -1073,8 +1073,8 @@ public class PedidosController : ControllerBase
         return Ok(new Response<bool> { Data = true, isSuccess = true, Message = "Pedido entregado y liquidado en caja exitosamente." });
     }
 
-    [HttpPut("{id}/Rebotar")]
-    public async Task<ActionResult<Response<bool>>> RebotarPedido(int id, [FromBody] DTO.Delivery.RebotarPedidoRequestDTO dto)
+    [HttpPut("{id:guid}/Rebotar")]
+    public async Task<ActionResult<Response<bool>>> RebotarPedido(Guid id, [FromBody] DTO.Delivery.RebotarPedidoRequestDTO dto)
     {
         var dbContext = HttpContext.RequestServices.GetService<Persistence.Context.ApplicationDbContext>()!;
         var pedido = await dbContext.Pedidos.Include(p => p.Cuentas).FirstOrDefaultAsync(p => p.Id == id);

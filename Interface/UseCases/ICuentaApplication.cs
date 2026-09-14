@@ -27,8 +27,8 @@ public interface ICuentaApplication
     Task<ResponsePagination<IEnumerable<CuentaDTO>>> GetAllWithPaginationAsync(int page, int pageSize);
     Task<Response<int>> CountAsync();
 
-    Task<Response<CuentaDTO>> GenerarCuentaAsync(int idPedido);
-    Response<CuentaDTO> GenerarCuenta(int idPedido);
+    Task<Response<CuentaDTO>> GenerarCuentaAsync(Guid idPedido);
+    Response<CuentaDTO> GenerarCuenta(Guid idPedido);
 
     #endregion
 }

@@ -9,8 +9,8 @@ public class EventoPedidoDTOValidator : AbstractValidator<EventoPedidoDTO>
     {
         // Pedido obligatorio
         RuleFor(x => x.IdPedido)
-            .GreaterThan(0)
-            .WithMessage("El campo IdPedido es requerido y debe ser mayor a 0.");
+            .NotEqual(Guid.Empty)
+            .WithMessage("El campo IdPedido es requerido.");
 
         // Usuario opcional pero válido si se especifica
         RuleFor(x => x.IdUsuario)

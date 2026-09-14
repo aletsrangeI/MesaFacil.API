@@ -2,9 +2,9 @@ namespace DTO.PedidoDetalle;
 
 public class PedidoDetalleDTO
 {
-    public int Id { get; set; }
-    public int IdPedido { get; set; }
-    public int? IdAsiento { get; set; }
+    public Guid Id { get; set; }
+    public Guid IdPedido { get; set; }
+    public Guid? IdAsiento { get; set; }
     public int IdProducto { get; set; }
     public int? IdVariante { get; set; }
     public decimal Cantidad { get; set; }

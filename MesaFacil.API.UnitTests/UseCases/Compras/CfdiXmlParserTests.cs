@@ -16,7 +16,7 @@ public class CfdiXmlParserTests
             .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
             .Options;
 
-        return new ApplicationDbContext(options, new AuditableEntitySaveChangesInterceptor());
+        return new ApplicationDbContext(options, new AuditableEntitySaveChangesInterceptor(), new OutboxSaveChangesInterceptor());
     }
 
 

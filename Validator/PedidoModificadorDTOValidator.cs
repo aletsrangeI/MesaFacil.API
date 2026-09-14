@@ -8,7 +8,7 @@ public class PedidoModificadorDTOValidator : AbstractValidator<PedidoModificador
     public PedidoModificadorDTOValidator()
     {
         RuleFor(x => x.IdDetalle)
-            .GreaterThan(0).WithMessage("IdDetalle es requerido y debe ser mayor a 0.");
+            .NotEqual(Guid.Empty).WithMessage("IdDetalle es requerido.");
 
         RuleFor(x => x.IdOpcion)
             .GreaterThan(0).WithMessage("IdOpcion es requerido y debe ser mayor a 0.");

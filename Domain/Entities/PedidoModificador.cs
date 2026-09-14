@@ -1,8 +1,8 @@
 namespace Domain.Entities;
 
-public class PedidoModificador : BaseAuditableEntity // Asume que hereda IdModificador o Id
+public class PedidoModificador : BaseAuditableGuidEntity // Spec 019: Id Guid/UUIDv7
 {
-    public int IdDetalle { get; set; }
+    public Guid IdDetalle { get; set; }
     public int IdOpcion { get; set; }
     
     // ==========================================
