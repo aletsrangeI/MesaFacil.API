@@ -74,6 +74,29 @@ public class DemoController : ControllerBase
             }
             await _context.SaveChangesAsync();
 
+            // 2.1 Catálogo tipado de Estaciones de Cocina (CatEstacionesCocina requerido por FK en Producto)
+            var catEstaciones = await _context.CatEstacionesCocina.ToListAsync();
+            var catParrilla = catEstaciones.FirstOrDefault(e => e.Descripcion != null && e.Descripcion.Contains("Parrilla"));
+            var catCocina = catEstaciones.FirstOrDefault(e => e.Descripcion != null && e.Descripcion.Contains("Cocina"));
+            var catBarra = catEstaciones.FirstOrDefault(e => e.Descripcion != null && (e.Descripcion.Contains("Barra") || e.Descripcion.Contains("Bebidas")));
+
+            if (catParrilla == null)
+            {
+                catParrilla = new CatEstacionesCocina { Descripcion = "Parrilla & Brasa", IsActive = true, CreatedBy = "demo-seed" };
+                _context.CatEstacionesCocina.Add(catParrilla);
+            }
+            if (catCocina == null)
+            {
+                catCocina = new CatEstacionesCocina { Descripcion = "Cocina Caliente & Fría", IsActive = true, CreatedBy = "demo-seed" };
+                _context.CatEstacionesCocina.Add(catCocina);
+            }
+            if (catBarra == null)
+            {
+                catBarra = new CatEstacionesCocina { Descripcion = "Barra & Coctelería", IsActive = true, CreatedBy = "demo-seed" };
+                _context.CatEstacionesCocina.Add(catBarra);
+            }
+            await _context.SaveChangesAsync();
+
             // 3. Áreas
             var areasExistentes = await _context.Areas.Where(a => a.IdSucursal == sucursal.Id).ToListAsync();
             Area areaSalon = areasExistentes.FirstOrDefault(a => a.Nombre != null && a.Nombre.Contains("Salón"))!;
@@ -142,6 +165,7 @@ public class DemoController : ControllerBase
                 {
                     mesa = new Mesa
                     {
+                        IdSucursal = sucursal.Id,
                         Codigo = def.codigo,
                         Asientos = def.asientos,
                         IdArea = def.idArea,
@@ -151,6 +175,7 @@ public class DemoController : ControllerBase
                 }
                 else
                 {
+                    mesa.IdSucursal = sucursal.Id;
                     mesa.IdArea = def.idArea;
                     mesa.IdEstadoMesa = def.estadoInicial;
                     mesa.Asientos = def.asientos;
@@ -196,22 +221,22 @@ public class DemoController : ControllerBase
             var prodsExistentes = await _context.Productos.Where(p => p.IdMenu == menu.Id).ToListAsync();
             var prodsList = new List<(string nombre, string cat, decimal precio, int idEstacion, string desc)>
             {
-                ("Ribeye Choice 400g", "Cortes & Parrilla", 480m, estacionParrilla.Id, "Corte marmoleado asado al carbón con sal de mar y romero"),
-                ("Picaña al Carbón 350g", "Cortes & Parrilla", 390m, estacionParrilla.Id, "Servida con chiles toreados y chimichurri rústico"),
-                ("Vacío Argentino 300g", "Cortes & Parrilla", 360m, estacionParrilla.Id, "Corte suave y jugoso a las brasas"),
-                ("Hamburguesa Brasa Ahumada", "Hamburguesas Gourmet", 220m, estacionParrilla.Id, "Carne Angus 200g, cheddar añejo, tocino ahumado y cebolla caramelizada"),
-                ("Hamburguesa Trufa & Portobello", "Hamburguesas Gourmet", 250m, estacionParrilla.Id, "Carne Angus, portobello braseado, queso suizo y mayonesa de trufa"),
-                ("Carpaccio de Res Trufado", "Entradas & Tapas", 185m, estacionCocina.Id, "Láminas finas de lomo de res con arúgula, alcaparras y lascas de parmesano"),
-                ("Tuétanos Asados con Esquites", "Entradas & Tapas", 165m, estacionCocina.Id, "Dos canoas de tuétano a la brasa con esquites tiernos y epazote"),
-                ("Tabla de Quesos & Jamón Serrano", "Entradas & Tapas", 240m, estacionCocina.Id, "Selección de quesos madurados, nueces garrapiñadas y pan campesino"),
-                ("Smoked Mezcalita Frutos Rojos", "Coctelería de Autor", 160m, estacionBarra.Id, "Mezcal espadín artesanal, infusión de frutos rojos y sal de gusano"),
-                ("Gin & Tonic Botánico", "Coctelería de Autor", 150m, estacionBarra.Id, "Ginebra premium, tónica artesanal, pepino fresco y bayas de enebro"),
-                ("Carajillo Shakeado", "Coctelería de Autor", 140m, estacionBarra.Id, "Licor 43 y shot de espresso recién extraído batido al punto"),
-                ("Cerveza Artesanal IPA 355ml", "Vinos & Cervezas", 95m, estacionBarra.Id, "Notas cítricas, lúpulo intenso y amargor equilibrado"),
-                ("Cerveza Ultra 355ml", "Vinos & Cervezas", 65m, estacionBarra.Id, "Cerveza clara ligera y refrescante"),
-                ("Copa Ensamble Tinto", "Vinos & Cervezas", 130m, estacionBarra.Id, "Valle de Guadalupe (Cabernet Sauvignon & Merlot)"),
-                ("Volcán de Dulce de Leche", "Postres Artesanales", 125m, estacionCocina.Id, "Centro líquido tibio con helado de vainilla de Papantla"),
-                ("Cheesecake Frutos del Bosque", "Postres Artesanales", 115m, estacionCocina.Id, "Estilo New York horneado con coulis de frambuesa y zarzamora")
+                ("Ribeye Choice 400g", "Cortes & Parrilla", 480m, catParrilla.Id, "Corte marmoleado asado al carbón con sal de mar y romero"),
+                ("Picaña al Carbón 350g", "Cortes & Parrilla", 390m, catParrilla.Id, "Servida con chiles toreados y chimichurri rústico"),
+                ("Vacío Argentino 300g", "Cortes & Parrilla", 360m, catParrilla.Id, "Corte suave y jugoso a las brasas"),
+                ("Hamburguesa Brasa Ahumada", "Hamburguesas Gourmet", 220m, catParrilla.Id, "Carne Angus 200g, cheddar añejo, tocino ahumado y cebolla caramelizada"),
+                ("Hamburguesa Trufa & Portobello", "Hamburguesas Gourmet", 250m, catParrilla.Id, "Carne Angus, portobello braseado, queso suizo y mayonesa de trufa"),
+                ("Carpaccio de Res Trufado", "Entradas & Tapas", 185m, catCocina.Id, "Láminas finas de lomo de res con arúgula, alcaparras y lascas de parmesano"),
+                ("Tuétanos Asados con Esquites", "Entradas & Tapas", 165m, catCocina.Id, "Dos canoas de tuétano a la brasa con esquites tiernos y epazote"),
+                ("Tabla de Quesos & Jamón Serrano", "Entradas & Tapas", 240m, catCocina.Id, "Selección de quesos madurados, nueces garrapiñadas y pan campesino"),
+                ("Smoked Mezcalita Frutos Rojos", "Coctelería de Autor", 160m, catBarra.Id, "Mezcal espadín artesanal, infusión de frutos rojos y sal de gusano"),
+                ("Gin & Tonic Botánico", "Coctelería de Autor", 150m, catBarra.Id, "Ginebra premium, tónica artesanal, pepino fresco y bayas de enebro"),
+                ("Carajillo Shakeado", "Coctelería de Autor", 140m, catBarra.Id, "Licor 43 y shot de espresso recién extraído batido al punto"),
+                ("Cerveza Artesanal IPA 355ml", "Vinos & Cervezas", 95m, catBarra.Id, "Notas cítricas, lúpulo intenso y amargor equilibrado"),
+                ("Cerveza Ultra 355ml", "Vinos & Cervezas", 65m, catBarra.Id, "Cerveza clara ligera y refrescante"),
+                ("Copa Ensamble Tinto", "Vinos & Cervezas", 130m, catBarra.Id, "Valle de Guadalupe (Cabernet Sauvignon & Merlot)"),
+                ("Volcán de Dulce de Leche", "Postres Artesanales", 125m, catCocina.Id, "Centro líquido tibio con helado de vainilla de Papantla"),
+                ("Cheesecake Frutos del Bosque", "Postres Artesanales", 115m, catCocina.Id, "Estilo New York horneado con coulis de frambuesa y zarzamora")
             };
 
             var productosMap = new Dictionary<string, (Producto prod, VarianteProducto var, decimal precio)>();
@@ -231,6 +256,13 @@ public class DemoController : ControllerBase
                         Activo = true
                     };
                     _context.Productos.Add(prod);
+                    await _context.SaveChangesAsync();
+                }
+                else
+                {
+                    prod.IdEstacionCocina = item.idEstacion;
+                    prod.Descripcion = item.desc;
+                    prod.Activo = true;
                     await _context.SaveChangesAsync();
                 }
 
@@ -282,13 +314,14 @@ public class DemoController : ControllerBase
 
             // 9. Turno Activo
             var turno = await _context.Turnos.FirstOrDefaultAsync(t => t.IdSucursal == sucursal.Id && t.Cierre == null);
+            var ahora = DateTime.UtcNow;
             if (turno == null)
             {
                 turno = new Turno
                 {
                     IdUsuario = usuario.Id,
                     IdSucursal = sucursal.Id,
-                    Apertura = DateTime.UtcNow.AddHours(-5),
+                    Apertura = ahora.AddHours(-5),
                     Cierre = null,
                     CajaInicial = 2000.00m
                 };
@@ -310,6 +343,33 @@ public class DemoController : ControllerBase
                     Nota = "Compra urgente de 2 bolsas de hielo frappé"
                 });
                 await _context.SaveChangesAsync();
+            }
+            else
+            {
+                // Asegurar que el turno activo inicie antes de las ventas simuladas
+                turno.Apertura = ahora.AddHours(-5);
+                if (turno.CajaInicial <= 0) turno.CajaInicial = 2000.00m;
+                await _context.SaveChangesAsync();
+
+                var movs = await _context.MovimientosCaja.Where(m => m.IdTurno == turno.Id).ToListAsync();
+                if (!movs.Any())
+                {
+                    _context.MovimientosCaja.Add(new MovimientoCaja
+                    {
+                        IdTurno = turno.Id,
+                        Tipo = "Ingreso",
+                        Monto = 500.00m,
+                        Nota = "Fondo de cambio adicional en billetes de $50 y monedas"
+                    });
+                    _context.MovimientosCaja.Add(new MovimientoCaja
+                    {
+                        IdTurno = turno.Id,
+                        Tipo = "Egreso",
+                        Monto = 200.00m,
+                        Nota = "Compra urgente de 2 bolsas de hielo frappé"
+                    });
+                    await _context.SaveChangesAsync();
+                }
             }
 
             // Catálogos adicionales
@@ -378,8 +438,9 @@ public class DemoController : ControllerBase
 
             for (int i = 1; i <= 14; i++)
             {
-                var horaApertura = DateTime.UtcNow.Date.AddHours(12).AddMinutes(i * 18);
-                var horaCierre = horaApertura.AddMinutes(random.Next(35, 70));
+                var horaApertura = turno.Apertura.AddMinutes((i - 1) * 16 + 10);
+                var horaCierre = horaApertura.AddMinutes(random.Next(12, 22));
+                if (horaCierre >= ahora) horaCierre = ahora.AddMinutes(-5);
                 var personas = random.Next(2, 5);
 
                 var pedido = new Pedido
@@ -448,7 +509,10 @@ public class DemoController : ControllerBase
                     Propina = Math.Round(pedidoTotal * 0.10m, 2),
                     PagadoEn = horaCierre,
                     IdMetodoDePago = metodoElegido,
-                    RecibidoPor = usuario.Id
+                    RecibidoPor = usuario.Id,
+                    IsActive = true,
+                    CreatedAt = horaCierre,
+                    CreatedBy = "demo-seed"
                 };
                 _context.Pagos.Add(pago);
                 await _context.SaveChangesAsync();
@@ -472,7 +536,7 @@ public class DemoController : ControllerBase
                     IdMesa = mesaM2.Id,
                     Personas = 4,
                     AbiertoPor = usuario.Id,
-                    AbiertoEn = DateTime.UtcNow.AddMinutes(-40),
+                    AbiertoEn = ahora.AddMinutes(-40),
                     IdTipoPedido = tipoComedor,
                     IdEstadoPedido = estEntregado,
                     CanalOrigen = "POS"
@@ -501,7 +565,7 @@ public class DemoController : ControllerBase
                     IdMesa = mesaM4.Id,
                     Personas = 2,
                     AbiertoPor = usuario.Id,
-                    AbiertoEn = DateTime.UtcNow.AddMinutes(-55),
+                    AbiertoEn = ahora.AddMinutes(-30),
                     IdTipoPedido = tipoComedor,
                     IdEstadoPedido = estEntregado,
                     CanalOrigen = "POS"
@@ -541,7 +605,7 @@ public class DemoController : ControllerBase
                     IdMesa = mesaT2.Id,
                     Personas = 3,
                     AbiertoPor = usuario.Id,
-                    AbiertoEn = DateTime.UtcNow.AddMinutes(-12),
+                    AbiertoEn = ahora.AddMinutes(-12),
                     IdTipoPedido = tipoComedor,
                     IdEstadoPedido = estPrep,
                     CanalOrigen = "POS"
