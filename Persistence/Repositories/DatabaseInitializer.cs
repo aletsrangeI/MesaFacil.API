@@ -99,6 +99,9 @@ public sealed class DatabaseInitializer : IDatabaseInitializer
         // 19) Spec 024: Candado de Supervisor y Auditoría de Cancelaciones
         await SeedCatMotivoCancelacionAsync(ct);
 
+        // 20) Asegurar columna IdSucursal en tabla Usuario
+        await EnsureUsuarioSucursalColumnAsync(ct);
+
         _logger.LogInformation("Inicialización completada con éxito.");
     }
 
@@ -1698,5 +1701,29 @@ public sealed class DatabaseInitializer : IDatabaseInitializer
         }
         await _db.SaveChangesAsync(ct);
         _logger.LogInformation("Seed: asegurados canales de venta en CatCanalVenta.");
+    }
+
+    private async Task EnsureUsuarioSucursalColumnAsync(CancellationToken ct)
+    {
+        try
+        {
+            var sql = @"
+                DO $$
+                BEGIN
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'Usuario' AND column_name = 'IdSucursal') THEN
+                        ALTER TABLE ""Usuario"" ADD COLUMN ""IdSucursal"" integer NULL;
+                    END IF;
+                END $$;
+                
+                -- Asignar la sucursal Centro Histórico (Id = 2) a los usuarios que no tengan sucursal asignada
+                UPDATE ""Usuario"" SET ""IdSucursal"" = 2 WHERE ""IdSucursal"" IS NULL;
+            ";
+            await _db.Database.ExecuteSqlRawAsync(sql, ct);
+            _logger.LogInformation("Columna IdSucursal en tabla Usuario verificada y poblada.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Advertencia al verificar columna IdSucursal en Usuario: {Message}", ex.Message);
+        }
     }
 }

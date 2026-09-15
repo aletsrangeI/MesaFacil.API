@@ -7,6 +7,7 @@ public class AuthMeDTO
     public string? Correo { get; init; }
     public string? Nombre { get; init; }
     public string? SucursalId { get; init; }
+    public string? NombreSucursal { get; init; }
     public bool TurnoAbierto { get; init; }
 
     public required IReadOnlyList<string> Roles { get; init; }

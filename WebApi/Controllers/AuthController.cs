@@ -133,6 +133,7 @@ public class AuthController : ControllerBase
             Correo = user.FindFirst(ClaimTypes.Email)?.Value ?? user.FindFirst("email")?.Value,
             Nombre = user.FindFirst("nombre")?.Value ?? user.Identity?.Name,
             SucursalId = user.FindFirst("sucursal_id")?.Value,
+            NombreSucursal = user.FindFirst("sucursal_nombre")?.Value,
             TurnoAbierto = (user.FindFirst("turno_abierto")?.Value ?? "0") == "1",
             Roles = rolesFromToken,
             Permissions = permissions,

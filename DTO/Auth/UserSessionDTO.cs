@@ -7,6 +7,8 @@ public class UserSessionDTO
     public required string Correo { get; init; }
     public string? NombreCompleto { get; init; }
 
+    public int? IdSucursal { get; init; }
+    public string? NombreSucursal { get; init; }
     public required IReadOnlyList<string> Roles { get; init; }
     public required IReadOnlyList<string> Accesos { get; init; } // e.g. ["/", "/admin", "/mesero"]
     public string? PermsVersion { get; init; } // opcional: hash/etag de permisos

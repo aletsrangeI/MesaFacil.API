@@ -16,5 +16,10 @@ public class UsuarioConfiguration : IEntityTypeConfiguration<Usuario>
             .WithMany(x => x.Usuarios)
             .HasForeignKey(x => x.IdEmpresa)
             .OnDelete(DeleteBehavior.Restrict);
+
+        e.HasOne(x => x.Sucursal)
+            .WithMany()
+            .HasForeignKey(x => x.IdSucursal)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }
