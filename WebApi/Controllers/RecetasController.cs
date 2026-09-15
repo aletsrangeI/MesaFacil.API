@@ -421,7 +421,7 @@ public class RecetasController : ControllerBase
                 PrecioVentaCalculado = precioVentaCalculado,
                 PrecioVentaConIva = precioVentaConIva,
                 NivelSaludMargen = nivelSalud,
-                Desglose = desglose.OrderByDescending(d => d.CostoTotal).ToList()
+                Desglose = desglose
             };
 
             response.isSuccess = true;
