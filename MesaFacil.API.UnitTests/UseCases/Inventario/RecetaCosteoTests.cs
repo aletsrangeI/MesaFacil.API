@@ -97,4 +97,52 @@ public class RecetaCosteoTests
         costoPorMl.Should().Be(0.05m);
         costoEnPlatillo.Should().Be(2.50m);
     }
+
+    [Fact]
+    public void ConversionUnidades_MililitrosAKilogramos_CalculaExacto()
+    {
+        // 10 ML de líquido culinario con base KG (ej. Aceite de Trufa) -> 0.01 KG
+        decimal cantidadMl = 10m;
+        decimal resultado = ConversionUnidadesHelper.ConvertirCantidad(cantidadMl, "ML", "KG");
+
+        resultado.Should().Be(0.01m);
+    }
+
+    [Fact]
+    public void ConversionUnidades_LitrosAKilogramos_CalculaExacto()
+    {
+        // 1.5 L -> 1.5 KG
+        decimal cantidadL = 1.5m;
+        decimal resultado = ConversionUnidadesHelper.ConvertirCantidad(cantidadL, "L", "KG");
+
+        resultado.Should().Be(1.5m);
+    }
+
+    [Fact]
+    public void ConversionUnidades_GramosAMililitros_CalculaExacto()
+    {
+        // 250 G -> 250 ML
+        decimal cantidadG = 250m;
+        decimal resultado = ConversionUnidadesHelper.ConvertirCantidad(cantidadG, "G", "ML");
+
+        resultado.Should().Be(250m);
+    }
+
+    [Fact]
+    public void CosteoMatematico_AceiteTrufa_10mlConBaseKg_CalculoCostoCorrecto()
+    {
+        // Aceite de Trufa: $380.00 / KG
+        // Receta pide: 10 ML con 4% de merma
+        decimal costoKg = 380.00m;
+        decimal cantidadMl = 10m;
+        decimal mermaPct = 4m;
+
+        decimal cantBaseKg = ConversionUnidadesHelper.ConvertirCantidad(cantidadMl, "ML", "KG");
+        decimal cantConMerma = cantBaseKg * (1m + (mermaPct / 100m));
+        decimal costoTotal = Math.Round(cantConMerma * costoKg, 2);
+
+        cantBaseKg.Should().Be(0.01m);
+        cantConMerma.Should().Be(0.0104m);
+        costoTotal.Should().Be(3.95m); // NO $3,952.00
+    }
 }

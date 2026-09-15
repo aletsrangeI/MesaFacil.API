@@ -30,53 +30,31 @@ public static class ConversionUnidadesHelper
         // Conversiones de Masa
         if (EsMasa(orig) && EsMasa(dest))
         {
-            decimal enGramos = orig switch
-            {
-                "KG" => cantidad * 1000m,
-                "G" => cantidad,
-                "MG" => cantidad / 1000m,
-                "LB" => cantidad * 453.59237m,
-                "OZ" => cantidad * 28.349523m,
-                _ => cantidad
-            };
-
-            decimal resultado = dest switch
-            {
-                "KG" => enGramos / 1000m,
-                "G" => enGramos,
-                "MG" => enGramos * 1000m,
-                "LB" => enGramos / 453.59237m,
-                "OZ" => enGramos / 28.349523m,
-                _ => enGramos
-            };
-
-            return Math.Round(resultado, 6);
+            decimal enGramos = A_Gramos(cantidad, orig);
+            return Math.Round(De_Gramos(enGramos, dest), 6);
         }
 
         // Conversiones de Volumen
         if (EsVolumen(orig) && EsVolumen(dest))
         {
-            decimal enMililitros = orig switch
-            {
-                "L" => cantidad * 1000m,
-                "ML" => cantidad,
-                "CC" => cantidad,
-                "OZ_FL" or "FL_OZ" => cantidad * 29.5735m,
-                "GAL" => cantidad * 3785.41m,
-                _ => cantidad
-            };
+            decimal enMililitros = A_Mililitros(cantidad, orig);
+            return Math.Round(De_Mililitros(enMililitros, dest), 6);
+        }
 
-            decimal resultado = dest switch
-            {
-                "L" => enMililitros / 1000m,
-                "ML" => enMililitros,
-                "CC" => enMililitros,
-                "OZ_FL" or "FL_OZ" => enMililitros / 29.5735m,
-                "GAL" => enMililitros / 3785.41m,
-                _ => enMililitros
-            };
+        // Conversiones Volumen -> Masa (Densidad culinaria estándar: 1 ml = 1 g)
+        if (EsVolumen(orig) && EsMasa(dest))
+        {
+            decimal enMililitros = A_Mililitros(cantidad, orig);
+            decimal enGramos = enMililitros;
+            return Math.Round(De_Gramos(enGramos, dest), 6);
+        }
 
-            return Math.Round(resultado, 6);
+        // Conversiones Masa -> Volumen (Densidad culinaria estándar: 1 g = 1 ml)
+        if (EsMasa(orig) && EsVolumen(dest))
+        {
+            decimal enGramos = A_Gramos(cantidad, orig);
+            decimal enMililitros = enGramos;
+            return Math.Round(De_Mililitros(enMililitros, dest), 6);
         }
 
         // Conteo
@@ -86,6 +64,46 @@ public static class ConversionUnidadesHelper
         // Sin factor conocido, retornar cantidad nominal
         return cantidad;
     }
+
+    private static decimal A_Gramos(decimal cantidad, string codigo) => codigo switch
+    {
+        "KG" => cantidad * 1000m,
+        "G" => cantidad,
+        "MG" => cantidad / 1000m,
+        "LB" => cantidad * 453.59237m,
+        "OZ" => cantidad * 28.349523m,
+        _ => cantidad
+    };
+
+    private static decimal De_Gramos(decimal gramos, string codigo) => codigo switch
+    {
+        "KG" => gramos / 1000m,
+        "G" => gramos,
+        "MG" => gramos * 1000m,
+        "LB" => gramos / 453.59237m,
+        "OZ" => gramos / 28.349523m,
+        _ => gramos
+    };
+
+    private static decimal A_Mililitros(decimal cantidad, string codigo) => codigo switch
+    {
+        "L" => cantidad * 1000m,
+        "ML" => cantidad,
+        "CC" => cantidad,
+        "OZ_FL" or "FL_OZ" => cantidad * 29.5735m,
+        "GAL" => cantidad * 3785.41m,
+        _ => cantidad
+    };
+
+    private static decimal De_Mililitros(decimal ml, string codigo) => codigo switch
+    {
+        "L" => ml / 1000m,
+        "ML" => ml,
+        "CC" => ml,
+        "OZ_FL" or "FL_OZ" => ml / 29.5735m,
+        "GAL" => ml / 3785.41m,
+        _ => ml
+    };
 
     public static bool EsMasa(string codigo)
     {
