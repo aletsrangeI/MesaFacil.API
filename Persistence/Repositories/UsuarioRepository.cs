@@ -105,6 +105,7 @@ public class UsuarioRepository : IUsuarioRepository
     {
         return await _context.Usuarios
             .Include(u => u.Empresa)
+            .Include(u => u.Sucursal)
             .Include(u => u.UsuarioRoles)
                 .ThenInclude(ur => ur.Rol)
             .Include(u => u.Credenciales)
@@ -116,6 +117,7 @@ public class UsuarioRepository : IUsuarioRepository
     {
         return await _context.Usuarios
             .Include(u => u.Empresa)
+            .Include(u => u.Sucursal)
             .Include(u => u.UsuarioRoles)
                 .ThenInclude(ur => ur.Rol)
             .Include(u => u.Credenciales)
@@ -127,6 +129,7 @@ public class UsuarioRepository : IUsuarioRepository
     {
         return await _context.Usuarios
             .Include(u => u.Empresa)
+            .Include(u => u.Sucursal)
             .Include(u => u.UsuarioRoles)
                 .ThenInclude(ur => ur.Rol)
             .Include(u => u.Credenciales)
@@ -146,6 +149,7 @@ public class UsuarioRepository : IUsuarioRepository
     public async Task<Usuario?> GetByCorreoWithRolesAndCredentialsAsync(string correo, CancellationToken ct)
     {
         return await _context.Usuarios
+            .Include(u => u.Sucursal)
             .Include(u => u.UsuarioRoles)
             .ThenInclude(ur => ur.Rol)
             .Include(u => u.Credenciales)
@@ -158,6 +162,7 @@ public class UsuarioRepository : IUsuarioRepository
         if (string.IsNullOrWhiteSpace(userOrEmail)) return null;
 
         return await _context.Usuarios
+            .Include(u => u.Sucursal)
             .Include(u => u.UsuarioRoles)
             .ThenInclude(ur => ur.Rol)
             .ThenInclude(r => r.AccesosRuta)

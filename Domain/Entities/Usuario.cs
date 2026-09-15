@@ -3,6 +3,7 @@ namespace Domain.Entities;
 public class Usuario : BaseAuditableEntity
 {
     public int IdEmpresa { get; set; }
+    public int? IdSucursal { get; set; }
     public string? NombreCompleto { get; set; }
     public string? Correo { get; set; }
 
@@ -20,6 +21,7 @@ public class Usuario : BaseAuditableEntity
     public DateTime? PinBloqueadoHasta { get; set; }
 
     public Empresa Empresa { get; set; } = null!;
+    public Sucursal? Sucursal { get; set; }
     public ICollection<UsuarioRol> UsuarioRoles { get; set; } = new List<UsuarioRol>();
     public ICollection<Credencial> Credenciales { get; set; } = new List<Credencial>();
     public ICollection<Turno> Turnos { get; set; } = new List<Turno>();

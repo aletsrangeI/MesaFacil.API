@@ -19,4 +19,6 @@ public class UsuarioDTO
     
     public int? IdRol { get; set; }
     public string? NombreRol { get; set; }
+    public int? IdSucursal { get; set; }
+    public string? NombreSucursal { get; set; }
 }

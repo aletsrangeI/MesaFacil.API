@@ -349,18 +349,11 @@ public class CorteCajaApplication : ICorteCajaApplication
             }
             else if (idSucursal.HasValue && idSucursal.Value > 0)
             {
+                // Aislamiento estricto: buscar única y exclusivamente turno abierto de la sucursal solicitada
                 turno = await _context.Turnos
                     .Where(t => t.IdSucursal == idSucursal.Value && t.Cierre == null)
                     .OrderByDescending(t => t.Apertura)
                     .FirstOrDefaultAsync();
-
-                if (turno == null)
-                {
-                    turno = await _context.Turnos
-                        .Where(t => t.Cierre == null)
-                        .OrderByDescending(t => t.Apertura)
-                        .FirstOrDefaultAsync();
-                }
             }
             else
             {
@@ -370,7 +363,7 @@ public class CorteCajaApplication : ICorteCajaApplication
                     .FirstOrDefaultAsync();
             }
 
-            int sucursalId = turno?.IdSucursal ?? idSucursal ?? 1;
+            int sucursalId = idSucursal ?? turno?.IdSucursal ?? 1;
 
             DateTime fechaInicio;
             decimal cajaInicial = 0;
@@ -530,7 +523,9 @@ public class CorteCajaApplication : ICorteCajaApplication
                 CantidadCuentasPagadas = cuentasPagadasCount
             };
             response.isSuccess = true;
-            response.Message = "Resumen de corte generado correctamente.";
+            response.Message = turno != null
+                ? "Resumen de corte generado correctamente."
+                : "No hay turno activo para esta sucursal.";
         }
         catch (Exception ex)
         {
@@ -553,6 +548,12 @@ public class CorteCajaApplication : ICorteCajaApplication
             }
 
             var r = resumenRes.Data;
+            if (!r.IdTurno.HasValue)
+            {
+                response.Message = "No hay un turno activo para cerrar en esta sucursal.";
+                return response;
+            }
+
             decimal diferencia = dto.Declarado - r.CajaEsperada;
 
             var corte = new CorteCaja
@@ -647,10 +648,18 @@ public class CorteCajaApplication : ICorteCajaApplication
 
                 decimal cajaInicial = c.Turno?.CajaInicial ?? 0;
 
-                var pagosCorte = await _context.Pagos
+                var pagosCorteQuery = _context.Pagos
+                    .Include(p => p.Cuenta)
+                        .ThenInclude(cu => cu.Pedido)
                     .Include(p => p.MetodoDePago)
-                    .Where(p => p.PagadoEn >= c.FechaInicio && p.PagadoEn <= c.FechaFin && p.IsActive)
-                    .ToListAsync();
+                    .Where(p => p.PagadoEn >= c.FechaInicio && p.PagadoEn <= c.FechaFin && p.IsActive);
+
+                if (c.IdSucursal.HasValue && c.IdSucursal.Value > 0)
+                {
+                    pagosCorteQuery = pagosCorteQuery.Where(p => p.Cuenta.Pedido.IdSucursal == c.IdSucursal.Value);
+                }
+
+                var pagosCorte = await pagosCorteQuery.ToListAsync();
 
                 var pagosTarjeta = pagosCorte.Where(p => p.IdMetodoDePago != 1 && (p.MetodoDePago == null || p.MetodoDePago.Descripcion.Contains("tarjeta", StringComparison.OrdinalIgnoreCase))).ToList();
                 decimal propinasTarjeta = pagosTarjeta.Sum(p => p.Propina);

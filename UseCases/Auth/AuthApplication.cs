@@ -130,6 +130,9 @@ public class AuthApplication : IAuthApplication
 
     private async Task<AuthResponseDTO> BuildAuthResponseAsync(Usuario usuario, List<string> roles, int? sucursalId, CancellationToken ct)
     {
+        int? finalSucursalId = sucursalId ?? usuario.IdSucursal;
+        string? nombreSucursal = usuario.Sucursal?.Nombre;
+
         // 4) Claims base
         var claims = new List<Claim>
         {
@@ -144,9 +147,13 @@ public class AuthApplication : IAuthApplication
         foreach (var roleName in roles)
             claims.Add(new Claim(ClaimTypes.Role, roleName));
 
-        // 6) Contexto opcional
-        if (sucursalId.HasValue)
-            claims.Add(new Claim("sucursal_id", sucursalId.Value.ToString()));
+        // 6) Contexto de Sucursal
+        if (finalSucursalId.HasValue)
+        {
+            claims.Add(new Claim("sucursal_id", finalSucursalId.Value.ToString()));
+            if (!string.IsNullOrEmpty(nombreSucursal))
+                claims.Add(new Claim("sucursal_nombre", nombreSucursal));
+        }
 
         var tieneTurnoAbierto = await _usuarios.HasOpenTurnoAsync(usuario.Id, ct);
         claims.Add(new Claim("turno_abierto", tieneTurnoAbierto ? "1" : "0"));
@@ -182,6 +189,8 @@ public class AuthApplication : IAuthApplication
             IdEmpresa = usuario.IdEmpresa,
             Correo = usuario.Correo!,
             NombreCompleto = usuario.NombreCompleto,
+            IdSucursal = finalSucursalId,
+            NombreSucursal = nombreSucursal,
             Roles = roles,
             Accesos = accesos,
             PermsVersion = null
