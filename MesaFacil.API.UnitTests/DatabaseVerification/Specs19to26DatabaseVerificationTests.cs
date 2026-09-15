@@ -13,6 +13,7 @@ using Xunit.Abstractions;
 
 namespace MesaFacil.API.UnitTests.DatabaseVerification;
 
+[Trait("Category", "DatabaseIntegration")]
 public class Specs19to26DatabaseVerificationTests
 {
     private readonly ITestOutputHelper _output;
