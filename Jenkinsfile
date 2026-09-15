@@ -64,6 +64,9 @@ pipeline {
           # Copiar configs compartidas si las usas:
           # [ -f "${SHARED_DIR}/appsettings.Production.json" ] && sudo cp "${SHARED_DIR}/appsettings.Production.json" "$REL_PATH/"
 
+          # Guardar versión previa para rollback
+          PREV_RELEASE=$(readlink -f "${CURRENT_DIR}" || true)
+
           # Symlink atómico a current
           sudo ln -sfn "$REL_PATH" "${CURRENT_DIR}"
           sudo chown -h deploy:deploy "${CURRENT_DIR}"
@@ -73,6 +76,30 @@ pipeline {
           sudo systemctl daemon-reload || true
           sudo systemctl restart ${APP_NAME}.service
 
+          # Health Check con reintentos (/api/health)
+          echo "Verificando estado de salud de la API..."
+          SUCCESS=0
+          for i in $(seq 1 12); do
+            if curl -s -f http://localhost:5000/api/health > /dev/null 2>&1 || curl -s -f http://localhost:5286/api/health > /dev/null 2>&1; then
+              echo ">> API levantó exitosamente (Health check OK)."
+              SUCCESS=1
+              break
+            fi
+            echo "Intento $i falló, esperando 3s..."
+            sleep 3
+          done
+
+          # Rollback automático si falla el health check
+          if [ $SUCCESS -ne 1 ]; then
+            echo "ALERTA CRÍTICA: Health check falló. Ejecutando Rollback automático..."
+            if [ -n "$PREV_RELEASE" ] && [ -d "$PREV_RELEASE" ]; then
+              sudo ln -sfn "$PREV_RELEASE" "${CURRENT_DIR}"
+              sudo systemctl restart ${APP_NAME}.service
+              echo "Rollback completado con éxito a la versión previa: $PREV_RELEASE"
+            fi
+            exit 1
+          fi
+
           # Mantén solo 5 releases
           cd "${RELEASES_DIR}"
           ls -1t | tail -n +6 | xargs -r sudo rm -rf --
@@ -81,5 +108,10 @@ pipeline {
     }
   }
 
-  post { always { cleanWs() } }
+  post {
+    failure {
+      echo "El despliegue de MesaFacil.API ha fallado. Se ejecutó el rollback si correspondía."
+    }
+    always { cleanWs() }
+  }
 }
