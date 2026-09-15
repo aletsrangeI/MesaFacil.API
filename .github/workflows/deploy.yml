@@ -91,11 +91,11 @@ jobs:
             sudo systemctl daemon-reload || true
             sudo systemctl restart ${APP_NAME}.service
 
-            # Health Check con reintentos (/api/health)
+            # Health Check con reintentos (/api/health en IPv4 directa)
             echo "Verificando endpoint de salud /api/health..."
             SUCCESS=0
             for i in $(seq 1 12); do
-              if curl -s -f http://localhost:5000/api/health > /dev/null 2>&1 || curl -s -f http://localhost:5286/api/health > /dev/null 2>&1; then
+              if curl -s -f -L http://127.0.0.1:5286/api/health > /dev/null 2>&1 || curl -s -f -L http://127.0.0.1/api/health > /dev/null 2>&1; then
                 echo ">> API levantó exitosamente (Health check OK)."
                 SUCCESS=1
                 break
