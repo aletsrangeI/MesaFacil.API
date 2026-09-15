@@ -1,0 +1,133 @@
+name: CI/CD - MesaFacil.API
+
+on:
+  push:
+    branches:
+      - Development
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-api-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    name: Build & Run Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout del código
+        uses: actions/checkout@v4
+
+      - name: Configurar .NET 9 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Restaurar dependencias
+        run: dotnet restore MesaFacil.API.sln
+
+      - name: Compilar solución
+        run: dotnet build MesaFacil.API.sln -c Release --no-restore
+
+      - name: Ejecutar pruebas unitarias
+        run: dotnet test MesaFacil.API.sln -c Release --no-build --verbosity normal
+
+      - name: Publicar aplicación (.NET Publish)
+        run: dotnet publish WebApi/WebApi.csproj -c Release -o ./publish /p:UseAppHost=false
+
+      - name: Guardar artefacto compilado
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-publish
+          path: ./publish
+          retention-days: 2
+
+  deploy-homelab:
+    name: Deploy a Homelab (via Tailscale)
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar artefacto compilado
+        uses: actions/download-artifact@v4
+        with:
+          name: api-publish
+          path: ./publish
+
+      # Conexión segura a la red Tailscale
+      - name: Conectar a Tailscale
+        uses: tailscale/github-action@v3
+        with:
+          authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
+
+      # Copiar artefacto al Homelab por SSH (usando la IP interna de Tailscale)
+      - name: Transferir release a Homelab
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.HOMELAB_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "./publish/*"
+          target: "/tmp/mesafacil-api-deploy-${{ github.run_number }}"
+          strip_components: 1
+
+      # Despliegue atómico con Rollback y Health Check
+      - name: Activar release y verificar salud
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.HOMELAB_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            set -e
+            APP_NAME="mesafacil-api"
+            RELEASES_DIR="/opt/mesafacil/api/releases"
+            CURRENT_DIR="/opt/mesafacil/api/current"
+            REL_PATH="${RELEASES_DIR}/${{ github.run_number }}-${{ github.sha }}"
+            TMP_DIR="/tmp/mesafacil-api-deploy-${{ github.run_number }}"
+
+            echo "Creando release en $REL_PATH..."
+            sudo mkdir -p "$REL_PATH"
+            sudo cp -r "$TMP_DIR"/* "$REL_PATH/"
+            rm -rf "$TMP_DIR"
+
+            # Guardar versión anterior para rollback
+            PREV_RELEASE=$(readlink -f "${CURRENT_DIR}" || true)
+
+            # Cambiar symlink al nuevo release
+            sudo ln -sfn "$REL_PATH" "${CURRENT_DIR}"
+            sudo chown -h deploy:deploy "${CURRENT_DIR}" || true
+            sudo chown -R deploy:deploy "${RELEASES_DIR}" || true
+
+            # Reiniciar servicio
+            sudo systemctl daemon-reload || true
+            sudo systemctl restart ${APP_NAME}.service
+
+            # Health Check con reintentos
+            echo "Verificando endpoint de salud /api/health..."
+            SUCCESS=0
+            for i in $(seq 1 12); do
+              if curl -s -f http://localhost:5000/api/health > /dev/null 2>&1 || curl -s -f http://localhost:5286/api/health > /dev/null 2>&1; then
+                echo ">> API levantó exitosamente (Health check OK)."
+                SUCCESS=1
+                break
+              fi
+              echo "Intento $i falló, esperando 3s..."
+              sleep 3
+            done
+
+            # Si falla la verificación, ejecutar Rollback inmediato
+            if [ $SUCCESS -ne 1 ]; then
+              echo "ALERTA: Health check falló. Iniciando Rollback automático..."
+              if [ -n "$PREV_RELEASE" ] && [ -d "$PREV_RELEASE" ]; then
+                sudo ln -sfn "$PREV_RELEASE" "${CURRENT_DIR}"
+                sudo systemctl restart ${APP_NAME}.service
+                echo "Rollback completado a $PREV_RELEASE."
+              fi
+              exit 1
+            fi
+
+            # Mantener solo los últimos 5 releases
+            cd "${RELEASES_DIR}"
+            ls -1t | tail -n +6 | xargs -r sudo rm -rf --
+            echo "Despliegue finalizado con éxito."
