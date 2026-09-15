@@ -120,20 +120,24 @@ public class DiagnosticTimeoutTests
         var tareaServidor = Task.Run(async () =>
         {
             using var socketCliente = await listener.AcceptTcpClientAsync();
+            socketCliente.NoDelay = true;
             using var stream = socketCliente.GetStream();
             var buffer = new byte[3];
 
             // DLE EOT 2 -> responde con bit2 (tapa abierta) encendido: 0x04
-            await stream.ReadAsync(buffer.AsMemory(0, 3));
+            await stream.ReadExactlyAsync(buffer.AsMemory(0, 3));
             await stream.WriteAsync(new byte[] { 0x04 });
+            await stream.FlushAsync();
 
             // DLE EOT 3 -> sin error: 0x00
-            await stream.ReadAsync(buffer.AsMemory(0, 3));
+            await stream.ReadExactlyAsync(buffer.AsMemory(0, 3));
             await stream.WriteAsync(new byte[] { 0x00 });
+            await stream.FlushAsync();
 
             // DLE EOT 4 -> bit5 (sin papel) encendido: 0x20
-            await stream.ReadAsync(buffer.AsMemory(0, 3));
+            await stream.ReadExactlyAsync(buffer.AsMemory(0, 3));
             await stream.WriteAsync(new byte[] { 0x20 });
+            await stream.FlushAsync();
         });
 
         try
