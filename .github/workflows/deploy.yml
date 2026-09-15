@@ -36,6 +36,19 @@ jobs:
         with:
           authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
 
+      # Esperar a que el túnel Tailscale hacia Homelab esté listo
+      - name: Esperar conectividad con Homelab
+        run: |
+          echo "Verificando conexión Tailscale hacia Homelab (100.110.215.58)..."
+          for i in $(seq 1 10); do
+            if tailscale ping -c 1 100.110.215.58 >/dev/null 2>&1; then
+              echo ">> Conexión Tailscale lista hacia Homelab."
+              break
+            fi
+            echo "Esperando ruta WireGuard (intento $i/10)..."
+            sleep 2
+          done
+
       - name: Ejecutar pruebas unitarias y de verificación
         run: dotnet test MesaFacil.API.sln -c Release --no-build --verbosity normal
 

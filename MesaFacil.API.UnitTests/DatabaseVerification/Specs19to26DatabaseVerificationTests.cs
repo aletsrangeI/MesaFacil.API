@@ -16,7 +16,7 @@ namespace MesaFacil.API.UnitTests.DatabaseVerification;
 public class Specs19to26DatabaseVerificationTests
 {
     private readonly ITestOutputHelper _output;
-    private const string ConnectionString = "Server=100.110.215.58;Port=5432;Database=MesaFacil;User Id=orionsys;Password=fenderstrato;Timeout=10;CommandTimeout=15;";
+    private const string ConnectionString = "Server=100.110.215.58;Port=5432;Database=MesaFacil;User Id=orionsys;Password=fenderstrato;Timeout=20;CommandTimeout=30;";
 
     public Specs19to26DatabaseVerificationTests(ITestOutputHelper output)
     {
@@ -36,7 +36,24 @@ public class Specs19to26DatabaseVerificationTests
     public async Task CheckDatabaseConnection_And_VerifyAppliedMigrations()
     {
         using var db = CreatePostgresDbContext();
-        var canConnect = await db.Database.CanConnectAsync();
+        
+        bool canConnect = false;
+        for (int intento = 1; intento <= 5; intento++)
+        {
+            try
+            {
+                canConnect = await db.Database.CanConnectAsync();
+                if (canConnect) break;
+            }
+            catch (Exception ex)
+            {
+                _output.WriteLine($"Intento {intento} falló con excepción: {ex.Message}");
+            }
+
+            _output.WriteLine($"Intento {intento}/5 de conexión a la BD no respondió aún. Reintentando en 2s (warmup Tailscale)...");
+            await Task.Delay(2000);
+        }
+
         _output.WriteLine($"DB CanConnect: {canConnect}");
         canConnect.Should().BeTrue();
 
