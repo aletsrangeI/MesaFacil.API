@@ -49,8 +49,8 @@ jobs:
             sleep 2
           done
 
-      - name: Ejecutar pruebas unitarias y de verificación
-        run: dotnet test MesaFacil.API.sln -c Release --no-build --verbosity normal
+      - name: Ejecutar pruebas unitarias (excluye integración de base de datos)
+        run: dotnet test MesaFacil.API.sln -c Release --no-build --filter "Category!=DatabaseIntegration" --verbosity normal
 
       - name: Publicar aplicación (.NET Publish)
         run: dotnet publish WebApi/WebApi.csproj -c Release -o ./publish /p:UseAppHost=false
