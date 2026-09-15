@@ -2,8 +2,7 @@
 FROM mcr.microsoft.com/dotnet/sdk:9.0-alpine AS build
 WORKDIR /src
 
-# Copiar archivos de solución y proyectos primero para optimizar la caché de capas de Docker
-COPY ["MesaFacil.API.sln", "./"]
+# Copiar proyectos que componen la API (excluyendo tests) para optimizar la caché de capas
 COPY ["WebApi/WebApi.csproj", "WebApi/"]
 COPY ["Common/Common.csproj", "Common/"]
 COPY ["Logging/Logging.csproj", "Logging/"]
@@ -13,14 +12,12 @@ COPY ["Interface/Interface.csproj", "Interface/"]
 COPY ["UseCases/UseCases.csproj", "UseCases/"]
 COPY ["Validator/Validator.csproj", "Validator/"]
 COPY ["Persistence/Persistence.csproj", "Persistence/"]
-COPY ["MesaFacil.API.UnitTests/MesaFacil.API.UnitTests.csproj", "MesaFacil.API.UnitTests/"]
 
-RUN dotnet restore "MesaFacil.API.sln"
+RUN dotnet restore "WebApi/WebApi.csproj"
 
-# Copiar el código fuente completo y compilar
+# Copiar el código fuente y publicar el ejecutable WebApi
 COPY . .
-WORKDIR /src/WebApi
-RUN dotnet publish "WebApi.csproj" -c Release -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "WebApi/WebApi.csproj" -c Release -o /app/publish /p:UseAppHost=false
 
 # Etapa 2: Runtime ligero (.NET 9 ASP.NET en Alpine, ~100MB)
 FROM mcr.microsoft.com/dotnet/aspnet:9.0-alpine AS runtime
