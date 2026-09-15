@@ -30,7 +30,7 @@ jobs:
       - name: Compilar solución
         run: dotnet build MesaFacil.API.sln -c Release --no-restore
 
-      # Conexión a Tailscale antes de las pruebas para que los tests de BD puedan alcanzar 100.110.215.58:5432
+      # Conexión a Tailscale
       - name: Conectar a Tailscale
         uses: tailscale/github-action@v3
         with:
@@ -42,25 +42,24 @@ jobs:
       - name: Publicar aplicación (.NET Publish)
         run: dotnet publish WebApi/WebApi.csproj -c Release -o ./publish /p:UseAppHost=false
 
-      # Copiar artefacto al Homelab por SSH (usando la IP interna de Tailscale)
-      - name: Transferir release a Homelab
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.HOMELAB_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: "./publish/*"
-          target: "/tmp/mesafacil-api-deploy-${{ github.run_number }}"
-          strip_components: 1
+      # Configurar clave SSH nativa en el host
+      - name: Configurar SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H ${{ secrets.HOMELAB_HOST }} >> ~/.ssh/known_hosts 2>/dev/null || true
 
-      # Despliegue atómico con Rollback y Health Check
+      # Transferir con rsync nativo (se ejecuta directo sobre la red de Tailscale, tarda segundos)
+      - name: Transferir release a Homelab
+        run: |
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_ed25519 ${{ secrets.SSH_USER }}@${{ secrets.HOMELAB_HOST }} "mkdir -p /tmp/mesafacil-api-deploy-${{ github.run_number }}"
+          rsync -avz -e "ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_ed25519" ./publish/ ${{ secrets.SSH_USER }}@${{ secrets.HOMELAB_HOST }}:/tmp/mesafacil-api-deploy-${{ github.run_number }}/
+
+      # Despliegue atómico con Rollback y Health Check via SSH nativo
       - name: Activar release y verificar salud
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.HOMELAB_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: |
+        run: |
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_ed25519 ${{ secrets.SSH_USER }}@${{ secrets.HOMELAB_HOST }} bash << 'EOF'
             set -e
             APP_NAME="mesafacil-api"
             RELEASES_DIR="/opt/mesafacil/api/releases"
@@ -113,3 +112,4 @@ jobs:
             cd "${RELEASES_DIR}"
             ls -1t | tail -n +6 | xargs -r sudo rm -rf --
             echo "Despliegue finalizado con éxito."
+          EOF
