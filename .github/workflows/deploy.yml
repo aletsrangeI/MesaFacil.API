@@ -36,34 +36,28 @@ jobs:
         with:
           authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
 
-      # Esperar a que el túnel Tailscale hacia Homelab esté listo
-      - name: Esperar conectividad con Homelab
-        run: |
-          echo "Verificando conexión Tailscale hacia Homelab (100.110.215.58)..."
-          for i in $(seq 1 10); do
-            if tailscale ping -c 1 100.110.215.58 >/dev/null 2>&1; then
-              echo ">> Conexión Tailscale lista hacia Homelab."
-              break
-            fi
-            echo "Esperando ruta WireGuard (intento $i/10)..."
-            sleep 2
-          done
-
-      - name: Ejecutar pruebas unitarias (excluye integración de base de datos)
-        run: dotnet test MesaFacil.API.sln -c Release --no-build --filter "Category!=DatabaseIntegration" --verbosity normal
+      - name: Ejecutar pruebas unitarias y de verificación
+        run: dotnet test MesaFacil.API.sln -c Release --no-build --verbosity normal
 
       - name: Publicar aplicación (.NET Publish)
         run: dotnet publish WebApi/WebApi.csproj -c Release -o ./publish /p:UseAppHost=false
 
-      # Configurar clave SSH nativa en el host
+      # Configurar clave SSH preservando saltos de línea
       - name: Configurar SSH
+        env:
+          SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          printf "%s\n" "$SSH_KEY" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
           ssh-keyscan -H ${{ secrets.HOMELAB_HOST }} >> ~/.ssh/known_hosts 2>/dev/null || true
 
-      # Transferir con rsync nativo (se ejecuta directo sobre la red de Tailscale, tarda segundos)
+      # Prueba de conexión SSH con salida informativa
+      - name: Verificar conexión SSH
+        run: |
+          ssh -v -o StrictHostKeyChecking=no -i ~/.ssh/id_ed25519 ${{ secrets.SSH_USER }}@${{ secrets.HOMELAB_HOST }} "echo '>> SSH conectado exitosamente al Homelab'"
+
+      # Transferir con rsync nativo por Tailscale
       - name: Transferir release a Homelab
         run: |
           ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_ed25519 ${{ secrets.SSH_USER }}@${{ secrets.HOMELAB_HOST }} "mkdir -p /tmp/mesafacil-api-deploy-${{ github.run_number }}"
