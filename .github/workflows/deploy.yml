@@ -12,8 +12,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build-and-test:
-    name: Build & Run Tests
+  build-test-deploy:
+    name: Build, Test & Deploy to Homelab
     runs-on: ubuntu-latest
     steps:
       - name: Checkout del código
@@ -30,35 +30,17 @@ jobs:
       - name: Compilar solución
         run: dotnet build MesaFacil.API.sln -c Release --no-restore
 
-      - name: Ejecutar pruebas unitarias
-        run: dotnet test MesaFacil.API.sln -c Release --no-build --verbosity normal
-
-      - name: Publicar aplicación (.NET Publish)
-        run: dotnet publish WebApi/WebApi.csproj -c Release -o ./publish /p:UseAppHost=false
-
-      - name: Guardar artefacto compilado
-        uses: actions/upload-artifact@v4
-        with:
-          name: api-publish
-          path: ./publish
-          retention-days: 2
-
-  deploy-homelab:
-    name: Deploy a Homelab (via Tailscale)
-    needs: build-and-test
-    runs-on: ubuntu-latest
-    steps:
-      - name: Descargar artefacto compilado
-        uses: actions/download-artifact@v4
-        with:
-          name: api-publish
-          path: ./publish
-
-      # Conexión segura a la red Tailscale
+      # Conexión a Tailscale antes de las pruebas para que los tests de BD puedan alcanzar 100.110.215.58:5432
       - name: Conectar a Tailscale
         uses: tailscale/github-action@v3
         with:
           authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
+
+      - name: Ejecutar pruebas unitarias y de verificación
+        run: dotnet test MesaFacil.API.sln -c Release --no-build --verbosity normal
+
+      - name: Publicar aplicación (.NET Publish)
+        run: dotnet publish WebApi/WebApi.csproj -c Release -o ./publish /p:UseAppHost=false
 
       # Copiar artefacto al Homelab por SSH (usando la IP interna de Tailscale)
       - name: Transferir release a Homelab
@@ -103,7 +85,7 @@ jobs:
             sudo systemctl daemon-reload || true
             sudo systemctl restart ${APP_NAME}.service
 
-            # Health Check con reintentos
+            # Health Check con reintentos (/api/health)
             echo "Verificando endpoint de salud /api/health..."
             SUCCESS=0
             for i in $(seq 1 12); do
