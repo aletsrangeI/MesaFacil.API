@@ -30,5 +30,10 @@ public class UsuarioDTOValidator : AbstractValidator<UsuarioDTO>
         RuleFor(x => x.Pin)
             .MaximumLength(32).WithMessage("El PIN no debe exceder los 32 caracteres.")
             .When(x => !string.IsNullOrEmpty(x.Pin));
+
+        // Pin de Supervisor (Spec 024): exactamente 4 dígitos numéricos si se proporciona
+        RuleFor(x => x.PinSupervisor)
+            .Matches(@"^\d{4}$").WithMessage("El PIN de supervisor debe ser exactamente de 4 dígitos numéricos.")
+            .When(x => !string.IsNullOrEmpty(x.PinSupervisor));
     }
 }
