@@ -17,7 +17,10 @@ public class CuentaDTO
     public decimal SaldoRestante { get; set; }
     public List<PagoResumenDTO> PagosRealizados { get; set; } = new();
 
-    // Propiedades para Impresión Térmica
+    // Propiedades para Impresión Térmica y Auditoría de Descuentos (Spec 028)
+    public decimal PorcentajeDescuento { get; set; }
+    public string? MotivoDescuento { get; set; }
+    public string? AutorizadoPor { get; set; }
     public string? MesaNombre { get; set; }
     public string? SucursalNombre { get; set; }
     public List<CuentaItemDTO> Items { get; set; } = new();
@@ -40,4 +43,13 @@ public class PagoResumenDTO
     public decimal Propina { get; set; }
     public string? MetodoDePago { get; set; }
     public DateTime PagadoEn { get; set; }
+}
+
+public class AplicarDescuentoCuentaDTO
+{
+    public int IdCuenta { get; set; }
+    public decimal PorcentajeDescuento { get; set; }
+    public decimal MontoDescuento { get; set; }
+    public string? MotivoDescuento { get; set; }
+    public string? SupervisorAuthToken { get; set; }
 }

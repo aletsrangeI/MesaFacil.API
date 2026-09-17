@@ -24,4 +24,11 @@ public class CuentasController : ControllerBase
         var response = await _cuentaApplication.GenerarCuentaAsync(idPedido);
         return Ok(response);
     }
+
+    [HttpPost("AplicarDescuento")]
+    public async Task<ActionResult<Response<CuentaDTO>>> AplicarDescuentoAsync([FromBody] AplicarDescuentoCuentaDTO dto)
+    {
+        var response = await _cuentaApplication.AplicarDescuentoAsync(dto);
+        return Ok(response);
+    }
 }

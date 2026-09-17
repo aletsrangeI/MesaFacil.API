@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using Common;
 using Domain.Entities;
 using DTO.Pago;
@@ -15,19 +15,22 @@ public class PagoApplication : IPagoApplication
     private readonly PagoDTOValidator _validationRules;
     private readonly IAppLogger<PagoApplication> _logger;
     private readonly IDescuentoInventarioService? _descuentoInventarioService;
+    private readonly ISupervisorPinSecurityService? _supervisorPinSecurityService;
 
     public PagoApplication(
         IUnitOfWork unitOfWork,
         IMapper mapper,
         PagoDTOValidator validationRules,
         IAppLogger<PagoApplication> logger,
-        IDescuentoInventarioService? descuentoInventarioService = null)
+        IDescuentoInventarioService? descuentoInventarioService = null,
+        ISupervisorPinSecurityService? supervisorPinSecurityService = null)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
         _validationRules = validationRules;
         _logger = logger;
         _descuentoInventarioService = descuentoInventarioService;
+        _supervisorPinSecurityService = supervisorPinSecurityService;
     }
 
     #region Metodos sincronos
@@ -344,13 +347,64 @@ public class PagoApplication : IPagoApplication
             var cuenta = await _unitOfWork.Cuentas.GetAsync(dto.IdCuenta);
             if (cuenta == null) throw new Exception("Cuenta no encontrada");
 
+            // Spec 028: Validación de candado de supervisor para descuentos
+            int? supervisorId = null;
+            if (dto.PorcentajeDescuento > 10.0m)
+            {
+                if (_supervisorPinSecurityService == null ||
+                    !_supervisorPinSecurityService.ValidarTokenDescuento(dto.SupervisorAuthToken, cuenta.IdPedido, out supervisorId))
+                {
+                    response.isSuccess = false;
+                    response.Message = "El descuento superior al 10% requiere autorización válida de supervisor.";
+                    return response;
+                }
+            }
+
+            // Aplicar descuento a la cuenta si viene indicado en el cobro
+            decimal montoDescuento = dto.MontoDescuento;
+            if (montoDescuento <= 0 && dto.PorcentajeDescuento > 0)
+            {
+                var baseTotal = cuenta.Subtotal + cuenta.ImpuestoTotal;
+                montoDescuento = Math.Round(baseTotal * (dto.PorcentajeDescuento / 100m), 2);
+            }
+
+            if (montoDescuento > 0 || dto.PorcentajeDescuento > 0)
+            {
+                cuenta.DescuentoTotal = montoDescuento;
+                cuenta.Total = Math.Max(0m, (cuenta.Subtotal + cuenta.ImpuestoTotal) - cuenta.DescuentoTotal);
+                cuenta.UpdatedAt = DateTime.UtcNow;
+                cuenta.UpdatedBy = supervisorId.HasValue ? $"Supervisor #{supervisorId}" : "PagoApplication";
+                await _unitOfWork.Cuentas.UpdateAsync(cuenta);
+
+                var eventoDescuento = new EventoPedido
+                {
+                    IdPedido = cuenta.IdPedido,
+                    IdUsuarioSupervisor = supervisorId,
+                    TipoEvento = dto.PorcentajeDescuento > 10.0m ? "DescuentoAutorizado" : "DescuentoAplicado",
+                    MontoCancelado = montoDescuento,
+                    PorcentajeDescuento = dto.PorcentajeDescuento,
+                    Payload = System.Text.Json.JsonSerializer.Serialize(new
+                    {
+                        IdCuenta = cuenta.Id,
+                        dto.PorcentajeDescuento,
+                        MontoDescuento = montoDescuento,
+                        Motivo = dto.MotivoDescuento,
+                        IdSupervisor = supervisorId
+                    }),
+                    IsActive = true,
+                    CreatedAt = DateTime.UtcNow,
+                    CreatedBy = supervisorId.HasValue ? $"Supervisor #{supervisorId}" : "PagoApplication"
+                };
+                await _unitOfWork.EventosPedido.InsertAsync(eventoDescuento);
+            }
+
             var pago = new Pago
             {
                 IdCuenta = dto.IdCuenta,
                 Monto = dto.Monto,
                 Propina = dto.Propina,
-                IdMetodoDePago = dto.IdMetodoDePago,
-                Referencia = dto.Referencia,
+                IdMetodoDePago = dto.IdMetodoDePago > 0 ? dto.IdMetodoDePago : 1,
+                Referencia = dto.Referencia ?? (cuenta.Total == 0 ? "Cortesia 100%" : null),
                 PagadoEn = DateTime.UtcNow,
                 IsActive = true,
                 CreatedBy = "System",

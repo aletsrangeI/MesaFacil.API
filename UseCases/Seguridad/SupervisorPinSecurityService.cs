@@ -251,6 +251,51 @@ public class SupervisorPinSecurityService : ISupervisorPinSecurityService
         return true;
     }
 
+    public bool ValidarTokenDescuento(string? token, Guid idPedido, out int? idUsuarioSupervisor)
+    {
+        idUsuarioSupervisor = null;
+        if (string.IsNullOrWhiteSpace(token)) return false;
+
+        var (issuer, audience, signingKeyBytes) = LeerConfigJwt();
+
+        var handler = new JwtSecurityTokenHandler { MapInboundClaims = false };
+        var parametros = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidIssuer = issuer,
+            ValidateAudience = true,
+            ValidAudience = audience,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(signingKeyBytes),
+            ValidateLifetime = true,
+            ClockSkew = TimeSpan.FromSeconds(5)
+        };
+
+        ClaimsPrincipal principal;
+        try
+        {
+            principal = handler.ValidateToken(token, parametros, out _);
+        }
+        catch
+        {
+            return false;
+        }
+
+        var typ = principal.FindFirst("typ")?.Value;
+        var accionClaim = principal.FindFirst("accionProtegida")?.Value;
+        var idPedidoClaim = principal.FindFirst("idPedido")?.Value;
+        var subClaim = principal.FindFirst(JwtRegisteredClaimNames.Sub)?.Value ?? principal.FindFirst("sub")?.Value;
+
+        if (typ != "supervisor-auth") return false;
+        if (!string.Equals(accionClaim, "DescuentoExcesivo", StringComparison.OrdinalIgnoreCase)) return false;
+        if (!string.Equals(idPedidoClaim, idPedido.ToString(), StringComparison.OrdinalIgnoreCase)) return false;
+
+        if (int.TryParse(subClaim, out var supervisorId))
+            idUsuarioSupervisor = supervisorId;
+
+        return true;
+    }
+
     private string GenerarTokenAutorizacion(int idSupervisor, string accionProtegida, Guid idPedido, Guid? idPedidoDetalle, DateTime nowUtc)
     {
         var (issuer, audience, signingKeyBytes) = LeerConfigJwt();

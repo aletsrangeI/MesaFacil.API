@@ -21,4 +21,11 @@ public interface ISupervisorPinSecurityService
     /// Usado por el endpoint de borrado de PedidoDetalle (restricción infranqueable, criterio #1).
     /// </summary>
     bool ValidarTokenAutorizacion(string? token, string accionEsperada, Guid idPedidoDetalle, out int? idUsuarioSupervisor);
+
+    /// <summary>
+    /// Spec 028: Valida el token efímero de autorización emitido para aplicar un descuento >10%.
+    /// Verifica firma, expiración (60s), typ "supervisor-auth", que "accionProtegida" sea "DescuentoExcesivo"
+    /// y que "idPedido" coincida con el pedido de la cuenta que se cobra.
+    /// </summary>
+    bool ValidarTokenDescuento(string? token, Guid idPedido, out int? idUsuarioSupervisor);
 }
