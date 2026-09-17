@@ -30,5 +30,7 @@ public interface ICuentaApplication
     Task<Response<CuentaDTO>> GenerarCuentaAsync(Guid idPedido);
     Response<CuentaDTO> GenerarCuenta(Guid idPedido);
 
+    Task<Response<CuentaDTO>> AplicarDescuentoAsync(AplicarDescuentoCuentaDTO dto);
+
     #endregion
 }

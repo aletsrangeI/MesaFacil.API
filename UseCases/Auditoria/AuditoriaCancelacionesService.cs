@@ -25,6 +25,7 @@ public class AuditoriaCancelacionesService : IAuditoriaCancelacionesService
 {
     private const decimal UmbralAlertaPorcentaje = 2.0m;
     private const string TipoEventoPlatilloCancelado = "PlatilloCancelado";
+    private const string TipoEventoDescuentoAutorizado = "DescuentoAutorizado";
 
     private readonly ApplicationDbContext _context;
 
@@ -59,7 +60,7 @@ public class AuditoriaCancelacionesService : IAuditoriaCancelacionesService
             .Include(e => e.Usuario)
             .Include(e => e.UsuarioSupervisor)
             .Where(e => e.IsActive
-                        && e.TipoEvento == TipoEventoPlatilloCancelado
+                        && (e.TipoEvento == TipoEventoPlatilloCancelado || e.TipoEvento == TipoEventoDescuentoAutorizado)
                         && e.CreatedAt >= fechaInicio && e.CreatedAt <= fechaFin
                         && e.Pedido.IdSucursal == turno.IdSucursal)
             .OrderByDescending(e => e.CreatedAt)
@@ -105,12 +106,17 @@ public class AuditoriaCancelacionesService : IAuditoriaCancelacionesService
         string? platillo = null;
         string? motivo = null;
 
+        if (evento.TipoEvento == TipoEventoDescuentoAutorizado)
+        {
+            platillo = $"Descuento {evento.PorcentajeDescuento ?? 0:F1}%";
+        }
+
         if (!string.IsNullOrWhiteSpace(evento.Payload))
         {
             try
             {
                 using var doc = JsonDocument.Parse(evento.Payload);
-                if (doc.RootElement.TryGetProperty("ProductoNombre", out var p)) platillo = p.GetString();
+                if (platillo == null && doc.RootElement.TryGetProperty("ProductoNombre", out var p)) platillo = p.GetString();
                 if (doc.RootElement.TryGetProperty("Motivo", out var m)) motivo = m.GetString();
             }
             catch (JsonException)

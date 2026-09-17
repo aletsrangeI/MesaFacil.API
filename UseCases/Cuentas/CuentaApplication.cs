@@ -14,17 +14,20 @@ public class CuentaApplication : ICuentaApplication
     private readonly IMapper _mapper;
     private readonly CuentaDTOValidator _validationRules;
     private readonly IAppLogger<CuentaApplication> _logger;
+    private readonly ISupervisorPinSecurityService? _supervisorPinSecurityService;
 
     public CuentaApplication(
         IUnitOfWork unitOfWork,
         IMapper mapper,
         CuentaDTOValidator validationRules,
-        IAppLogger<CuentaApplication> logger)
+        IAppLogger<CuentaApplication> logger,
+        ISupervisorPinSecurityService? supervisorPinSecurityService = null)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
         _validationRules = validationRules;
         _logger = logger;
+        _supervisorPinSecurityService = supervisorPinSecurityService;
     }
 
     #region Metodos sincronos
@@ -361,7 +364,7 @@ public class CuentaApplication : ICuentaApplication
                 cuenta = cuentaExistente;
                 cuenta.Subtotal = subtotal;
                 cuenta.ImpuestoTotal = impuestoTotal;
-                cuenta.Total = total;
+                cuenta.Total = Math.Max(0m, (subtotal + impuestoTotal) - cuenta.DescuentoTotal);
                 cuenta.UpdatedAt = DateTime.UtcNow;
                 cuenta.UpdatedBy = "System";
                 await _unitOfWork.Cuentas.UpdateAsync(cuenta);
@@ -373,6 +376,7 @@ public class CuentaApplication : ICuentaApplication
                     IdPedido = idPedido,
                     Subtotal = subtotal,
                     ImpuestoTotal = impuestoTotal,
+                    DescuentoTotal = 0m,
                     Total = total,
                     IdEstadoCuenta = 2, // Abierta
                     IsActive = true,
@@ -400,6 +404,42 @@ public class CuentaApplication : ICuentaApplication
                 MetodoDePago = p.IdMetodoDePago == 1 ? "Efectivo" : "Tarjeta",
                 PagadoEn = p.PagadoEn
             }).ToList();
+
+            // Spec 028: Buscar evento de descuento reciente para enriquecer el DTO de la cuenta
+            if (_unitOfWork.EventosPedido != null)
+            {
+                var eventosAll = await _unitOfWork.EventosPedido.GetAllAsync();
+                if (eventosAll != null)
+                {
+                    var eventoDescuento = eventosAll
+                        .Where(e => e.IdPedido == idPedido && (e.TipoEvento == "DescuentoAutorizado" || e.TipoEvento == "DescuentoAplicado") && e.IsActive)
+                        .OrderByDescending(e => e.CreatedAt)
+                        .FirstOrDefault();
+
+                    if (eventoDescuento != null)
+                    {
+                        dto.PorcentajeDescuento = eventoDescuento.PorcentajeDescuento ?? 0m;
+                        if (!string.IsNullOrWhiteSpace(eventoDescuento.Payload))
+                        {
+                            try
+                            {
+                                using var doc = System.Text.Json.JsonDocument.Parse(eventoDescuento.Payload);
+                                if (doc.RootElement.TryGetProperty("Motivo", out var m)) dto.MotivoDescuento = m.GetString();
+                            }
+                            catch { }
+                        }
+
+                        if (eventoDescuento.IdUsuarioSupervisor.HasValue && _unitOfWork.Usuarios != null)
+                        {
+                            var supervisor = await _unitOfWork.Usuarios.GetAsync(eventoDescuento.IdUsuarioSupervisor.Value);
+                            if (supervisor != null)
+                            {
+                                dto.AutorizadoPor = supervisor.NombreCompleto;
+                            }
+                        }
+                    }
+                }
+            }
 
             // Metadatos de Mesa y Sucursal
             if (pedido.IdMesa.HasValue)
@@ -450,5 +490,69 @@ public class CuentaApplication : ICuentaApplication
     public Response<CuentaDTO> GenerarCuenta(Guid idPedido)
     {
         return GenerarCuentaAsync(idPedido).GetAwaiter().GetResult();
+    }
+
+    public async Task<Response<CuentaDTO>> AplicarDescuentoAsync(AplicarDescuentoCuentaDTO dto)
+    {
+        var response = new Response<CuentaDTO>();
+        try
+        {
+            var cuenta = await _unitOfWork.Cuentas.GetAsync(dto.IdCuenta);
+            if (cuenta == null) throw new Exception("Cuenta no encontrada");
+
+            int? supervisorId = null;
+            if (dto.PorcentajeDescuento > 10.0m)
+            {
+                if (_supervisorPinSecurityService == null ||
+                    !_supervisorPinSecurityService.ValidarTokenDescuento(dto.SupervisorAuthToken, cuenta.IdPedido, out supervisorId))
+                {
+                    response.isSuccess = false;
+                    response.Message = "El descuento superior al 10% requiere autorización válida de supervisor.";
+                    return response;
+                }
+            }
+
+            decimal montoDescuento = dto.MontoDescuento;
+            if (montoDescuento <= 0 && dto.PorcentajeDescuento > 0)
+            {
+                var baseTotal = cuenta.Subtotal + cuenta.ImpuestoTotal;
+                montoDescuento = Math.Round(baseTotal * (dto.PorcentajeDescuento / 100m), 2);
+            }
+
+            cuenta.DescuentoTotal = montoDescuento;
+            cuenta.Total = Math.Max(0m, (cuenta.Subtotal + cuenta.ImpuestoTotal) - cuenta.DescuentoTotal);
+            cuenta.UpdatedAt = DateTime.UtcNow;
+            cuenta.UpdatedBy = supervisorId.HasValue ? $"Supervisor #{supervisorId}" : "CuentaApplication";
+            await _unitOfWork.Cuentas.UpdateAsync(cuenta);
+
+            var eventoDescuento = new EventoPedido
+            {
+                IdPedido = cuenta.IdPedido,
+                IdUsuarioSupervisor = supervisorId,
+                TipoEvento = dto.PorcentajeDescuento > 10.0m ? "DescuentoAutorizado" : "DescuentoAplicado",
+                MontoCancelado = montoDescuento,
+                PorcentajeDescuento = dto.PorcentajeDescuento,
+                Payload = System.Text.Json.JsonSerializer.Serialize(new
+                {
+                    IdCuenta = cuenta.Id,
+                    dto.PorcentajeDescuento,
+                    MontoDescuento = montoDescuento,
+                    Motivo = dto.MotivoDescuento,
+                    IdSupervisor = supervisorId
+                }),
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow,
+                CreatedBy = supervisorId.HasValue ? $"Supervisor #{supervisorId}" : "CuentaApplication"
+            };
+            await _unitOfWork.EventosPedido.InsertAsync(eventoDescuento);
+
+            return await GenerarCuentaAsync(cuenta.IdPedido);
+        }
+        catch (Exception ex)
+        {
+            response.Message = ex.Message;
+            _logger.LogError(ex.Message);
+        }
+        return response;
     }
 }
