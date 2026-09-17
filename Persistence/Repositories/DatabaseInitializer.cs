@@ -26,6 +26,12 @@ public sealed class DatabaseInitializer : IDatabaseInitializer
     {
         _logger.LogInformation("Iniciando inicialización de base de datos...");
 
+        if (_db.Database.IsRelational())
+        {
+            _logger.LogInformation("Aplicando migraciones pendientes de EF Core...");
+            await _db.Database.MigrateAsync(ct);
+        }
+
         // 0) Reparar datos corruptos de ejecuciones anteriores
         await RepairCorruptRolesAsync(ct);
 
