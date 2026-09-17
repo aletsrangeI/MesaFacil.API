@@ -76,7 +76,7 @@ jobs:
             sleep 2
           done
 
-      # Configurar clave SSH sanitizando posibles saltos de línea
+      # Configurar clave SSH sanitizando posibles saltos de línea y forzando algoritmo KEX compatible con MTU de Tailscale
       - name: Configurar SSH
         env:
           SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
@@ -84,6 +84,15 @@ jobs:
           mkdir -p ~/.ssh
           printf "%s\n" "$SSH_KEY" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
+          cat << 'EOF' > ~/.ssh/config
+          Host *
+            KexAlgorithms curve25519-sha256,curve25519-sha256@libssh.org,diffie-hellman-group14-sha256
+            IPQoS throughput
+            ServerAliveInterval 15
+            ServerAliveCountMax 3
+            StrictHostKeyChecking no
+          EOF
+          chmod 600 ~/.ssh/config
           ssh-keyscan -H ${{ secrets.HOMELAB_HOST }} >> ~/.ssh/known_hosts 2>/dev/null || true
 
       # Despliegue con Docker Compose en Homelab
@@ -91,7 +100,7 @@ jobs:
         run: |
           SSH_USER=$(echo "${{ secrets.SSH_USER }}" | tr -d '\r\n[:space:]')
           HOMELAB_HOST=$(echo "${{ secrets.HOMELAB_HOST }}" | tr -d '\r\n[:space:]')
-          ssh -v -o StrictHostKeyChecking=no -i ~/.ssh/id_ed25519 "$SSH_USER@$HOMELAB_HOST" bash << 'EOF'
+          ssh -v -o KexAlgorithms=curve25519-sha256 -o IPQoS=throughput -o StrictHostKeyChecking=no -i ~/.ssh/id_ed25519 "$SSH_USER@$HOMELAB_HOST" bash << 'EOF'
             set -e
             cd /opt/mesafacil
             docker compose pull api
