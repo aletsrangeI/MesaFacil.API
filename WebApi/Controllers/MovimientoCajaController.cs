@@ -1,4 +1,5 @@
 using Common;
+using Domain.Entities;
 using DTO.MovimientoCaja;
 using Interface.UseCases;
 using Microsoft.AspNetCore.Authorization;
@@ -150,7 +151,21 @@ public class MovimientoCajaController : ControllerBase
 
         try
         {
-            var query = _context.MovimientosCaja
+            DateTime? fInicio = fechaInicio.HasValue ? DateTime.SpecifyKind(fechaInicio.Value, DateTimeKind.Utc) : null;
+            DateTime? fFin = fechaFin.HasValue ? DateTime.SpecifyKind(fechaFin.Value, DateTimeKind.Utc) : null;
+
+            // 1. Obtener Turno de referencia si se solicitó por idTurno
+            Turno? turnoFiltro = null;
+            if (idTurno.HasValue && idTurno.Value > 0)
+            {
+                turnoFiltro = await _context.Turnos
+                    .Include(t => t.Sucursal)
+                    .Include(t => t.Usuario)
+                    .FirstOrDefaultAsync(t => t.Id == idTurno.Value);
+            }
+
+            // 2. Movimientos manuales de caja (Entradas / Egresos)
+            var movQuery = _context.MovimientosCaja
                 .Include(m => m.Turno)
                     .ThenInclude(t => t.Usuario)
                 .Include(m => m.Turno)
@@ -159,28 +174,25 @@ public class MovimientoCajaController : ControllerBase
 
             if (idTurno.HasValue && idTurno.Value > 0)
             {
-                query = query.Where(m => m.IdTurno == idTurno.Value);
+                movQuery = movQuery.Where(m => m.IdTurno == idTurno.Value);
             }
 
             if (idSucursal.HasValue && idSucursal.Value > 0)
             {
-                query = query.Where(m => m.Turno.IdSucursal == idSucursal.Value);
+                movQuery = movQuery.Where(m => m.Turno.IdSucursal == idSucursal.Value);
             }
 
-            if (fechaInicio.HasValue)
+            if (fInicio.HasValue)
             {
-                var fInicio = DateTime.SpecifyKind(fechaInicio.Value, DateTimeKind.Utc);
-                query = query.Where(m => m.CreatedAt >= fInicio);
+                movQuery = movQuery.Where(m => m.CreatedAt >= fInicio.Value);
             }
 
-            if (fechaFin.HasValue)
+            if (fFin.HasValue)
             {
-                var fFin = DateTime.SpecifyKind(fechaFin.Value, DateTimeKind.Utc);
-                query = query.Where(m => m.CreatedAt <= fFin);
+                movQuery = movQuery.Where(m => m.CreatedAt <= fFin.Value);
             }
 
-            var list = await query
-                .OrderByDescending(m => m.CreatedAt)
+            var movList = await movQuery
                 .Select(m => new MovimientoCajaItemDTO
                 {
                     Id = m.Id,
@@ -199,6 +211,150 @@ public class MovimientoCajaController : ControllerBase
                     CreatedAt = m.CreatedAt
                 })
                 .ToListAsync();
+
+            // 3. Pagos de cuentas/pedidos (Cobros de mesas, mostrador y delivery)
+            var pagosQuery = _context.Pagos
+                .Include(p => p.Cuenta)
+                    .ThenInclude(c => c.Pedido)
+                        .ThenInclude(ped => ped.Mesa)
+                .Include(p => p.Cuenta)
+                    .ThenInclude(c => c.Pedido)
+                        .ThenInclude(ped => ped.Sucursal)
+                .Include(p => p.Cuenta)
+                    .ThenInclude(c => c.Pedido)
+                        .ThenInclude(ped => ped.AbiertoPorUsuario)
+                .Include(p => p.RecibidoPorUsuario)
+                .Include(p => p.MetodoDePago)
+                .Where(p => p.IsActive);
+
+            if (idTurno.HasValue && idTurno.Value > 0)
+            {
+                if (turnoFiltro != null)
+                {
+                    var aperturaUtc = DateTime.SpecifyKind(turnoFiltro.Apertura, DateTimeKind.Utc);
+                    pagosQuery = pagosQuery.Where(p => p.Cuenta.Pedido.IdSucursal == turnoFiltro.IdSucursal && p.PagadoEn >= aperturaUtc);
+                    if (turnoFiltro.Cierre.HasValue)
+                    {
+                        var cierreUtc = DateTime.SpecifyKind(turnoFiltro.Cierre.Value, DateTimeKind.Utc);
+                        pagosQuery = pagosQuery.Where(p => p.PagadoEn <= cierreUtc);
+                    }
+                }
+                else
+                {
+                    pagosQuery = pagosQuery.Where(p => false);
+                }
+            }
+            else
+            {
+                if (idSucursal.HasValue && idSucursal.Value > 0)
+                {
+                    pagosQuery = pagosQuery.Where(p => p.Cuenta.Pedido.IdSucursal == idSucursal.Value);
+                }
+
+                if (fInicio.HasValue)
+                {
+                    pagosQuery = pagosQuery.Where(p => p.PagadoEn >= fInicio.Value);
+                }
+
+                if (fFin.HasValue)
+                {
+                    pagosQuery = pagosQuery.Where(p => p.PagadoEn <= fFin.Value);
+                }
+            }
+
+            var pagos = await pagosQuery.ToListAsync();
+
+            // 4. Pre-cargar turnos relevantes para asociar a los cobros
+            List<Turno> turnosRelevantes = new();
+            if (pagos.Any())
+            {
+                if (turnoFiltro != null)
+                {
+                    turnosRelevantes.Add(turnoFiltro);
+                }
+                else
+                {
+                    var turnosQ = _context.Turnos
+                        .Include(t => t.Usuario)
+                        .Include(t => t.Sucursal)
+                        .AsQueryable();
+
+                    if (idSucursal.HasValue && idSucursal.Value > 0)
+                    {
+                        turnosQ = turnosQ.Where(t => t.IdSucursal == idSucursal.Value);
+                    }
+
+                    if (fInicio.HasValue)
+                    {
+                        var fMargen = fInicio.Value.AddDays(-1);
+                        turnosQ = turnosQ.Where(t => t.Cierre == null || t.Cierre >= fMargen);
+                    }
+
+                    turnosRelevantes = await turnosQ.ToListAsync();
+                }
+            }
+
+            var pagosList = pagos.Select(p =>
+            {
+                var ped = p.Cuenta?.Pedido;
+                var pedSucursalId = ped?.IdSucursal ?? idSucursal ?? 0;
+                var pFecha = DateTime.SpecifyKind(p.PagadoEn, DateTimeKind.Utc);
+
+                var turnoAsociado = turnosRelevantes.FirstOrDefault(t =>
+                    t.IdSucursal == pedSucursalId &&
+                    pFecha >= DateTime.SpecifyKind(t.Apertura, DateTimeKind.Utc) &&
+                    (!t.Cierre.HasValue || pFecha <= DateTime.SpecifyKind(t.Cierre.Value, DateTimeKind.Utc)));
+
+                int itemTurnoId = turnoAsociado?.Id ?? 0;
+                string itemSucursalNombre = ped?.Sucursal?.Nombre ?? turnoAsociado?.Sucursal?.Nombre ?? "";
+                string itemUsuario = turnoAsociado?.Usuario?.NombreCompleto
+                    ?? p.RecibidoPorUsuario?.NombreCompleto
+                    ?? ped?.AbiertoPorUsuario?.NombreCompleto
+                    ?? p.CreatedBy
+                    ?? "Cajero";
+
+                string mesaDesc;
+                if (ped?.Mesa != null)
+                {
+                    mesaDesc = $"Mesa {ped.Mesa.Codigo}";
+                }
+                else if (!string.IsNullOrEmpty(ped?.CanalOrigen) && ped.CanalOrigen != "POS")
+                {
+                    mesaDesc = $"Pedido {ped.CanalOrigen}";
+                }
+                else
+                {
+                    mesaDesc = "Mostrador";
+                }
+
+                var metodoNombre = p.MetodoDePago?.Descripcion ?? "Pago";
+                var concepto = $"Cobro {mesaDesc} ({metodoNombre})";
+
+                var folio = ped != null && ped.FolioDiario > 0 ? $" • Folio #{ped.FolioDiario}" : "";
+                var propinaInfo = p.Propina > 0 ? $" • Propina: ${p.Propina:F2}" : "";
+                var refInfo = !string.IsNullOrWhiteSpace(p.Referencia) ? $" • Ref: {p.Referencia}" : "";
+                var nota = $"Cuenta #{p.IdCuenta}{folio}{propinaInfo}{refInfo}";
+
+                return new MovimientoCajaItemDTO
+                {
+                    Id = p.Id,
+                    IdTurno = itemTurnoId,
+                    IdSucursal = pedSucursalId,
+                    NombreSucursal = itemSucursalNombre,
+                    NombreUsuario = itemUsuario,
+                    Tipo = "Ingreso",
+                    Monto = p.Monto + p.Propina,
+                    Concepto = concepto,
+                    Nota = nota,
+                    CreatedAt = p.PagadoEn != default ? p.PagadoEn : p.CreatedAt
+                };
+            }).ToList();
+
+            // 5. Unificar y ordenar cronológicamente descendente
+            var list = movList
+                .Concat(pagosList)
+                .OrderByDescending(m => m.CreatedAt)
+                .ToList();
 
             response.Data = list;
             response.isSuccess = true;
