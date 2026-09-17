@@ -30,6 +30,28 @@ public class UsuarioApplication : IUsuarioApplication
         _logger = logger;
     }
 
+    private UsuarioDTO MapToUsuarioDto(Usuario user)
+    {
+        var dto = _mapper.Map<UsuarioDTO>(user);
+        dto.NombreEmpresa = user.Empresa?.Nombre;
+        dto.NombreSucursal = user.Sucursal?.Nombre;
+        var ur = user.UsuarioRoles.FirstOrDefault(r => r.IsActive);
+        if (ur != null)
+        {
+            dto.IdRol = ur.IdRol;
+            dto.NombreRol = ur.Rol?.Nombre;
+        }
+
+        dto.HasPassword = user.Credenciales.Any(c => c.CatCredencial?.Descripcion == "PASSWORD" && c.IsActive);
+        dto.HasPin = user.Credenciales.Any(c => c.CatCredencial?.Descripcion == "PIN" && c.IsActive);
+        dto.HasPinSupervisor = !string.IsNullOrEmpty(user.PinSupervisorHash);
+        dto.IsPinSupervisorLocked = user.PinBloqueadoHasta.HasValue && user.PinBloqueadoHasta.Value > DateTime.UtcNow;
+        dto.PinBloqueadoHasta = user.PinBloqueadoHasta;
+        dto.HasOpenTurno = user.Turnos.Any(t => t.Cierre == null && t.IsActive);
+
+        return dto;
+    }
+
     #region Metodos sincronos
 
     public Response<bool> Insert(UsuarioDTO dto)
@@ -47,6 +69,17 @@ public class UsuarioApplication : IUsuarioApplication
             }
 
             var entity = _mapper.Map<Usuario>(dto);
+
+            // Spec 024: Candado de Supervisor
+            if (!string.IsNullOrWhiteSpace(dto.PinSupervisor))
+            {
+                var (supHash, supSalt) = _hasher.HashPassword(dto.PinSupervisor);
+                entity.PinSupervisorHash = supHash;
+                entity.PinSupervisorSalt = supSalt;
+                entity.PinIntentosFallidos = 0;
+                entity.PinBloqueadoHasta = null;
+            }
+
             response.Data = _unitOfWork.Usuarios.Insert(entity);
 
             if (response.Data)
@@ -72,7 +105,7 @@ public class UsuarioApplication : IUsuarioApplication
                     }
                 }
 
-                // 1.2 Asignar PIN (si se proporciona)
+                // 1.2 Asignar PIN de acceso rápido (si se proporciona)
                 if (!string.IsNullOrWhiteSpace(dto.Pin))
                 {
                     var catCred = _unitOfWork.CatCredenciales.GetAll()
@@ -133,8 +166,49 @@ public class UsuarioApplication : IUsuarioApplication
                 return response;
             }
 
-            var entity = _mapper.Map<Usuario>(dto);
-            response.Data = _unitOfWork.Usuarios.Update(entity);
+            var existingUser = _unitOfWork.Usuarios.Get(dto.Id);
+            if (existingUser == null)
+            {
+                response.isSuccess = false;
+                response.Message = "Usuario no encontrado";
+                return response;
+            }
+
+            // Protección de turno: no desactivar usuario con turno de caja abierto
+            if (!dto.IsActive && existingUser.IsActive)
+            {
+                var hasOpenTurno = _unitOfWork.Usuarios.HasOpenTurnoAsync(dto.Id, CancellationToken.None).GetAwaiter().GetResult();
+                if (hasOpenTurno)
+                {
+                    response.isSuccess = false;
+                    response.Message = "No es posible desactivar al usuario porque tiene un turno de caja abierto en el POS. Cierre el turno antes de continuar.";
+                    return response;
+                }
+            }
+
+            existingUser.NombreCompleto = dto.NombreCompleto;
+            existingUser.Correo = dto.Correo;
+            existingUser.IdEmpresa = dto.IdEmpresa;
+            existingUser.IdSucursal = dto.IdSucursal;
+            existingUser.IsActive = dto.IsActive;
+
+            // Spec 024: Candado de Supervisor
+            if (!string.IsNullOrWhiteSpace(dto.PinSupervisor))
+            {
+                var (supHash, supSalt) = _hasher.HashPassword(dto.PinSupervisor);
+                existingUser.PinSupervisorHash = supHash;
+                existingUser.PinSupervisorSalt = supSalt;
+                existingUser.PinIntentosFallidos = 0;
+                existingUser.PinBloqueadoHasta = null;
+            }
+            else if (dto.DesbloquearPinSupervisor == true)
+            {
+                existingUser.PinIntentosFallidos = 0;
+                existingUser.PinBloqueadoHasta = null;
+            }
+
+            response.Data = _unitOfWork.Usuarios.Update(existingUser);
+            var entity = existingUser;
 
             if (response.Data)
             {
@@ -252,6 +326,15 @@ public class UsuarioApplication : IUsuarioApplication
         var response = new Response<bool>();
         try
         {
+            // Protección de turno: no eliminar usuario con turno de caja abierto
+            var hasOpenTurno = _unitOfWork.Usuarios.HasOpenTurnoAsync(id, CancellationToken.None).GetAwaiter().GetResult();
+            if (hasOpenTurno)
+            {
+                response.isSuccess = false;
+                response.Message = "No es posible eliminar al usuario porque tiene un turno de caja abierto en el POS. Cierre el turno antes de proceder.";
+                return response;
+            }
+
             response.Data = _unitOfWork.Usuarios.Delete(id);
 
             if (response.Data)
@@ -283,15 +366,7 @@ public class UsuarioApplication : IUsuarioApplication
             
             if (entity != null)
             {
-                var dto = _mapper.Map<UsuarioDTO>(entity);
-                dto.NombreEmpresa = entity.Empresa?.Nombre;
-                var role = entity.UsuarioRoles.FirstOrDefault(ur => ur.IsActive);
-                if (role != null)
-                {
-                    dto.IdRol = role.IdRol;
-                    dto.NombreRol = role.Rol?.Nombre;
-                }
-                response.Data = dto;
+                response.Data = MapToUsuarioDto(entity);
                 response.isSuccess = true;
                 response.Message = "Usuario encontrado";
             }
@@ -316,20 +391,7 @@ public class UsuarioApplication : IUsuarioApplication
         try
         {
             var list = _unitOfWork.Usuarios.GetAll();
-            var mapped = new List<UsuarioDTO>();
-            foreach (var user in list)
-            {
-                var dto = _mapper.Map<UsuarioDTO>(user);
-                dto.NombreEmpresa = user.Empresa?.Nombre;
-                var ur = user.UsuarioRoles.FirstOrDefault(r => r.IsActive);
-                if (ur != null)
-                {
-                    dto.IdRol = ur.IdRol;
-                    dto.NombreRol = ur.Rol?.Nombre;
-                }
-                mapped.Add(dto);
-            }
-            response.Data = mapped;
+            response.Data = list.Select(MapToUsuarioDto).ToList();
             response.isSuccess = true;
             response.Message = "Usuarios obtenidos correctamente";
         }
@@ -349,22 +411,7 @@ public class UsuarioApplication : IUsuarioApplication
         {
             var count = _unitOfWork.Usuarios.Count();
             var list = _unitOfWork.Usuarios.GetAllWithPagination(page, pageSize);
-
-            var mapped = new List<UsuarioDTO>();
-            foreach (var user in list)
-            {
-                var dto = _mapper.Map<UsuarioDTO>(user);
-                dto.NombreEmpresa = user.Empresa?.Nombre;
-                var ur = user.UsuarioRoles.FirstOrDefault(r => r.IsActive);
-                if (ur != null)
-                {
-                    dto.IdRol = ur.IdRol;
-                    dto.NombreRol = ur.Rol?.Nombre;
-                }
-                mapped.Add(dto);
-            }
-
-            response.Data = mapped;
+            response.Data = list.Select(MapToUsuarioDto).ToList();
             response.PageNumber = page;
             response.TotalCount = count;
             response.TotalPages = (int)Math.Ceiling(count / (double)pageSize);
@@ -417,6 +464,17 @@ public class UsuarioApplication : IUsuarioApplication
             }
 
             var entity = _mapper.Map<Usuario>(dto);
+
+            // Spec 024: Candado de Supervisor
+            if (!string.IsNullOrWhiteSpace(dto.PinSupervisor))
+            {
+                var (supHash, supSalt) = _hasher.HashPassword(dto.PinSupervisor);
+                entity.PinSupervisorHash = supHash;
+                entity.PinSupervisorSalt = supSalt;
+                entity.PinIntentosFallidos = 0;
+                entity.PinBloqueadoHasta = null;
+            }
+
             response.Data = await _unitOfWork.Usuarios.InsertAsync(entity);
 
             if (response.Data)
@@ -442,7 +500,7 @@ public class UsuarioApplication : IUsuarioApplication
                     }
                 }
 
-                // 1.2 Asignar PIN (si se proporciona)
+                // 1.2 Asignar PIN de acceso rápido (si se proporciona)
                 if (!string.IsNullOrWhiteSpace(dto.Pin))
                 {
                     var catCreds = await _unitOfWork.CatCredenciales.GetAllAsync();
@@ -503,8 +561,49 @@ public class UsuarioApplication : IUsuarioApplication
                 return response;
             }
 
-            var entity = _mapper.Map<Usuario>(dto);
-            response.Data = await _unitOfWork.Usuarios.UpdateAsync(entity);
+            var existingUser = await _unitOfWork.Usuarios.GetAsync(dto.Id);
+            if (existingUser == null)
+            {
+                response.isSuccess = false;
+                response.Message = "Usuario no encontrado";
+                return response;
+            }
+
+            // Protección de turno: no desactivar usuario con turno de caja abierto
+            if (!dto.IsActive && existingUser.IsActive)
+            {
+                var hasOpenTurno = await _unitOfWork.Usuarios.HasOpenTurnoAsync(dto.Id, CancellationToken.None);
+                if (hasOpenTurno)
+                {
+                    response.isSuccess = false;
+                    response.Message = "No es posible desactivar al usuario porque tiene un turno de caja abierto en el POS. Cierre el turno antes de continuar.";
+                    return response;
+                }
+            }
+
+            existingUser.NombreCompleto = dto.NombreCompleto;
+            existingUser.Correo = dto.Correo;
+            existingUser.IdEmpresa = dto.IdEmpresa;
+            existingUser.IdSucursal = dto.IdSucursal;
+            existingUser.IsActive = dto.IsActive;
+
+            // Spec 024: Candado de Supervisor
+            if (!string.IsNullOrWhiteSpace(dto.PinSupervisor))
+            {
+                var (supHash, supSalt) = _hasher.HashPassword(dto.PinSupervisor);
+                existingUser.PinSupervisorHash = supHash;
+                existingUser.PinSupervisorSalt = supSalt;
+                existingUser.PinIntentosFallidos = 0;
+                existingUser.PinBloqueadoHasta = null;
+            }
+            else if (dto.DesbloquearPinSupervisor == true)
+            {
+                existingUser.PinIntentosFallidos = 0;
+                existingUser.PinBloqueadoHasta = null;
+            }
+
+            response.Data = await _unitOfWork.Usuarios.UpdateAsync(existingUser);
+            var entity = existingUser;
 
             if (response.Data)
             {
@@ -621,6 +720,15 @@ public class UsuarioApplication : IUsuarioApplication
         var response = new Response<bool>();
         try
         {
+            // Protección de turno: no eliminar usuario con turno de caja abierto
+            var hasOpenTurno = await _unitOfWork.Usuarios.HasOpenTurnoAsync(id, CancellationToken.None);
+            if (hasOpenTurno)
+            {
+                response.isSuccess = false;
+                response.Message = "No es posible eliminar al usuario porque tiene un turno de caja abierto en el POS. Cierre el turno antes de proceder.";
+                return response;
+            }
+
             response.Data = await _unitOfWork.Usuarios.DeleteAsync(id);
 
             if (response.Data)
@@ -652,15 +760,7 @@ public class UsuarioApplication : IUsuarioApplication
             
             if (entity != null)
             {
-                var dto = _mapper.Map<UsuarioDTO>(entity);
-                dto.NombreEmpresa = entity.Empresa?.Nombre;
-                var role = entity.UsuarioRoles.FirstOrDefault(ur => ur.IsActive);
-                if (role != null)
-                {
-                    dto.IdRol = role.IdRol;
-                    dto.NombreRol = role.Rol?.Nombre;
-                }
-                response.Data = dto;
+                response.Data = MapToUsuarioDto(entity);
                 response.isSuccess = true;
                 response.Message = "Usuario encontrado";
             }
@@ -685,20 +785,7 @@ public class UsuarioApplication : IUsuarioApplication
         try
         {
             var list = await _unitOfWork.Usuarios.GetAllAsync();
-            var mapped = new List<UsuarioDTO>();
-            foreach (var user in list)
-            {
-                var dto = _mapper.Map<UsuarioDTO>(user);
-                dto.NombreEmpresa = user.Empresa?.Nombre;
-                var ur = user.UsuarioRoles.FirstOrDefault(r => r.IsActive);
-                if (ur != null)
-                {
-                    dto.IdRol = ur.IdRol;
-                    dto.NombreRol = ur.Rol?.Nombre;
-                }
-                mapped.Add(dto);
-            }
-            response.Data = mapped;
+            response.Data = list.Select(MapToUsuarioDto).ToList();
             response.isSuccess = true;
             response.Message = "Usuarios obtenidos correctamente";
         }
@@ -718,22 +805,7 @@ public class UsuarioApplication : IUsuarioApplication
         {
             var count = await _unitOfWork.Usuarios.CountAsync();
             var list = await _unitOfWork.Usuarios.GetAllWithPaginationAsync(page, pageSize);
-
-            var mapped = new List<UsuarioDTO>();
-            foreach (var user in list)
-            {
-                var dto = _mapper.Map<UsuarioDTO>(user);
-                dto.NombreEmpresa = user.Empresa?.Nombre;
-                var ur = user.UsuarioRoles.FirstOrDefault(r => r.IsActive);
-                if (ur != null)
-                {
-                    dto.IdRol = ur.IdRol;
-                    dto.NombreRol = ur.Rol?.Nombre;
-                }
-                mapped.Add(dto);
-            }
-
-            response.Data = mapped;
+            response.Data = list.Select(MapToUsuarioDto).ToList();
             response.PageNumber = page;
             response.TotalCount = count;
             response.TotalPages = (int)Math.Ceiling(count / (double)pageSize);

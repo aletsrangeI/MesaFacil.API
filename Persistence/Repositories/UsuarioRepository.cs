@@ -42,10 +42,12 @@ public class UsuarioRepository : IUsuarioRepository
     {
         return _context.Usuarios
             .Include(u => u.Empresa)
+            .Include(u => u.Sucursal)
             .Include(u => u.UsuarioRoles)
                 .ThenInclude(ur => ur.Rol)
             .Include(u => u.Credenciales)
                 .ThenInclude(c => c.CatCredencial)
+            .Include(u => u.Turnos.Where(t => t.Cierre == null && t.IsActive))
             .FirstOrDefault(u => u.Id == id);
     }
 
@@ -53,20 +55,24 @@ public class UsuarioRepository : IUsuarioRepository
     {
         return _context.Usuarios
             .Include(u => u.Empresa)
+            .Include(u => u.Sucursal)
             .Include(u => u.UsuarioRoles)
                 .ThenInclude(ur => ur.Rol)
             .Include(u => u.Credenciales)
-                .ThenInclude(c => c.CatCredencial);
+                .ThenInclude(c => c.CatCredencial)
+            .Include(u => u.Turnos.Where(t => t.Cierre == null && t.IsActive));
     }
 
     public IEnumerable<Usuario> GetAllWithPagination(int page, int pageSize)
     {
         return _context.Usuarios
             .Include(u => u.Empresa)
+            .Include(u => u.Sucursal)
             .Include(u => u.UsuarioRoles)
                 .ThenInclude(ur => ur.Rol)
             .Include(u => u.Credenciales)
                 .ThenInclude(c => c.CatCredencial)
+            .Include(u => u.Turnos.Where(t => t.Cierre == null && t.IsActive))
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToList();
@@ -110,6 +116,7 @@ public class UsuarioRepository : IUsuarioRepository
                 .ThenInclude(ur => ur.Rol)
             .Include(u => u.Credenciales)
                 .ThenInclude(c => c.CatCredencial)
+            .Include(u => u.Turnos.Where(t => t.Cierre == null && t.IsActive))
             .FirstOrDefaultAsync(u => u.Id == id);
     }
 
@@ -122,6 +129,7 @@ public class UsuarioRepository : IUsuarioRepository
                 .ThenInclude(ur => ur.Rol)
             .Include(u => u.Credenciales)
                 .ThenInclude(c => c.CatCredencial)
+            .Include(u => u.Turnos.Where(t => t.Cierre == null && t.IsActive))
             .ToListAsync();
     }
 
@@ -134,6 +142,7 @@ public class UsuarioRepository : IUsuarioRepository
                 .ThenInclude(ur => ur.Rol)
             .Include(u => u.Credenciales)
                 .ThenInclude(c => c.CatCredencial)
+            .Include(u => u.Turnos.Where(t => t.Cierre == null && t.IsActive))
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync();
