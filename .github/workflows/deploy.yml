@@ -23,12 +23,6 @@ jobs:
       - name: Checkout del código
         uses: actions/checkout@v4
 
-      # Conectar a Tailscale para que las pruebas puedan acceder a PostgreSQL
-      - name: Conectar a Tailscale
-        uses: tailscale/github-action@v3
-        with:
-          authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
-
       - name: Configurar .NET 9 SDK
         uses: actions/setup-dotnet@v4
         with:
@@ -63,7 +57,26 @@ jobs:
             ghcr.io/${{ env.IMAGE_OWNER }}/mesafacil-api:latest
             ghcr.io/${{ env.IMAGE_OWNER }}/mesafacil-api:${{ github.sha }}
 
-      # Configurar clave SSH
+      # Conectar a Tailscale justo antes del despliegue (evita interferencias con Docker Buildx)
+      - name: Conectar a Tailscale
+        uses: tailscale/github-action@v3
+        with:
+          authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
+
+      # Esperar a que el túnel Tailscale hacia Homelab esté caliente y listo
+      - name: Verificar conectividad Tailscale hacia Homelab
+        run: |
+          echo "Verificando ruta Tailscale hacia ${{ secrets.HOMELAB_HOST }}..."
+          for i in $(seq 1 12); do
+            if tailscale ping -c 1 ${{ secrets.HOMELAB_HOST }} >/dev/null 2>&1; then
+              echo ">> Túnel Tailscale activo y listo."
+              break
+            fi
+            echo "Esperando ruta WireGuard (intento $i/12)..."
+            sleep 2
+          done
+
+      # Configurar clave SSH sanitizando posibles saltos de línea
       - name: Configurar SSH
         env:
           SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
@@ -76,7 +89,9 @@ jobs:
       # Despliegue con Docker Compose en Homelab
       - name: Desplegar en Homelab con Docker Compose
         run: |
-          ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_ed25519 ${{ secrets.SSH_USER }}@${{ secrets.HOMELAB_HOST }} bash << 'EOF'
+          SSH_USER=$(echo "${{ secrets.SSH_USER }}" | tr -d '\r\n[:space:]')
+          HOMELAB_HOST=$(echo "${{ secrets.HOMELAB_HOST }}" | tr -d '\r\n[:space:]')
+          ssh -v -o StrictHostKeyChecking=no -i ~/.ssh/id_ed25519 "$SSH_USER@$HOMELAB_HOST" bash << 'EOF'
             set -e
             cd /opt/mesafacil
             docker compose pull api
