@@ -101,6 +101,9 @@ public static class ConfigureServices
         services.AddScoped<Interface.UseCases.IAuditoriaCancelacionesService, Auditoria.AuditoriaCancelacionesService>();
         RegisterGenericCatalog<CatMotivoCancelacion>(services, "motivos-cancelacion");
 
+        // Spec 031: Inteligencia Gastronómica & Matriz de Ingeniería de Menú (BCG)
+        services.AddScoped<Interface.UseCases.IMenuEngineeringService, Analitica.MenuEngineeringService>();
+
         return services;
     }
 
