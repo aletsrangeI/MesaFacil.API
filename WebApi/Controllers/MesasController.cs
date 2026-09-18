@@ -1,8 +1,11 @@
 using Common;
+using Domain.Entities;
 using DTO.Mesa;
 using Interface.UseCases;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
+using WebApi.Hubs;
 
 namespace WebApi.Controllers;
 
@@ -12,10 +15,12 @@ namespace WebApi.Controllers;
 public class MesasController : ControllerBase
 {
     private readonly IMesaApplication _mesaApplication;
+    private readonly IHubContext<MesasHub>? _mesasHub;
 
-    public MesasController(IMesaApplication mesaApplication)
+    public MesasController(IMesaApplication mesaApplication, IHubContext<MesasHub>? mesasHub = null)
     {
         _mesaApplication = mesaApplication;
+        _mesasHub = mesasHub;
     }
 
     #region Metodos sincronos
@@ -45,6 +50,17 @@ public class MesasController : ControllerBase
     public ActionResult<Response<bool>> Update([FromBody] MesaDTO mesa)
     {
         var response = _mesaApplication.Update(mesa);
+        if (response.isSuccess && _mesasHub != null)
+        {
+            _ = _mesasHub.Clients.All.SendAsync("MesaEstadoActualizado", new
+            {
+                idMesa = mesa.Id,
+                idEstadoMesa = mesa.IdEstadoMesa,
+                codigoMesa = mesa.Codigo,
+                idSucursal = mesa.IdSucursal,
+                timestamp = DateTime.UtcNow
+            });
+        }
         return Ok(response);
     }
 
@@ -98,6 +114,40 @@ public class MesasController : ControllerBase
     public async Task<ActionResult<Response<bool>>> UpdateAsync([FromBody] MesaDTO mesa)
     {
         var response = await _mesaApplication.UpdateAsync(mesa);
+        if (response.isSuccess && _mesasHub != null)
+        {
+            await _mesasHub.Clients.All.SendAsync("MesaEstadoActualizado", new
+            {
+                idMesa = mesa.Id,
+                idEstadoMesa = mesa.IdEstadoMesa,
+                codigoMesa = mesa.Codigo,
+                idSucursal = mesa.IdSucursal,
+                timestamp = DateTime.UtcNow
+            });
+        }
+        return Ok(response);
+    }
+
+    [HttpPut("{id}/solicitar-cuenta")]
+    [HttpPut("SolicitarCuenta/{id}")]
+    public async Task<ActionResult<Response<bool>>> SolicitarCuenta(int id)
+    {
+        var response = await _mesaApplication.SolicitarCuentaAsync(id);
+        if (response.isSuccess && _mesasHub != null)
+        {
+            var mesaRes = await _mesaApplication.GetAsync(id);
+            var codigoMesa = mesaRes.Data?.Codigo ?? $"M{id}";
+            var idSucursal = mesaRes.Data?.IdSucursal ?? 1;
+
+            await _mesasHub.Clients.All.SendAsync("MesaEstadoActualizado", new
+            {
+                idMesa = id,
+                idEstadoMesa = EstadosMesaConst.PidiendoCuenta,
+                codigoMesa = codigoMesa,
+                idSucursal = idSucursal,
+                timestamp = DateTime.UtcNow
+            });
+        }
         return Ok(response);
     }
 

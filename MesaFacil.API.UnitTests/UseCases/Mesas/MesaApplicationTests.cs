@@ -114,4 +114,89 @@ public class MesaApplicationTests
         // Verificamos que el error fue registrado en el logger
         _loggerMock.Verify(l => l.LogError(errorMessage), Times.Once);
     }
+
+    #region Spec 029: Estado Operativo de Mesa Pidiendo Cuenta / Por Cobrar
+
+    [Fact]
+    public async Task SolicitarCuentaAsync_WhenMesaExists_UpdatesStatusToPidiendoCuentaAndReturnsSuccess()
+    {
+        // Arrange
+        int mesaId = 5;
+        var mesaEntity = new Mesa
+        {
+            Id = mesaId,
+            Codigo = "M5",
+            IdEstadoMesa = EstadosMesaConst.Ocupada,
+            IsActive = true
+        };
+
+        _unitOfWorkMock.Setup(uow => uow.Mesas.GetAsync(mesaId))
+                       .ReturnsAsync(mesaEntity);
+        _unitOfWorkMock.Setup(uow => uow.Mesas.UpdateAsync(It.IsAny<Mesa>()))
+                       .ReturnsAsync(true);
+
+        // Act
+        var result = await _sut.SolicitarCuentaAsync(mesaId);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.isSuccess.Should().BeTrue();
+        result.Data.Should().BeTrue();
+        result.Message.Should().Be("Cuenta solicitada correctamente");
+
+        mesaEntity.IdEstadoMesa.Should().Be(EstadosMesaConst.PidiendoCuenta);
+        _unitOfWorkMock.Verify(uow => uow.Mesas.UpdateAsync(It.Is<Mesa>(m => m.Id == mesaId && m.IdEstadoMesa == EstadosMesaConst.PidiendoCuenta)), Times.Once);
+    }
+
+    [Fact]
+    public async Task SolicitarCuentaAsync_WhenMesaDoesNotExist_ReturnsResponseWithSuccessFalse()
+    {
+        // Arrange
+        int mesaId = 999;
+        _unitOfWorkMock.Setup(uow => uow.Mesas.GetAsync(mesaId))
+                       .ReturnsAsync((Mesa?)null);
+
+        // Act
+        var result = await _sut.SolicitarCuentaAsync(mesaId);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.isSuccess.Should().BeFalse();
+        result.Data.Should().BeFalse();
+        result.Message.Should().Be("Mesa no encontrada");
+        _unitOfWorkMock.Verify(uow => uow.Mesas.UpdateAsync(It.IsAny<Mesa>()), Times.Never);
+    }
+
+    [Fact]
+    public void SolicitarCuenta_Sync_WhenMesaExists_UpdatesStatusToPidiendoCuenta()
+    {
+        // Arrange
+        int mesaId = 3;
+        var mesaEntity = new Mesa
+        {
+            Id = mesaId,
+            Codigo = "M3",
+            IdEstadoMesa = EstadosMesaConst.Ocupada,
+            IsActive = true
+        };
+
+        _unitOfWorkMock.Setup(uow => uow.Mesas.Get(mesaId))
+                       .Returns(mesaEntity);
+        _unitOfWorkMock.Setup(uow => uow.Mesas.Update(It.IsAny<Mesa>()))
+                       .Returns(true);
+
+        // Act
+        var result = _sut.SolicitarCuenta(mesaId);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.isSuccess.Should().BeTrue();
+        result.Data.Should().BeTrue();
+        result.Message.Should().Be("Cuenta solicitada correctamente");
+
+        mesaEntity.IdEstadoMesa.Should().Be(EstadosMesaConst.PidiendoCuenta);
+        _unitOfWorkMock.Verify(uow => uow.Mesas.Update(It.Is<Mesa>(m => m.Id == mesaId && m.IdEstadoMesa == EstadosMesaConst.PidiendoCuenta)), Times.Once);
+    }
+
+    #endregion
 }
