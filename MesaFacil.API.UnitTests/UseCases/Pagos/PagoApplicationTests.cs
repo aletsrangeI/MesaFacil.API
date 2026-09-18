@@ -158,8 +158,8 @@ public class PagoApplicationTests
         // 2. Pedido cerrado -> Estado 5 (Cerrado)
         _unitOfWorkMock.Verify(u => u.Pedidos.UpdateAsync(It.Is<Pedido>(p => p.Id == pedidoId && p.IdEstadoPedido == 5)), Times.Once);
 
-        // 3. Mesa marcada sucia -> Estado 4 (Sucia)
-        _unitOfWorkMock.Verify(u => u.Mesas.UpdateAsync(It.Is<Mesa>(m => m.Id == mesaId && m.IdEstadoMesa == 4)), Times.Once);
+        // 3. Mesa marcada sucia -> Estado 5 (Sucia / EstadosMesaConst.Sucia)
+        _unitOfWorkMock.Verify(u => u.Mesas.UpdateAsync(It.Is<Mesa>(m => m.Id == mesaId && m.IdEstadoMesa == EstadosMesaConst.Sucia)), Times.Once);
 
         // 4. Evento de cierre registrado
         _unitOfWorkMock.Verify(u => u.EventosPedido.InsertAsync(It.Is<EventoPedido>(e =>

@@ -175,6 +175,37 @@ public class MesaApplication : IMesaApplication
         return response;
     }
 
+    public Response<bool> SolicitarCuenta(int idMesa)
+    {
+        var response = new Response<bool>();
+        try
+        {
+            var mesa = _unitOfWork.Mesas.Get(idMesa);
+            if (mesa == null)
+            {
+                response.isSuccess = false;
+                response.Message = "Mesa no encontrada";
+                return response;
+            }
+
+            mesa.IdEstadoMesa = EstadosMesaConst.PidiendoCuenta;
+            mesa.UpdatedAt = DateTime.UtcNow;
+            mesa.UpdatedBy = "Mesero";
+            response.Data = _unitOfWork.Mesas.Update(mesa);
+            if (response.Data)
+            {
+                response.isSuccess = true;
+                response.Message = "Cuenta solicitada correctamente";
+            }
+        }
+        catch (Exception ex)
+        {
+            response.Message = ex.Message;
+            _logger.LogError(ex.Message);
+        }
+        return response;
+    }
+
     #endregion
 
     #region Metodos asincronos
@@ -321,6 +352,37 @@ public class MesaApplication : IMesaApplication
             {
             	response.isSuccess = true;
             	response.Message = "Mesa encontrado";
+            }
+        }
+        catch (Exception ex)
+        {
+            response.Message = ex.Message;
+            _logger.LogError(ex.Message);
+        }
+        return response;
+    }
+
+    public async Task<Response<bool>> SolicitarCuentaAsync(int idMesa)
+    {
+        var response = new Response<bool>();
+        try
+        {
+            var mesa = await _unitOfWork.Mesas.GetAsync(idMesa);
+            if (mesa == null)
+            {
+                response.isSuccess = false;
+                response.Message = "Mesa no encontrada";
+                return response;
+            }
+
+            mesa.IdEstadoMesa = EstadosMesaConst.PidiendoCuenta;
+            mesa.UpdatedAt = DateTime.UtcNow;
+            mesa.UpdatedBy = "Mesero";
+            response.Data = await _unitOfWork.Mesas.UpdateAsync(mesa);
+            if (response.Data)
+            {
+                response.isSuccess = true;
+                response.Message = "Cuenta solicitada correctamente";
             }
         }
         catch (Exception ex)

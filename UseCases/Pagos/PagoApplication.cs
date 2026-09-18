@@ -457,7 +457,7 @@ public class PagoApplication : IPagoApplication
                         var mesa = await _unitOfWork.Mesas.GetAsync(pedido.IdMesa.Value);
                         if (mesa != null)
                         {
-                            mesa.IdEstadoMesa = 4; // Sucia
+                            mesa.IdEstadoMesa = EstadosMesaConst.Sucia; // 5 (Sucia / En Limpieza)
                             await _unitOfWork.Mesas.UpdateAsync(mesa);
                         }
                     }

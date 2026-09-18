@@ -157,7 +157,7 @@ public sealed class DatabaseInitializer : IDatabaseInitializer
 
     private async Task SeedCatEstadoMesaAsync(CancellationToken ct)
     {
-        var estados = new[] { "Disponible", "Ocupada", "Reservada", "Sucia", "Fuera de Servicio" };
+        var estados = new[] { "Disponible", "Ocupada", "Reservada", "Pidiendo Cuenta", "Sucia", "Fuera de Servicio" };
         foreach (var estado in estados)
         {
             var exists = await _db.Set<CatEstadoMesa>().AnyAsync(e => e.Descripcion == estado, ct);
