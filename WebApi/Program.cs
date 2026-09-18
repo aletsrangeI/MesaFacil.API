@@ -111,6 +111,7 @@ app.UseWatchDog(conf =>
 app.MapControllers();
 app.MapAllEndpoints();
 app.MapHub<KdsHub>("/hubs/kds");
+app.MapHub<MesasHub>("/hubs/mesas");
 
 // Spec 019: endpoint de salud liviano y anónimo para que MesaFacil.UI (useNetworkStatus) pueda
 // hacer ping periódico sin necesitar un token JWT.

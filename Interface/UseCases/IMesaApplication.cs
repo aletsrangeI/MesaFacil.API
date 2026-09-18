@@ -14,6 +14,7 @@ public interface IMesaApplication
     Response<IEnumerable<MesaDTO>> GetAll();
     ResponsePagination<IEnumerable<MesaDTO>> GetAllWithPagination(int page, int pageSize);
     Response<int> Count();
+    Response<bool> SolicitarCuenta(int idMesa);
 
     #endregion
 
@@ -26,6 +27,7 @@ public interface IMesaApplication
     Task<Response<IEnumerable<MesaDTO>>> GetAllAsync();
     Task<ResponsePagination<IEnumerable<MesaDTO>>> GetAllWithPaginationAsync(int page, int pageSize);
     Task<Response<int>> CountAsync();
+    Task<Response<bool>> SolicitarCuentaAsync(int idMesa);
 
     #endregion
 }
