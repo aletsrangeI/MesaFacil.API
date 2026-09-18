@@ -123,6 +123,10 @@ public class ApplicationDbContext : DbContext
     // Spec 023: Asistente de Autodiagnóstico y Auto-Recuperación de Impresoras Térmicas
     public DbSet<ConfiguracionImpresora>  ConfiguracionesImpresora  { get; set; }
 
+    // Spec 032: Hostess, Reservaciones y Fila de Espera Digital (Waitlist)
+    public DbSet<ReservaMesa>             ReservasMesa              { get; set; }
+    public DbSet<FilaEsperaItem>          FilaEsperaItems           { get; set; }
+
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -299,6 +303,25 @@ public class ApplicationDbContext : DbContext
             .WithMany()
             .HasForeignKey(p => p.IdUsuario)
             .OnDelete(DeleteBehavior.Restrict);
+
+        // Spec 032: Hostess, Reservaciones y Fila de Espera Digital (Waitlist)
+        modelBuilder.Entity<ReservaMesa>()
+            .HasIndex(r => new { r.IdEmpresa, r.IdSucursal, r.FechaHoraReserva, r.EstadoReserva });
+
+        modelBuilder.Entity<ReservaMesa>()
+            .HasOne(r => r.Mesa)
+            .WithMany()
+            .HasForeignKey(r => r.IdMesa)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        modelBuilder.Entity<FilaEsperaItem>()
+            .HasIndex(f => new { f.IdEmpresa, f.IdSucursal, f.Estado, f.RegistradoEn });
+
+        modelBuilder.Entity<FilaEsperaItem>()
+            .HasOne(f => f.MesaAsignada)
+            .WithMany()
+            .HasForeignKey(f => f.IdMesaAsignada)
+            .OnDelete(DeleteBehavior.SetNull);
 
         base.OnModelCreating(modelBuilder);
     }
