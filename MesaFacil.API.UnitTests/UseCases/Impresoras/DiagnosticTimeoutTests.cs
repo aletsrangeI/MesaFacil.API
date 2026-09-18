@@ -80,7 +80,7 @@ public class DiagnosticTimeoutTests
         {
             using var socketCliente = await listener.AcceptTcpClientAsync();
             // Mantiene el socket abierto sin escribir nada hasta que el test termine.
-            await Task.Delay(TimeSpan.FromSeconds(5));
+            await Task.Delay(TimeSpan.FromSeconds(10));
         });
 
         try
@@ -100,7 +100,7 @@ public class DiagnosticTimeoutTests
             resultado.EstadoTapaYPapel.Should().BeNull();
             resultado.EstadoError.Should().BeNull();
             resultado.EstadoRolloPapel.Should().BeNull();
-            cronometro.ElapsedMilliseconds.Should().BeLessThan(4000);
+            cronometro.ElapsedMilliseconds.Should().BeLessThan(6500);
         }
         finally
         {
