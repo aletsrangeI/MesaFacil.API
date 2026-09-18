@@ -15,22 +15,42 @@ public static class ConfigureServices
         IConfiguration configuration)
     {
         services.AddScoped<AuditableEntitySaveChangesInterceptor>();
-        services.AddDbContext<ApplicationDbContext>(
-            options =>
-                options.UseNpgsql(
-                    configuration.GetConnectionString("mesafacil_db"),
-                    builder =>
-                        builder.MigrationsAssembly(
-                            typeof(ApplicationDbContext).Assembly.FullName
-                        )
-                )
-        );
-        
-        var connString = configuration.GetConnectionString("mesafacil_db");
-        var dsBuilder  = new NpgsqlDataSourceBuilder(connString);
-        dsBuilder.EnableDynamicJson(); // <== Clave para json/jsonb con List<T>
-        // Opcional: dsBuilder.UseNodaTime();
-        var dataSource = dsBuilder.Build();
+        var executionProfile = configuration["ExecutionProfile"] 
+            ?? Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")
+            ?? Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT");
+        var isEdge = string.Equals(executionProfile, "Edge", StringComparison.OrdinalIgnoreCase);
+
+        if (isEdge)
+        {
+            var sqliteConn = configuration.GetConnectionString("SqliteConnection") 
+                ?? "Data Source=mesafacil_edge.db;Cache=Shared";
+            services.AddDbContext<ApplicationDbContext>(options =>
+            {
+                options.UseSqlite(sqliteConn);
+            });
+        }
+        else
+        {
+            services.AddDbContext<ApplicationDbContext>(
+                options =>
+                    options.UseNpgsql(
+                        configuration.GetConnectionString("mesafacil_db"),
+                        builder =>
+                            builder.MigrationsAssembly(
+                                typeof(ApplicationDbContext).Assembly.FullName
+                            )
+                    )
+            );
+            
+            var connString = configuration.GetConnectionString("mesafacil_db");
+            if (!string.IsNullOrWhiteSpace(connString))
+            {
+                var dsBuilder  = new NpgsqlDataSourceBuilder(connString);
+                dsBuilder.EnableDynamicJson(); // <== Clave para json/jsonb con List<T>
+                // Opcional: dsBuilder.UseNodaTime();
+                var dataSource = dsBuilder.Build();
+            }
+        }
 
         services.Scan(scan => scan
             // 1. Busca en el ensamblado donde vive ApplicationDbContext (tu capa de persistencia)

@@ -97,7 +97,18 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseWatchDogExceptionLogger();
-app.UseHttpsRedirection();
+
+var isEdgeProfile = string.Equals(builder.Configuration["ExecutionProfile"], "Edge", StringComparison.OrdinalIgnoreCase) 
+    || builder.Environment.IsEnvironment("Edge");
+
+if (!isEdgeProfile)
+{
+    app.UseHttpsRedirection();
+}
+
+app.UseDefaultFiles();
+app.UseStaticFiles();
+
 app.UseCors("policyMesaFacil");
 app.UseAuthentication();
 app.UseAuthorization();
@@ -117,6 +128,13 @@ app.MapHub<MesasHub>("/hubs/mesas");
 // hacer ping periódico sin necesitar un token JWT.
 app.MapGet("/api/health", () => Results.Ok(new { status = "ok", utc = DateTime.UtcNow }))
     .AllowAnonymous();
+
+// Spec 030: Servir SPA (MesaFacil.UI) como fallback cuando exista index.html en wwwroot
+var webRoot = app.Environment.WebRootPath ?? Path.Combine(AppContext.BaseDirectory, "wwwroot");
+if (File.Exists(Path.Combine(webRoot, "index.html")))
+{
+    app.MapFallbackToFile("index.html");
+}
 
 app.Run();
 

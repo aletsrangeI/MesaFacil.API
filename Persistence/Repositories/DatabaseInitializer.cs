@@ -26,7 +26,17 @@ public sealed class DatabaseInitializer : IDatabaseInitializer
     {
         _logger.LogInformation("Iniciando inicialización de base de datos...");
 
-        if (_db.Database.IsRelational())
+        if (_db.Database.ProviderName?.Contains("Sqlite") == true)
+        {
+            _logger.LogInformation("Perfil Edge detectado (SQLite). Asegurando esquema mediante EnsureCreatedAsync...");
+            await _db.Database.EnsureCreatedAsync(ct);
+
+            _logger.LogInformation("Configurando optimizaciones SQLite WAL (Write-Ahead Logging)...");
+            await _db.Database.ExecuteSqlRawAsync("PRAGMA journal_mode = WAL;", ct);
+            await _db.Database.ExecuteSqlRawAsync("PRAGMA synchronous = NORMAL;", ct);
+            await _db.Database.ExecuteSqlRawAsync("PRAGMA busy_timeout = 5000;", ct);
+        }
+        else if (_db.Database.IsRelational())
         {
             _logger.LogInformation("Aplicando migraciones pendientes de EF Core...");
             await _db.Database.MigrateAsync(ct);
@@ -40,7 +50,8 @@ public sealed class DatabaseInitializer : IDatabaseInitializer
         await EnsureRoleAsync("Manager", isSystem: false, isAssignable: true, ct);
         await EnsureRoleAsync("Mesero", isSystem: false, isAssignable: true, ct);
 
-        // 2) Seed Operativo (Empresa, Usuario Admin, Credencial y Vínculo de Rol)
+        // 2) Seed Operativo (Empresa, Sucursal, Usuario Admin, Credencial y Vínculo de Rol)
+        await EnsureEmpresaYSucursalAsync(ct);
         await SeedAdminUserAsync(ct);
 
         // 3) RBAC: Permisos y asignación a roles
@@ -1343,6 +1354,45 @@ public sealed class DatabaseInitializer : IDatabaseInitializer
         await _db.SaveChangesAsync(ct);
     }
 
+    private async Task EnsureEmpresaYSucursalAsync(CancellationToken ct)
+    {
+        var empresa = await _db.Empresas.FirstOrDefaultAsync(e => e.Id == 1, ct);
+        if (empresa == null)
+        {
+            empresa = new Empresa
+            {
+                Id = 1,
+                Nombre = "MesaFacil Restaurante",
+                Rfc = "XAXX010101000",
+                IsActive = true,
+                CreatedBy = "seed",
+                CreatedAt = DateTime.UtcNow
+            };
+            _db.Empresas.Add(empresa);
+            await _db.SaveChangesAsync(ct);
+            _logger.LogInformation("Seed: Empresa base creada (Id=1).");
+        }
+
+        var sucursal = await _db.Sucursales.FirstOrDefaultAsync(s => s.Id == 1, ct);
+        if (sucursal == null)
+        {
+            sucursal = new Sucursal
+            {
+                Id = 1,
+                IdEmpresa = empresa.Id,
+                Nombre = "Sucursal Principal",
+                Direccion = "Matriz",
+                ZonaHoraria = "America/Mexico_City",
+                IsActive = true,
+                CreatedBy = "seed",
+                CreatedAt = DateTime.UtcNow
+            };
+            _db.Sucursales.Add(sucursal);
+            await _db.SaveChangesAsync(ct);
+            _logger.LogInformation("Seed: Sucursal base creada (Id=1).");
+        }
+    }
+
     private async Task<Usuario> EnsureAdminUserAsync(CancellationToken ct)
     {
         var admin = await _db.Usuarios.FirstOrDefaultAsync(u => u.Correo == "admin@mesafacil.local", ct);
@@ -1386,6 +1436,13 @@ public sealed class DatabaseInitializer : IDatabaseInitializer
     {
         var cafeId = 1; // Asumimos que el Café Americano tiene ID 1
         
+        var cafeExists = await _db.Productos.AnyAsync(p => p.Id == cafeId, ct);
+        if (!cafeExists)
+        {
+            _logger.LogInformation("SeedCoffeeModifiersAsync: Producto con ID {CafeId} no existe en la base de datos. Omitiendo seed de modificadores.", cafeId);
+            return;
+        }
+
         // Verificar si ya existe algún grupo
         var exists = await _db.Set<GrupoModificador>().AnyAsync(g => g.IdProducto == cafeId && g.Nombre == "Tipo de Leche", ct);
         if (exists) return;
@@ -1444,6 +1501,12 @@ public sealed class DatabaseInitializer : IDatabaseInitializer
 
     private async Task EnsureDeliveryColumnsAsync(CancellationToken ct)
     {
+        if (_db.Database.ProviderName?.Contains("Sqlite") == true)
+        {
+            // SQLite genera el esquema completo con EnsureCreatedAsync().
+            return;
+        }
+
         try
         {
             var sql = @"
@@ -1746,6 +1809,12 @@ public sealed class DatabaseInitializer : IDatabaseInitializer
 
     private async Task EnsureUsuarioSucursalColumnAsync(CancellationToken ct)
     {
+        if (_db.Database.ProviderName?.Contains("Sqlite") == true)
+        {
+            // SQLite genera el esquema completo con EnsureCreatedAsync().
+            return;
+        }
+
         try
         {
             var sql = @"

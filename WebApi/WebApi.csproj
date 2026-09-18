@@ -31,6 +31,9 @@
 
     <ItemGroup>
       <Folder Include="Modules\Swagger\" />
+      <None Update="appsettings.Edge.json">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
     </ItemGroup>
 
     <ItemGroup>
