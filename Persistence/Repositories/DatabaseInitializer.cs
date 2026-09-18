@@ -105,7 +105,10 @@ public sealed class DatabaseInitializer : IDatabaseInitializer
         // 19) Spec 024: Candado de Supervisor y Auditoría de Cancelaciones
         await SeedCatMotivoCancelacionAsync(ct);
 
-        // 20) Asegurar columna IdSucursal en tabla Usuario
+        // 20) Spec 028: Tipos de Descuento (CatTipoDescuento)
+        await SeedCatTipoDescuentoAsync(ct);
+
+        // 21) Asegurar columna IdSucursal en tabla Usuario
         await EnsureUsuarioSucursalColumnAsync(ct);
 
         _logger.LogInformation("Inicialización completada con éxito.");
@@ -1676,6 +1679,38 @@ public sealed class DatabaseInitializer : IDatabaseInitializer
         }
         await _db.SaveChangesAsync(ct);
         _logger.LogInformation("Seed: asegurados motivos base en CatMotivoCancelacion.");
+    }
+
+    /// <summary>
+    /// Spec 028: Catálogo oficial de tipos/motivos de descuento en CatTipoDescuento.
+    /// </summary>
+    private async Task SeedCatTipoDescuentoAsync(CancellationToken ct)
+    {
+        var motivos = new[]
+        {
+            "Cortesía de la Casa",
+            "Compensación por Demora en Cocina",
+            "Inconformidad de Comensal con Platillo",
+            "Descuento a Colaborador / Empleado",
+            "Convenio Comercial / Descuento Empresarial",
+            "Promoción Especial"
+        };
+
+        foreach (var m in motivos)
+        {
+            var exists = await _db.Set<CatTipoDescuento>().AnyAsync(x => x.Descripcion == m, ct);
+            if (!exists)
+            {
+                _db.Add(new CatTipoDescuento
+                {
+                    Descripcion = m,
+                    IsActive = true,
+                    CreatedBy = "seed"
+                });
+            }
+        }
+        await _db.SaveChangesAsync(ct);
+        _logger.LogInformation("Seed: asegurados tipos de descuento en CatTipoDescuento.");
     }
 
     private async Task SeedCatCanalVentaAsync(CancellationToken ct)
