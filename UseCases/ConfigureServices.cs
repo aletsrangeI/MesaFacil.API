@@ -104,6 +104,9 @@ public static class ConfigureServices
         // Spec 031: Inteligencia Gastronómica & Matriz de Ingeniería de Menú (BCG)
         services.AddScoped<Interface.UseCases.IMenuEngineeringService, Analitica.MenuEngineeringService>();
 
+        // Spec 032: Módulo de Hostess, Reservaciones y Fila de Espera Digital (Waitlist)
+        services.AddScoped<Interface.UseCases.IHostessService, Hostess.HostessService>();
+
         return services;
     }
 
