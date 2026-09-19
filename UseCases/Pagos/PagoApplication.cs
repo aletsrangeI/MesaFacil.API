@@ -457,8 +457,22 @@ public class PagoApplication : IPagoApplication
                         var mesa = await _unitOfWork.Mesas.GetAsync(pedido.IdMesa.Value);
                         if (mesa != null)
                         {
-                            mesa.IdEstadoMesa = EstadosMesaConst.Sucia; // 5 (Sucia / En Limpieza)
-                            await _unitOfWork.Mesas.UpdateAsync(mesa);
+                            int idPrincipal = mesa.IdMesaPrincipal ?? mesa.Id;
+                            var mesasGrupo = new List<Mesa> { mesa };
+                            var todasMesas = await _unitOfWork.Mesas.GetAllAsync();
+                            if (todasMesas != null)
+                            {
+                                var relacionadas = todasMesas.Where(m => (m.IdMesaPrincipal == idPrincipal || m.Id == idPrincipal) && m.Id != mesa.Id);
+                                mesasGrupo.AddRange(relacionadas);
+                            }
+
+                            foreach (var mg in mesasGrupo)
+                            {
+                                mg.IdEstadoMesa = EstadosMesaConst.Sucia; // 5 (Sucia / En Limpieza)
+                                mg.IdMesaPrincipal = null;
+                                mg.UpdatedAt = DateTime.UtcNow;
+                                await _unitOfWork.Mesas.UpdateAsync(mg);
+                            }
                         }
                     }
 

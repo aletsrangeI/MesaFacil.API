@@ -28,6 +28,9 @@ public interface IMesaApplication
     Task<ResponsePagination<IEnumerable<MesaDTO>>> GetAllWithPaginationAsync(int page, int pageSize);
     Task<Response<int>> CountAsync();
     Task<Response<bool>> SolicitarCuentaAsync(int idMesa);
+    Task<Response<bool>> UnirMesasAsync(UnirMesasDTO dto);
+    Task<Response<bool>> DesunirMesaAsync(int idMesa);
+    Task<Response<bool>> DesunirGrupoAsync(int idMesaPrincipal);
 
     #endregion
 }

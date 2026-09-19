@@ -323,6 +323,13 @@ public class ApplicationDbContext : DbContext
             .HasForeignKey(f => f.IdMesaAsignada)
             .OnDelete(DeleteBehavior.SetNull);
 
+        // Fusión / Agrupación de mesas (Mesas Unidas)
+        modelBuilder.Entity<Mesa>()
+            .HasOne(m => m.MesaPrincipal)
+            .WithMany(m => m.MesasSecundarias)
+            .HasForeignKey(m => m.IdMesaPrincipal)
+            .OnDelete(DeleteBehavior.SetNull);
+
         base.OnModelCreating(modelBuilder);
     }
 
