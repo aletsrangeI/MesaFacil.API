@@ -32,7 +32,7 @@ public class ApplicationDbContextFactory : IDesignTimeDbContextFactory<Applicati
 
         // 2. Obtener la cadena de conexión
         var connectionString = configuration.GetConnectionString("mesafacil_db") 
-            ?? "Server=100.110.215.58;Port=5432;Database=MesaFacil;User Id=orionsys;Password=[REDACTED];";
+            ?? "Host=localhost;Port=5432;Database=MesaFacil;Username=postgres;Password=postgres;";
 
         optionsBuilder.UseNpgsql(connectionString);
 
