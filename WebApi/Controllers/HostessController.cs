@@ -51,12 +51,16 @@ public class HostessController : ControllerBase
         var response = new Response<FilaEsperaItemDTO>();
         try
         {
-            if (string.IsNullOrWhiteSpace(dto.NombreCliente) || string.IsNullOrWhiteSpace(dto.TelefonoCliente))
+            if (string.IsNullOrWhiteSpace(dto.NombreCliente))
             {
                 response.isSuccess = false;
-                response.Message = "El nombre y teléfono del cliente son requeridos.";
+                response.Message = "El nombre del cliente es requerido.";
                 return BadRequest(response);
             }
+
+            // Aceptar teléfono tanto de TelefonoCliente como del alias Telefono
+            var tel = !string.IsNullOrWhiteSpace(dto.TelefonoCliente) ? dto.TelefonoCliente : dto.Telefono;
+            dto.TelefonoCliente = tel?.Trim() ?? string.Empty;
 
             var item = await _hostessService.RegistrarEnWaitlistAsync(dto);
             response.Data = item;
@@ -195,12 +199,16 @@ public class HostessController : ControllerBase
         var response = new Response<ReservaMesaDTO>();
         try
         {
-            if (string.IsNullOrWhiteSpace(dto.NombreCliente) || string.IsNullOrWhiteSpace(dto.TelefonoCliente))
+            if (string.IsNullOrWhiteSpace(dto.NombreCliente))
             {
                 response.isSuccess = false;
-                response.Message = "El nombre y teléfono del cliente son requeridos.";
+                response.Message = "El nombre del cliente es requerido.";
                 return BadRequest(response);
             }
+
+            // Aceptar teléfono tanto de TelefonoCliente como del alias Telefono
+            var tel = !string.IsNullOrWhiteSpace(dto.TelefonoCliente) ? dto.TelefonoCliente : dto.Telefono;
+            dto.TelefonoCliente = tel?.Trim() ?? string.Empty;
 
             var reserva = await _hostessService.CrearReservaAsync(dto);
 

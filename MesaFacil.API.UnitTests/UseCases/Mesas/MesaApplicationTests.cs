@@ -198,5 +198,52 @@ public class MesaApplicationTests
         _unitOfWorkMock.Verify(uow => uow.Mesas.Update(It.Is<Mesa>(m => m.Id == mesaId && m.IdEstadoMesa == EstadosMesaConst.PidiendoCuenta)), Times.Once);
     }
 
+    [Fact]
+    public async Task UnirMesasAsync_AsignaIdMesaPrincipal_YSincronizaEstado()
+    {
+        // Arrange
+        var mesa1 = new Mesa { Id = 1, Codigo = "M1", Asientos = 4, IdEstadoMesa = EstadosMesaConst.Ocupada, IsActive = true };
+        var mesa2 = new Mesa { Id = 2, Codigo = "M2", Asientos = 2, IdEstadoMesa = EstadosMesaConst.Disponible, IsActive = true };
+        var mesas = new List<Mesa> { mesa1, mesa2 };
+
+        _unitOfWorkMock.Setup(u => u.Mesas.GetAsync(1)).ReturnsAsync(mesa1);
+        _unitOfWorkMock.Setup(u => u.Mesas.GetAsync(2)).ReturnsAsync(mesa2);
+        _unitOfWorkMock.Setup(u => u.Mesas.GetAllAsync()).ReturnsAsync(mesas);
+        _unitOfWorkMock.Setup(u => u.Mesas.UpdateAsync(It.IsAny<Mesa>())).ReturnsAsync(true);
+
+        var dto = new UnirMesasDTO
+        {
+            IdMesaPrincipal = 1,
+            IdsMesasSecundarias = new List<int> { 2 }
+        };
+
+        // Act
+        var result = await _sut.UnirMesasAsync(dto);
+
+        // Assert
+        result.isSuccess.Should().BeTrue();
+        result.Data.Should().BeTrue();
+        mesa2.IdMesaPrincipal.Should().Be(1);
+        mesa2.IdEstadoMesa.Should().Be(EstadosMesaConst.Ocupada);
+    }
+
+    [Fact]
+    public async Task DesunirMesaAsync_CuandoEsSecundaria_RestauraADisponible()
+    {
+        // Arrange
+        var mesa2 = new Mesa { Id = 2, Codigo = "M2", Asientos = 2, IdMesaPrincipal = 1, IdEstadoMesa = EstadosMesaConst.Ocupada, IsActive = true };
+        _unitOfWorkMock.Setup(u => u.Mesas.GetAsync(2)).ReturnsAsync(mesa2);
+        _unitOfWorkMock.Setup(u => u.Mesas.UpdateAsync(It.IsAny<Mesa>())).ReturnsAsync(true);
+
+        // Act
+        var result = await _sut.DesunirMesaAsync(2);
+
+        // Assert
+        result.isSuccess.Should().BeTrue();
+        result.Data.Should().BeTrue();
+        mesa2.IdMesaPrincipal.Should().BeNull();
+        mesa2.IdEstadoMesa.Should().Be(EstadosMesaConst.Disponible);
+    }
+
     #endregion
 }

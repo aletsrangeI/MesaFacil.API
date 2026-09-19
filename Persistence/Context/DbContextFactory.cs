@@ -10,23 +10,29 @@ public class ApplicationDbContextFactory : IDesignTimeDbContextFactory<Applicati
 {
     public ApplicationDbContext CreateDbContext(string[] args)
     {
-        // 1. Construir la configuración
-        // El método SetBasePath requiere Microsoft.Extensions.Configuration.Json
+        // 1. Construir la configuración buscando appsettings en rutas relativas comunes
+        var currentDir = Directory.GetCurrentDirectory();
+        var candidatePaths = new[]
+        {
+            Path.Combine(currentDir, "WebApi"),
+            Path.Combine(currentDir, "../WebApi"),
+            Path.Combine(currentDir, "MesaFacil.API/WebApi"),
+            currentDir
+        };
+
+        string basePath = candidatePaths.FirstOrDefault(p => File.Exists(Path.Combine(p, "appsettings.json"))) ?? currentDir;
+
         IConfigurationRoot configuration = new ConfigurationBuilder()
-            .SetBasePath(Path.Combine(Directory.GetCurrentDirectory(), "../WebApi")) 
-            .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+            .SetBasePath(basePath)
+            .AddJsonFile("appsettings.json", optional: true, reloadOnChange: false)
             .AddJsonFile("appsettings.Development.json", optional: true)
             .Build();
 
         var optionsBuilder = new DbContextOptionsBuilder<ApplicationDbContext>();
-        
+
         // 2. Obtener la cadena de conexión
-        var connectionString = configuration.GetConnectionString("mesafacil_db");
-        
-        if (string.IsNullOrEmpty(connectionString))
-        {
-            throw new InvalidOperationException("No se encontró la cadena de conexión 'mesafacil_db'.");
-        }
+        var connectionString = configuration.GetConnectionString("mesafacil_db") 
+            ?? "Server=100.110.215.58;Port=5432;Database=MesaFacil;User Id=orionsys;Password=[REDACTED];";
 
         optionsBuilder.UseNpgsql(connectionString);
 
