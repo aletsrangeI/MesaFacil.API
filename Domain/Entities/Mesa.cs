@@ -10,6 +10,9 @@ public class Mesa : BaseAuditableEntity // Hereda Id y campos de auditoría (inc
     // [CORREGIDO] - Referencia única al catálogo específico
     public int IdEstadoMesa { get; set; }
 
+    // [NUEVO] - Fusión / Agrupación de mesas (Mesas Unidas)
+    public int? IdMesaPrincipal { get; set; }
+
     // ==========================================
     // PROPIEDADES DE NAVEGACIÓN
     // ==========================================
@@ -18,6 +21,9 @@ public class Mesa : BaseAuditableEntity // Hereda Id y campos de auditoría (inc
 
     // [CORREGIDO] - Navegación tipada
     public virtual CatEstadoMesa EstadoMesa { get; set; } = null!;
+
+    public virtual Mesa? MesaPrincipal { get; set; }
+    public virtual ICollection<Mesa> MesasSecundarias { get; set; } = new List<Mesa>();
 
     public ICollection<Pedido> Pedidos { get; set; } = new List<Pedido>();
 }

@@ -316,6 +316,10 @@ public class PedidosController : ControllerBase
     {
         var dbContext = HttpContext.RequestServices.GetService<Persistence.Context.ApplicationDbContext>()!;
 
+        // Si la mesa está unida a otra, buscar el pedido de la mesa principal
+        var mesaConsultada = await dbContext.Mesas.FindAsync(idMesa);
+        int targetMesaId = mesaConsultada?.IdMesaPrincipal ?? idMesa;
+
         // Obtener IDs de estados activos (no cerrado, no cancelado)
         var estadosInactivos = await dbContext.CatEstadosPedido
             .Where(e => EF.Functions.ILike(e.Descripcion, "%cerrado%")
@@ -326,7 +330,7 @@ public class PedidosController : ControllerBase
         var pedido = await dbContext.Pedidos
             .Include(p => p.Detalles)
                 .ThenInclude(d => d.Modificadores)
-            .Where(p => p.IdMesa == idMesa &&
+            .Where(p => p.IdMesa == targetMesaId &&
                         (estadosInactivos.Any()
                             ? !estadosInactivos.Contains(p.IdEstadoPedido)
                             : p.IdEstadoPedido != 3 && p.IdEstadoPedido != 4))

@@ -196,26 +196,39 @@ public class HostessService : IHostessService
         var sucursal = await _context.Sucursales.FindAsync(dto.IdSucursal);
         int idEmpresa = sucursal?.IdEmpresa ?? 1;
 
+        var notasFinales = dto.Notas?.Trim();
+        if (!string.IsNullOrWhiteSpace(dto.Correo))
+        {
+            var correoTag = $"[Email: {dto.Correo.Trim()}]";
+            notasFinales = string.IsNullOrWhiteSpace(notasFinales)
+                ? correoTag
+                : $"{notasFinales} {correoTag}";
+        }
+
+        var telefono = !string.IsNullOrWhiteSpace(dto.TelefonoCliente) ? dto.TelefonoCliente : dto.Telefono;
+        var idMesaFinal = dto.IdMesa ?? dto.IdMesaAsignada;
+        var anticipo = dto.AnticipoPagado > 0 ? dto.AnticipoPagado : (dto.DepositoGarantia ?? 0m);
+
         var entity = new ReservaMesa
         {
             IdEmpresa = idEmpresa,
             IdSucursal = dto.IdSucursal,
-            IdMesa = dto.IdMesa,
+            IdMesa = idMesaFinal,
             NombreCliente = dto.NombreCliente.Trim(),
-            TelefonoCliente = dto.TelefonoCliente.Trim(),
+            TelefonoCliente = telefono?.Trim() ?? string.Empty,
             FechaHoraReserva = dto.FechaHoraReserva,
             NumeroPersonas = dto.NumeroPersonas > 0 ? dto.NumeroPersonas : 2,
             ZonaPreferencia = dto.ZonaPreferencia,
             EstadoReserva = "Confirmada",
-            AnticipoPagado = dto.AnticipoPagado >= 0 ? dto.AnticipoPagado : 0m,
-            Notas = dto.Notas,
+            AnticipoPagado = anticipo,
+            Notas = notasFinales,
             IsActive = true
         };
 
         // Si se asignó mesa previa, podemos marcarla como Reservada si falta poco
-        if (dto.IdMesa.HasValue)
+        if (idMesaFinal.HasValue)
         {
-            var mesa = await _context.Mesas.FindAsync(dto.IdMesa.Value);
+            var mesa = await _context.Mesas.FindAsync(idMesaFinal.Value);
             if (mesa != null && (dto.FechaHoraReserva - DateTime.UtcNow).TotalMinutes <= 60)
             {
                 mesa.IdEstadoMesa = EstadosMesaConst.Reservada;
@@ -354,6 +367,18 @@ public class HostessService : IHostessService
 
     private ReservaMesaDTO MapReservaToDTO(ReservaMesa r)
     {
+        string? correo = null;
+        string? notasLimpia = r.Notas;
+        if (!string.IsNullOrEmpty(r.Notas))
+        {
+            var emailTagMatch = System.Text.RegularExpressions.Regex.Match(r.Notas, @"\[Email:\s*([^\]]+)\]");
+            if (emailTagMatch.Success)
+            {
+                correo = emailTagMatch.Groups[1].Value.Trim();
+                notasLimpia = r.Notas.Replace(emailTagMatch.Value, "").Trim();
+            }
+        }
+
         return new ReservaMesaDTO
         {
             Id = r.Id,
@@ -363,18 +388,21 @@ public class HostessService : IHostessService
             CodigoMesa = r.Mesa?.Codigo,
             NombreCliente = r.NombreCliente,
             TelefonoCliente = r.TelefonoCliente,
+            Correo = correo,
             FechaHoraReserva = r.FechaHoraReserva,
             NumeroPersonas = r.NumeroPersonas,
             ZonaPreferencia = r.ZonaPreferencia,
             EstadoReserva = r.EstadoReserva,
             AnticipoPagado = r.AnticipoPagado,
-            Notas = r.Notas
+            Notas = string.IsNullOrWhiteSpace(notasLimpia) ? null : notasLimpia
         };
     }
 
-    private string GenerarEnlaceWhatsApp(string telefono, string nombreCliente, int numeroPersonas, string? zona, string? nombreSucursal)
+    private string? GenerarEnlaceWhatsApp(string telefono, string nombreCliente, int numeroPersonas, string? zona, string? nombreSucursal)
     {
+        if (string.IsNullOrWhiteSpace(telefono)) return null;
         var digits = new string(telefono.Where(char.IsDigit).ToArray());
+        if (string.IsNullOrWhiteSpace(digits)) return null;
         if (digits.Length == 10)
         {
             // Código de país México (+52) por defecto

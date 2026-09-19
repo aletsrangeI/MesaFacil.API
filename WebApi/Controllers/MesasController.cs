@@ -172,5 +172,53 @@ public class MesasController : ControllerBase
         return Ok(response);
     }
 
+    [HttpPost("Unir")]
+    public async Task<ActionResult<Response<bool>>> UnirMesas([FromBody] UnirMesasDTO dto)
+    {
+        var response = await _mesaApplication.UnirMesasAsync(dto);
+        if (response.isSuccess && _mesasHub != null)
+        {
+            await _mesasHub.Clients.All.SendAsync("MesasUnidasActualizadas", new
+            {
+                idMesaPrincipal = dto.IdMesaPrincipal,
+                idsMesasSecundarias = dto.IdsMesasSecundarias,
+                timestamp = DateTime.UtcNow
+            });
+        }
+        return Ok(response);
+    }
+
+    [HttpPost("Desunir/{idMesa}")]
+    public async Task<ActionResult<Response<bool>>> DesunirMesa(int idMesa)
+    {
+        var response = await _mesaApplication.DesunirMesaAsync(idMesa);
+        if (response.isSuccess && _mesasHub != null)
+        {
+            await _mesasHub.Clients.All.SendAsync("MesasUnidasActualizadas", new
+            {
+                idMesa = idMesa,
+                desunida = true,
+                timestamp = DateTime.UtcNow
+            });
+        }
+        return Ok(response);
+    }
+
+    [HttpPost("DesunirGrupo/{idMesaPrincipal}")]
+    public async Task<ActionResult<Response<bool>>> DesunirGrupo(int idMesaPrincipal)
+    {
+        var response = await _mesaApplication.DesunirGrupoAsync(idMesaPrincipal);
+        if (response.isSuccess && _mesasHub != null)
+        {
+            await _mesasHub.Clients.All.SendAsync("MesasUnidasActualizadas", new
+            {
+                idMesaPrincipal = idMesaPrincipal,
+                desunida = true,
+                timestamp = DateTime.UtcNow
+            });
+        }
+        return Ok(response);
+    }
+
     #endregion
 }

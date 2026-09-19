@@ -184,6 +184,45 @@ public class HostessServiceTests
     }
 
     [Fact]
+    public async Task CrearReserva_ConCorreoYAliases_GuardaYRetornaCorrectamente()
+    {
+        // Arrange
+        using var context = CreateInMemoryDbContext();
+        var service = new HostessService(context);
+
+        var sucursal = new Sucursal { Id = 1, Nombre = "Condesa", IsActive = true };
+        context.Sucursales.Add(sucursal);
+        await context.SaveChangesAsync();
+
+        var dtoCrear = new CrearReservaDTO
+        {
+            IdSucursal = 1,
+            NombreCliente = "Alecs Dev",
+            Telefono = "5511223344",
+            Correo = "alecs@ejemplo.com",
+            Comensales = 4,
+            FechaHoraReserva = DateTime.UtcNow.AddHours(3),
+            DepositoGarantia = 250m,
+            Notas = "Mesa cerca de ventana"
+        };
+
+        // Act
+        var reserva = await service.CrearReservaAsync(dtoCrear);
+
+        // Assert
+        reserva.Should().NotBeNull();
+        reserva.NombreCliente.Should().Be("Alecs Dev");
+        reserva.Telefono.Should().Be("5511223344");
+        reserva.TelefonoCliente.Should().Be("5511223344");
+        reserva.Correo.Should().Be("alecs@ejemplo.com");
+        reserva.Comensales.Should().Be(4);
+        reserva.NumeroPersonas.Should().Be(4);
+        reserva.AnticipoPagado.Should().Be(250m);
+        reserva.DepositoGarantia.Should().Be(250m);
+        reserva.Notas.Should().Contain("Mesa cerca de ventana");
+    }
+
+    [Fact]
     public async Task DashboardSummary_RetornaMetricasConsolidadasCorrectas()
     {
         // Arrange
