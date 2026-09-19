@@ -16,10 +16,14 @@ public static class ConfigureServices
     {
         services.AddScoped<AuditableEntitySaveChangesInterceptor>();
 
-        var rawConn = configuration.GetConnectionString("mesafacil_db")
-            ?? configuration["ConnectionStrings:mesafacil_db"]
-            ?? configuration["ConnectionStrings__mesafacil_db"]
-            ?? configuration["mesafacil_db"];
+        var rawConn = new[]
+        {
+            Environment.GetEnvironmentVariable("ConnectionStrings__mesafacil_db"),
+            configuration.GetConnectionString("mesafacil_db"),
+            configuration["ConnectionStrings:mesafacil_db"],
+            configuration["ConnectionStrings__mesafacil_db"],
+            configuration["mesafacil_db"]
+        }.FirstOrDefault(s => !string.IsNullOrWhiteSpace(s));
 
         var connString = SanitizeConnectionString(rawConn);
 
@@ -78,6 +82,19 @@ public static class ConfigureServices
         if ((s.StartsWith("'") && s.EndsWith("'")) || (s.StartsWith("\"") && s.EndsWith("\"")))
         {
             s = s.Substring(1, s.Length - 2).Trim();
+        }
+
+        // Normalizar claves comunes a PostgreSQL / Npgsql
+        if (s.Contains("Server=", StringComparison.OrdinalIgnoreCase) &&
+            !s.Contains("Host=", StringComparison.OrdinalIgnoreCase))
+        {
+            s = System.Text.RegularExpressions.Regex.Replace(s, @"(?i)\bServer\s*=", "Host=");
+        }
+
+        if (s.Contains("User Id=", StringComparison.OrdinalIgnoreCase) &&
+            !s.Contains("Username=", StringComparison.OrdinalIgnoreCase))
+        {
+            s = System.Text.RegularExpressions.Regex.Replace(s, @"(?i)\bUser Id\s*=", "Username=");
         }
 
         return s;
