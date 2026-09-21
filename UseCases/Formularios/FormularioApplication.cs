@@ -1,4 +1,4 @@
-using AutoMapper;
+using Interface.Mapping;
 using Common;
 using Domain.Entities;
 using DTO.Formulario;
@@ -11,13 +11,13 @@ namespace UseCases.Formularios;
 public class FormularioApplication : IFormularioApplication
 {
     private readonly IUnitOfWork _unitOfWork;
-    private readonly IMapper _mapper;
+    private readonly IAppMapper _mapper;
     private readonly FormularioDTOValidator _validationRules;
     private readonly IAppLogger<FormularioApplication> _logger;
 
     public FormularioApplication(
         IUnitOfWork unitOfWork,
-        IMapper mapper,
+        IAppMapper mapper,
         FormularioDTOValidator validationRules,
         IAppLogger<FormularioApplication> logger)
     {

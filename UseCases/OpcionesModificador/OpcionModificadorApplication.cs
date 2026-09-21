@@ -1,4 +1,4 @@
-using AutoMapper;
+using Interface.Mapping;
 using Common;
 using Domain.Entities;
 using DTO.OpcionModificador;
@@ -11,13 +11,13 @@ namespace UseCases.OpcionesModificador;
 public class OpcionModificadorApplication : IOpcionModificadorApplication
 {
     private readonly IUnitOfWork _unitOfWork;
-    private readonly IMapper _mapper;
+    private readonly IAppMapper _mapper;
     private readonly OpcionModificadorDTOValidator _validationRules;
     private readonly IAppLogger<OpcionModificadorApplication> _logger;
 
     public OpcionModificadorApplication(
         IUnitOfWork unitOfWork,
-        IMapper mapper,
+        IAppMapper mapper,
         OpcionModificadorDTOValidator validationRules,
         IAppLogger<OpcionModificadorApplication> logger)
     {

@@ -1,4 +1,4 @@
-using AutoMapper;
+using Interface.Mapping;
 using Common;
 using Domain.Entities;
 using DTO.Cuenta;
@@ -14,14 +14,14 @@ namespace MesaFacil.API.UnitTests.UseCases.Cuentas;
 public class CuentaApplicationTests
 {
     private readonly Mock<IUnitOfWork> _unitOfWorkMock;
-    private readonly Mock<IMapper> _mapperMock;
+    private readonly Mock<IAppMapper> _mapperMock;
     private readonly Mock<IAppLogger<CuentaApplication>> _loggerMock;
     private readonly CuentaApplication _sut;
 
     public CuentaApplicationTests()
     {
         _unitOfWorkMock = new Mock<IUnitOfWork>();
-        _mapperMock = new Mock<IMapper>();
+        _mapperMock = new Mock<IAppMapper>();
         _loggerMock = new Mock<IAppLogger<CuentaApplication>>();
 
         _sut = new CuentaApplication(

@@ -1,4 +1,4 @@
-using AutoMapper;
+using Interface.Mapping;
 using Common;
 using Domain.Entities;
 using DTO.Rol;
@@ -11,13 +11,13 @@ namespace UseCases.Roles;
 public class RolApplication : IRolApplication
 {
     private readonly IUnitOfWork _unitOfWork;
-    private readonly IMapper _mapper;
+    private readonly IAppMapper _mapper;
     private readonly RolDTOValidator _validationRules;
     private readonly IAppLogger<RolApplication> _logger;
 
     public RolApplication(
         IUnitOfWork unitOfWork,
-        IMapper mapper,
+        IAppMapper mapper,
         RolDTOValidator validationRules,
         IAppLogger<RolApplication> logger)
     {

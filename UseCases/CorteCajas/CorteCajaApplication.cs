@@ -1,4 +1,4 @@
-using AutoMapper;
+using Interface.Mapping;
 using Common;
 using Domain.Entities;
 using DTO.CorteCaja;
@@ -15,14 +15,14 @@ public class CorteCajaApplication : ICorteCajaApplication
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly ApplicationDbContext _context;
-    private readonly IMapper _mapper;
+    private readonly IAppMapper _mapper;
     private readonly CorteCajaDTOValidator _validationRules;
     private readonly IAppLogger<CorteCajaApplication> _logger;
 
     public CorteCajaApplication(
         IUnitOfWork unitOfWork,
         ApplicationDbContext context,
-        IMapper mapper,
+        IAppMapper mapper,
         CorteCajaDTOValidator validationRules,
         IAppLogger<CorteCajaApplication> logger)
     {

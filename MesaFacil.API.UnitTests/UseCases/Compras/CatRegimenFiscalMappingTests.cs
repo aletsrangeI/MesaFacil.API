@@ -1,28 +1,19 @@
-﻿using AutoMapper;
 using Domain.Entities;
 using DTO.GenericCatalog;
 using FluentAssertions;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using UseCases.Common;
+using Interface.Mapping;
+using UseCases.Common.Mapping;
 using Xunit;
 
 namespace MesaFacil.API.UnitTests.UseCases.Compras;
 
 public class CatRegimenFiscalMappingTests
 {
-    private readonly IMapper _mapper;
+    private readonly IAppMapper _mapper;
 
     public CatRegimenFiscalMappingTests()
     {
-        var services = new ServiceCollection();
-        services.AddLogging();
-        services.AddAutoMapper(cfg =>
-        {
-            cfg.AddProfile<GenericCatalogProfile>();
-        });
-        var sp = services.BuildServiceProvider();
-        _mapper = sp.GetRequiredService<IMapper>();
+        _mapper = new AppMapper();
     }
 
     [Fact]

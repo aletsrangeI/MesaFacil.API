@@ -1,4 +1,4 @@
-using AutoMapper;
+using Interface.Mapping;
 using Common;
 using Domain.Entities;
 using DTO.Pedido;
@@ -14,7 +14,7 @@ namespace MesaFacil.API.UnitTests.UseCases.Pedidos;
 public class PedidoApplicationTests
 {
     private readonly Mock<IUnitOfWork> _unitOfWorkMock;
-    private readonly Mock<IMapper> _mapperMock;
+    private readonly Mock<IAppMapper> _mapperMock;
     private readonly Mock<IAppLogger<PedidoApplication>> _loggerMock;
     private readonly Mock<IFoliadorSucursalService> _foliadorMock;
     private readonly PedidoApplication _sut;
@@ -22,7 +22,7 @@ public class PedidoApplicationTests
     public PedidoApplicationTests()
     {
         _unitOfWorkMock = new Mock<IUnitOfWork>();
-        _mapperMock = new Mock<IMapper>();
+        _mapperMock = new Mock<IAppMapper>();
         _loggerMock = new Mock<IAppLogger<PedidoApplication>>();
         _foliadorMock = new Mock<IFoliadorSucursalService>();
         _foliadorMock.Setup(f => f.ObtenerSiguienteFolioAsync(It.IsAny<int>(), It.IsAny<DateOnly?>(), It.IsAny<CancellationToken>()))

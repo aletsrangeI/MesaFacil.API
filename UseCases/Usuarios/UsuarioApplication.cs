@@ -1,4 +1,4 @@
-using AutoMapper;
+using Interface.Mapping;
 using Common;
 using Domain.Entities;
 using DTO.Usuario;
@@ -11,14 +11,14 @@ namespace UseCases.Usuarios;
 public class UsuarioApplication : IUsuarioApplication
 {
     private readonly IUnitOfWork _unitOfWork;
-    private readonly IMapper _mapper;
+    private readonly IAppMapper _mapper;
     private readonly UsuarioDTOValidator _validationRules;
     private readonly IPasswordHasher _hasher;
     private readonly IAppLogger<UsuarioApplication> _logger;
 
     public UsuarioApplication(
         IUnitOfWork unitOfWork,
-        IMapper mapper,
+        IAppMapper mapper,
         UsuarioDTOValidator validationRules,
         IPasswordHasher hasher,
         IAppLogger<UsuarioApplication> logger)

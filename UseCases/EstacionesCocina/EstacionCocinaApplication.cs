@@ -1,4 +1,4 @@
-using AutoMapper;
+using Interface.Mapping;
 using Common;
 using Domain.Entities;
 using DTO.EstacionCocina;
@@ -11,13 +11,13 @@ namespace UseCases.EstacionesCocina;
 public class EstacionCocinaApplication : IEstacionCocinaApplication
 {
     private readonly IUnitOfWork _unitOfWork;
-    private readonly IMapper _mapper;
+    private readonly IAppMapper _mapper;
     private readonly EstacionCocinaDTOValidator _validationRules;
     private readonly IAppLogger<EstacionCocinaApplication> _logger;
 
     public EstacionCocinaApplication(
         IUnitOfWork unitOfWork,
-        IMapper mapper,
+        IAppMapper mapper,
         EstacionCocinaDTOValidator validationRules,
         IAppLogger<EstacionCocinaApplication> logger)
     {

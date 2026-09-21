@@ -1,4 +1,4 @@
-using AutoMapper;
+using Interface.Mapping;
 using Common;
 using Domain.Entities;
 using DTO.Sucursal;
@@ -11,13 +11,13 @@ namespace UseCases.Sucursales;
 public class SucursalApplication : ISucursalApplication
 {
     private readonly IUnitOfWork _unitOfWork;
-    private readonly IMapper _mapper;
+    private readonly IAppMapper _mapper;
     private readonly SucursalDTOValidator _validationRules;
     private readonly IAppLogger<SucursalApplication> _logger;
 
     public SucursalApplication(
         IUnitOfWork unitOfWork,
-        IMapper mapper,
+        IAppMapper mapper,
         SucursalDTOValidator validationRules,
         IAppLogger<SucursalApplication> logger)
     {

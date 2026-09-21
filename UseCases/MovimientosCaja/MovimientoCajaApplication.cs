@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using Interface.Mapping;
 using Common;
 using Domain.Entities;
 using DTO.MovimientoCaja;
@@ -11,13 +11,13 @@ namespace UseCases.MovimientosCaja;
 public class MovimientoCajaApplication : IMovimientoCajaApplication
 {
     private readonly IUnitOfWork _unitOfWork;
-    private readonly IMapper _mapper;
+    private readonly IAppMapper _mapper;
     private readonly MovimientoCajaDTOValidator _validationRules;
     private readonly IAppLogger<MovimientoCajaApplication> _logger;
 
     public MovimientoCajaApplication(
         IUnitOfWork unitOfWork,
-        IMapper mapper,
+        IAppMapper mapper,
         MovimientoCajaDTOValidator validationRules,
         IAppLogger<MovimientoCajaApplication> logger)
     {

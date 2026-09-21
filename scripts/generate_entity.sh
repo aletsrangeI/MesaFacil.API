@@ -199,10 +199,10 @@ generate_usecase_application() {
   ensure_dir "$dir"
 
   create_file "$path" "$(cat <<'EOF'
-using AutoMapper;
 using Common;
 using Domain.Entities;
 using DTO.__NAME__;
+using Interface.Mapping;
 using Interface.Persistence;
 using Interface.UseCases;
 using Validator;
@@ -212,13 +212,13 @@ namespace UseCases.__PLURAL__;
 public class __NAME__Application : I__NAME__Application
 {
     private readonly IUnitOfWork _unitOfWork;
-    private readonly IMapper _mapper;
+    private readonly IAppMapper _mapper;
     private readonly __NAME__DTOValidator _validationRules;
     private readonly IAppLogger<__NAME__Application> _logger;
 
     public __NAME__Application(
         IUnitOfWork unitOfWork,
-        IMapper mapper,
+        IAppMapper mapper,
         __NAME__DTOValidator validationRules,
         IAppLogger<__NAME__Application> logger)
     {

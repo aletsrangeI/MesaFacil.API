@@ -1,4 +1,4 @@
-using AutoMapper;
+using Interface.Mapping;
 using Common;
 using Domain.Entities;
 using DTO.UsuarioRol;
@@ -11,13 +11,13 @@ namespace UseCases.UsuarioRoles;
 public class UsuarioRolApplication : IUsuarioRolApplication
 {
     private readonly IUnitOfWork _unitOfWork;
-    private readonly IMapper _mapper;
+    private readonly IAppMapper _mapper;
     private readonly UsuarioRolDTOValidator _validationRules;
     private readonly IAppLogger<UsuarioRolApplication> _logger;
 
     public UsuarioRolApplication(
         IUnitOfWork unitOfWork,
-        IMapper mapper,
+        IAppMapper mapper,
         UsuarioRolDTOValidator validationRules,
         IAppLogger<UsuarioRolApplication> logger)
     {

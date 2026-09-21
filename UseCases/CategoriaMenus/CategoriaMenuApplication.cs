@@ -1,4 +1,4 @@
-using AutoMapper;
+using Interface.Mapping;
 using Common;
 using Domain.Entities;
 using DTO.CategoriaMenu;
@@ -11,13 +11,13 @@ namespace UseCases.CategoriaMenus;
 public class CategoriaMenuApplication : ICategoriaMenuApplication
 {
     private readonly IUnitOfWork _unitOfWork;
-    private readonly IMapper _mapper;
+    private readonly IAppMapper _mapper;
     private readonly CategoriaMenuDTOValidator _validationRules;
     private readonly IAppLogger<CategoriaMenuApplication> _logger;
 
     public CategoriaMenuApplication(
         IUnitOfWork unitOfWork,
-        IMapper mapper,
+        IAppMapper mapper,
         CategoriaMenuDTOValidator validationRules,
         IAppLogger<CategoriaMenuApplication> logger)
     {

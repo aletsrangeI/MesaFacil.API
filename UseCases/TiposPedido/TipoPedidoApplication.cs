@@ -1,4 +1,4 @@
-using AutoMapper;
+using Interface.Mapping;
 using Common;
 using Domain.Entities;
 using DTO.TiposPedido;
@@ -11,13 +11,13 @@ namespace UseCases.TiposPedido;
 public class TipoPedidoApplication : ITipoPedidoApplication
 {
     private readonly IGenericRepository<CatTipoPedido> _repo;
-    private readonly IMapper _mapper;
+    private readonly IAppMapper _mapper;
     private readonly TipoPedidoDTOValidator _validationRules;
     private readonly IAppLogger<TipoPedidoApplication> _logger;
 
     public TipoPedidoApplication(
         IGenericRepository<CatTipoPedido> repo,
-        IMapper mapper,
+        IAppMapper mapper,
         TipoPedidoDTOValidator validationRules,
         IAppLogger<TipoPedidoApplication> logger)
     {

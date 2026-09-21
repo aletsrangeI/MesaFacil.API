@@ -1,4 +1,4 @@
-using AutoMapper;
+using Interface.Mapping;
 using Common;
 using Domain.Entities;
 using DTO.EventoPedido;
@@ -11,13 +11,13 @@ namespace UseCases.EventosPedido;
 public class EventoPedidoApplication : IEventoPedidoApplication
 {
     private readonly IUnitOfWork _unitOfWork;
-    private readonly IMapper _mapper;
+    private readonly IAppMapper _mapper;
     private readonly EventoPedidoDTOValidator _validationRules;
     private readonly IAppLogger<EventoPedidoApplication> _logger;
 
     public EventoPedidoApplication(
         IUnitOfWork unitOfWork,
-        IMapper mapper,
+        IAppMapper mapper,
         EventoPedidoDTOValidator validationRules,
         IAppLogger<EventoPedidoApplication> logger)
     {

@@ -1,4 +1,4 @@
-using AutoMapper;
+using Interface.Mapping;
 using Common;
 using Domain.Entities;
 using DTO.Turno;
@@ -11,13 +11,13 @@ namespace UseCases.Turnos;
 public class TurnoApplication : ITurnoApplication
 {
     private readonly IUnitOfWork _unitOfWork;
-    private readonly IMapper _mapper;
+    private readonly IAppMapper _mapper;
     private readonly TurnoDTOValidator _validationRules;
     private readonly IAppLogger<TurnoApplication> _logger;
 
     public TurnoApplication(
         IUnitOfWork unitOfWork,
-        IMapper mapper,
+        IAppMapper mapper,
         TurnoDTOValidator validationRules,
         IAppLogger<TurnoApplication> logger)
     {
