@@ -1,4 +1,4 @@
-using AutoMapper;
+using Interface.Mapping;
 using Common;
 using Domain.Entities;
 using DTO.RolAccesoRuta;
@@ -11,13 +11,13 @@ namespace UseCases.RolAccesoRutas;
 public class RolAccesoRutaApplication : IRolAccesoRutaApplication
 {
     private readonly IUnitOfWork _unitOfWork;
-    private readonly IMapper _mapper;
+    private readonly IAppMapper _mapper;
     private readonly RolAccesoRutaDTOValidator _validationRules;
     private readonly IAppLogger<RolAccesoRutaApplication> _logger;
 
     public RolAccesoRutaApplication(
         IUnitOfWork unitOfWork,
-        IMapper mapper,
+        IAppMapper mapper,
         RolAccesoRutaDTOValidator validationRules,
         IAppLogger<RolAccesoRutaApplication> logger)
     {

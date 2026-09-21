@@ -159,21 +159,7 @@ function Add-DbSet {
 }
 
 function Update-MappingsProfile {
-    $usingLine = "using DTO.$Name;"
-    $mapLine = "        CreateMap<$Name, ${Name}DTO>().ReverseMap();"
-    Update-File -RelativePath 'UseCases/Common/Mapping/MappingsProfile.cs' -Updater {
-        param($text)
-        $result = Insert-Using -Text $text -UsingLine $usingLine
-        if ($result -notlike "*$mapLine*") {
-            $anchor = 'CreateMap<Catalog, CatalogDTO>().ReverseMap();'
-            $idx = $result.IndexOf($anchor, [StringComparison]::Ordinal)
-            if ($idx -lt 0) {
-                throw 'Unable to locate mapping anchor in MappingsProfile.cs'
-            }
-            $result = $result.Insert($idx + $anchor.Length, $NewLine + $mapLine)
-        }
-        return $result
-    }
+    # Mapeo registrado en AppMapper / IAppMapper
 }
 
 function Update-UseCasesConfig {
@@ -359,10 +345,10 @@ public interface I__NAME__Application
 "@)
 
     New-ScaffoldFile -RelativePath "UseCases/$Plural/${Name}Application.cs" -Content (Get-Template @"
-using AutoMapper;
 using Common;
 using Domain.Entities;
 using DTO.__NAME__;
+using Interface.Mapping;
 using Interface.Persistence;
 using Interface.UseCases;
 using Validator;
@@ -372,11 +358,11 @@ namespace UseCases.__PLURAL__;
 public class __NAME__Application : I__NAME__Application
 {
     private readonly IUnitOfWork _unitOfWork;
-    private readonly IMapper _mapper;
+    private readonly IAppMapper _mapper;
     private readonly __NAME__DTOValidator _validationRules;
     private readonly IAppLogger<__NAME__Application> _logger;
 
-    public __NAME__Application(IUnitOfWork unitOfWork, IMapper mapper, __NAME__DTOValidator validationRules,
+    public __NAME__Application(IUnitOfWork unitOfWork, IAppMapper mapper, __NAME__DTOValidator validationRules,
         IAppLogger<__NAME__Application> logger)
     {
         _unitOfWork = unitOfWork;

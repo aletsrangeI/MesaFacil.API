@@ -1,4 +1,4 @@
-using AutoMapper;
+using Interface.Mapping;
 using Common;
 using Domain.Entities;
 using DTO.Area;
@@ -11,13 +11,13 @@ namespace UseCases.Areas;
 public class AreaApplication : IAreaApplication
 {
     private readonly IUnitOfWork _unitOfWork;
-    private readonly IMapper _mapper;
+    private readonly IAppMapper _mapper;
     private readonly AreaDTOValidator _validationRules;
     private readonly IAppLogger<AreaApplication> _logger;
 
     public AreaApplication(
         IUnitOfWork unitOfWork,
-        IMapper mapper,
+        IAppMapper mapper,
         AreaDTOValidator validationRules,
         IAppLogger<AreaApplication> logger)
     {

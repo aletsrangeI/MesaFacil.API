@@ -13,10 +13,7 @@ public static class ConfigureServices
 {
     public static IServiceCollection AddApplicationServices(this IServiceCollection services)
     {
-        services.AddAutoMapper(cfg =>
-        {
-            /* opcional: config extra */
-        }, Assembly.GetExecutingAssembly());
+        services.AddSingleton<Interface.Mapping.IAppMapper, UseCases.Common.Mapping.AppMapper>();
 
         // 1. Auto-descubrimiento de Casos de Uso (Busca en el proyecto UseCases)
         services.Scan(scan => scan

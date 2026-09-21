@@ -1,4 +1,4 @@
-using AutoMapper;
+using Interface.Mapping;
 using Common;
 using Domain.Entities;
 using DTO.Precio;
@@ -11,13 +11,13 @@ namespace UseCases.Precios;
 public class PrecioApplication : IPrecioApplication
 {
     private readonly IUnitOfWork _unitOfWork;
-    private readonly IMapper _mapper;
+    private readonly IAppMapper _mapper;
     private readonly PrecioDTOValidator _validationRules;
     private readonly IAppLogger<PrecioApplication> _logger;
 
     public PrecioApplication(
         IUnitOfWork unitOfWork,
-        IMapper mapper,
+        IAppMapper mapper,
         PrecioDTOValidator validationRules,
         IAppLogger<PrecioApplication> logger)
     {

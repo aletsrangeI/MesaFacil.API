@@ -1,4 +1,4 @@
-using AutoMapper;
+using Interface.Mapping;
 using Common;
 using Domain.Entities;
 using DTO.Cliente;
@@ -11,13 +11,13 @@ namespace UseCases.Clientes;
 public class ClienteApplication : IClienteApplication
 {
     private readonly IUnitOfWork _unitOfWork;
-    private readonly IMapper _mapper;
+    private readonly IAppMapper _mapper;
     private readonly ClienteDTOValidator _validationRules;
     private readonly IAppLogger<ClienteApplication> _logger;
 
     public ClienteApplication(
         IUnitOfWork unitOfWork,
-        IMapper mapper,
+        IAppMapper mapper,
         ClienteDTOValidator validationRules,
         IAppLogger<ClienteApplication> logger)
     {

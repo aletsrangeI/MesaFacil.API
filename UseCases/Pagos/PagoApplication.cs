@@ -1,4 +1,4 @@
-using AutoMapper;
+using Interface.Mapping;
 using Common;
 using Domain.Entities;
 using DTO.Pago;
@@ -11,7 +11,7 @@ namespace UseCases.Pagos;
 public class PagoApplication : IPagoApplication
 {
     private readonly IUnitOfWork _unitOfWork;
-    private readonly IMapper _mapper;
+    private readonly IAppMapper _mapper;
     private readonly PagoDTOValidator _validationRules;
     private readonly IAppLogger<PagoApplication> _logger;
     private readonly IDescuentoInventarioService? _descuentoInventarioService;
@@ -19,7 +19,7 @@ public class PagoApplication : IPagoApplication
 
     public PagoApplication(
         IUnitOfWork unitOfWork,
-        IMapper mapper,
+        IAppMapper mapper,
         PagoDTOValidator validationRules,
         IAppLogger<PagoApplication> logger,
         IDescuentoInventarioService? descuentoInventarioService = null,

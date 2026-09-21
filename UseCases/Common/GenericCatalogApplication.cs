@@ -1,4 +1,4 @@
-using AutoMapper;
+using Interface.Mapping;
 using Common;
 using Domain.Entities;
 using DTO.GenericCatalog;
@@ -16,12 +16,12 @@ public class GenericCatalogApplication<TEntity> : IGenericCatalogApplication
     where TEntity : BaseAuditableEntity, ICatalogEntity, new()
 {
     private readonly IGenericRepository<TEntity>               _repo;
-    private readonly IMapper                                   _mapper;
+    private readonly IAppMapper                                   _mapper;
     private readonly IAppLogger<GenericCatalogApplication<TEntity>> _logger;
 
     public GenericCatalogApplication(
         IGenericRepository<TEntity>               repo,
-        IMapper                                   mapper,
+        IAppMapper                                   mapper,
         IAppLogger<GenericCatalogApplication<TEntity>> logger)
     {
         _repo   = repo;

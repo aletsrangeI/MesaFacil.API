@@ -1,4 +1,4 @@
-using AutoMapper;
+using Interface.Mapping;
 using Common;
 using Domain.Entities;
 using DTO.Empresa;
@@ -11,13 +11,13 @@ namespace UseCases.Empresas;
 public class EmpresaApplication : IEmpresaApplication
 {
     private readonly IUnitOfWork _unitOfWork;
-    private readonly IMapper _mapper;
+    private readonly IAppMapper _mapper;
     private readonly EmpresaDTOValidator _validationRules;
     private readonly IAppLogger<EmpresaApplication> _logger;
 
     public EmpresaApplication(
         IUnitOfWork unitOfWork,
-        IMapper mapper,
+        IAppMapper mapper,
         EmpresaDTOValidator validationRules,
         IAppLogger<EmpresaApplication> logger)
     {

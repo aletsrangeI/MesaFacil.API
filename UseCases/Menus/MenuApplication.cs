@@ -1,4 +1,4 @@
-using AutoMapper;
+using Interface.Mapping;
 using Common;
 using Domain.Entities;
 using DTO.Menu;
@@ -11,13 +11,13 @@ namespace UseCases.Menus;
 public class MenuApplication : IMenuApplication
 {
     private readonly IUnitOfWork _unitOfWork;
-    private readonly IMapper _mapper;
+    private readonly IAppMapper _mapper;
     private readonly MenuDTOValidator _validationRules;
     private readonly IAppLogger<MenuApplication> _logger;
 
     public MenuApplication(
         IUnitOfWork unitOfWork,
-        IMapper mapper,
+        IAppMapper mapper,
         MenuDTOValidator validationRules,
         IAppLogger<MenuApplication> logger)
     {

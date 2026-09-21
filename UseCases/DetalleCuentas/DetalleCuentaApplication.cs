@@ -1,4 +1,4 @@
-using AutoMapper;
+using Interface.Mapping;
 using Common;
 using Domain.Entities;
 using DTO.DetalleCuenta;
@@ -11,13 +11,13 @@ namespace UseCases.DetalleCuentas;
 public class DetalleCuentaApplication : IDetalleCuentaApplication
 {
     private readonly IUnitOfWork _unitOfWork;
-    private readonly IMapper _mapper;
+    private readonly IAppMapper _mapper;
     private readonly DetalleCuentaDTOValidator _validationRules;
     private readonly IAppLogger<DetalleCuentaApplication> _logger;
 
     public DetalleCuentaApplication(
         IUnitOfWork unitOfWork,
-        IMapper mapper,
+        IAppMapper mapper,
         DetalleCuentaDTOValidator validationRules,
         IAppLogger<DetalleCuentaApplication> logger)
     {

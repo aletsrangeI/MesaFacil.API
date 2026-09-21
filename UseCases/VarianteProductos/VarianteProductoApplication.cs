@@ -1,4 +1,4 @@
-using AutoMapper;
+using Interface.Mapping;
 using Common;
 using Domain.Entities;
 using DTO.VarianteProducto;
@@ -11,13 +11,13 @@ namespace UseCases.VarianteProductos;
 public class VarianteProductoApplication : IVarianteProductoApplication
 {
     private readonly IUnitOfWork _unitOfWork;
-    private readonly IMapper _mapper;
+    private readonly IAppMapper _mapper;
     private readonly VarianteProductoDTOValidator _validationRules;
     private readonly IAppLogger<VarianteProductoApplication> _logger;
 
     public VarianteProductoApplication(
         IUnitOfWork unitOfWork,
-        IMapper mapper,
+        IAppMapper mapper,
         VarianteProductoDTOValidator validationRules,
         IAppLogger<VarianteProductoApplication> logger)
     {

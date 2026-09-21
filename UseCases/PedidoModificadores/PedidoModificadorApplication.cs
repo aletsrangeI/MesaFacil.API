@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using Interface.Mapping;
 using Common;
 using Domain.Entities;
 using DTO.PedidoModificador;
@@ -11,13 +11,13 @@ namespace UseCases.PedidoModificadores;
 public class PedidoModificadorApplication : IPedidoModificadorApplication
 {
     private readonly IUnitOfWork _unitOfWork;
-    private readonly IMapper _mapper;
+    private readonly IAppMapper _mapper;
     private readonly PedidoModificadorDTOValidator _validationRules;
     private readonly IAppLogger<PedidoModificadorApplication> _logger;
 
     public PedidoModificadorApplication(
         IUnitOfWork unitOfWork,
-        IMapper mapper,
+        IAppMapper mapper,
         PedidoModificadorDTOValidator validationRules,
         IAppLogger<PedidoModificadorApplication> logger)
     {

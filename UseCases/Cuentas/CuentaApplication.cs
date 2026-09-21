@@ -1,4 +1,4 @@
-using AutoMapper;
+using Interface.Mapping;
 using Common;
 using Domain.Entities;
 using DTO.Cuenta;
@@ -11,14 +11,14 @@ namespace UseCases.Cuentas;
 public class CuentaApplication : ICuentaApplication
 {
     private readonly IUnitOfWork _unitOfWork;
-    private readonly IMapper _mapper;
+    private readonly IAppMapper _mapper;
     private readonly CuentaDTOValidator _validationRules;
     private readonly IAppLogger<CuentaApplication> _logger;
     private readonly ISupervisorPinSecurityService? _supervisorPinSecurityService;
 
     public CuentaApplication(
         IUnitOfWork unitOfWork,
-        IMapper mapper,
+        IAppMapper mapper,
         CuentaDTOValidator validationRules,
         IAppLogger<CuentaApplication> logger,
         ISupervisorPinSecurityService? supervisorPinSecurityService = null)

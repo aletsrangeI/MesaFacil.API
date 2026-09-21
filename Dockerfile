@@ -1,5 +1,5 @@
-# Etapa 1: Build y Publish con SDK de .NET 9
-FROM mcr.microsoft.com/dotnet/sdk:9.0-alpine AS build
+# Etapa 1: Build y Publish con SDK de .NET 10
+FROM mcr.microsoft.com/dotnet/sdk:10.0-alpine AS build
 WORKDIR /src
 
 # Copiar proyectos que componen la API (excluyendo tests) para optimizar la caché de capas
@@ -19,8 +19,8 @@ RUN dotnet restore "WebApi/WebApi.csproj"
 COPY . .
 RUN dotnet publish "WebApi/WebApi.csproj" -c Release -o /app/publish /p:UseAppHost=false
 
-# Etapa 2: Runtime ligero (.NET 9 ASP.NET en Alpine, ~100MB)
-FROM mcr.microsoft.com/dotnet/aspnet:9.0-alpine AS runtime
+# Etapa 2: Runtime ligero (.NET 10 ASP.NET en Alpine, ~100MB)
+FROM mcr.microsoft.com/dotnet/aspnet:10.0-alpine AS runtime
 WORKDIR /app
 EXPOSE 8080
 ENV ASPNETCORE_URLS=http://+:8080

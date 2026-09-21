@@ -1,4 +1,4 @@
-using AutoMapper;
+using Interface.Mapping;
 using Common;
 using Domain.Entities;
 using DTO.Credencial;
@@ -11,13 +11,13 @@ namespace UseCases.Credenciales;
 public class CredencialApplication : ICredencialApplication
 {
     private readonly IUnitOfWork _unitOfWork;
-    private readonly IMapper _mapper;
+    private readonly IAppMapper _mapper;
     private readonly CredencialDTOValidator _validationRules;
     private readonly IAppLogger<CredencialApplication> _logger;
 
     public CredencialApplication(
         IUnitOfWork unitOfWork,
-        IMapper mapper,
+        IAppMapper mapper,
         CredencialDTOValidator validationRules,
         IAppLogger<CredencialApplication> logger)
     {

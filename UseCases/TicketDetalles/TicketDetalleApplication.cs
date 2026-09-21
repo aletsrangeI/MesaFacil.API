@@ -1,4 +1,4 @@
-using AutoMapper;
+using Interface.Mapping;
 using Common;
 using Domain.Entities;
 using DTO.TicketDetalle;
@@ -11,13 +11,13 @@ namespace UseCases.TicketDetalles;
 public class TicketDetalleApplication : ITicketDetalleApplication
 {
     private readonly IUnitOfWork _unitOfWork;
-    private readonly IMapper _mapper;
+    private readonly IAppMapper _mapper;
     private readonly TicketDetalleDTOValidator _validationRules;
     private readonly IAppLogger<TicketDetalleApplication> _logger;
 
     public TicketDetalleApplication(
         IUnitOfWork unitOfWork,
-        IMapper mapper,
+        IAppMapper mapper,
         TicketDetalleDTOValidator validationRules,
         IAppLogger<TicketDetalleApplication> logger)
     {

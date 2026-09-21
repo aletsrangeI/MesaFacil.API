@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using Interface.Mapping;
 using Common;
 using Domain.Entities;
 using DTO.TicketCocina;
@@ -11,13 +11,13 @@ namespace UseCases.TicketsCocina;
 public class TicketCocinaApplication : ITicketCocinaApplication
 {
     private readonly IUnitOfWork _unitOfWork;
-    private readonly IMapper _mapper;
+    private readonly IAppMapper _mapper;
     private readonly TicketCocinaDTOValidator _validationRules;
     private readonly IAppLogger<TicketCocinaApplication> _logger;
 
     public TicketCocinaApplication(
         IUnitOfWork unitOfWork,
-        IMapper mapper,
+        IAppMapper mapper,
         TicketCocinaDTOValidator validationRules,
         IAppLogger<TicketCocinaApplication> logger)
     {

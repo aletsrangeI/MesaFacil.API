@@ -1,4 +1,4 @@
-using AutoMapper;
+using Interface.Mapping;
 using Common;
 using Domain.Entities;
 using DTO.GrupoModificador;
@@ -11,13 +11,13 @@ namespace UseCases.GruposModificador;
 public class GrupoModificadorApplication : IGrupoModificadorApplication
 {
     private readonly IUnitOfWork _unitOfWork;
-    private readonly IMapper _mapper;
+    private readonly IAppMapper _mapper;
     private readonly GrupoModificadorDTOValidator _validationRules;
     private readonly IAppLogger<GrupoModificadorApplication> _logger;
 
     public GrupoModificadorApplication(
         IUnitOfWork unitOfWork,
-        IMapper mapper,
+        IAppMapper mapper,
         GrupoModificadorDTOValidator validationRules,
         IAppLogger<GrupoModificadorApplication> logger)
     {
