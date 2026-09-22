@@ -244,7 +244,7 @@ public class HostessServiceTests
         );
 
         context.ReservasMesa.Add(
-            new ReservaMesa { Id = 1, IdEmpresa = 1, IdSucursal = 1, NombreCliente = "Reserva 1", TelefonoCliente = "789", FechaHoraReserva = DateTime.UtcNow.AddHours(1), EstadoReserva = "Confirmada", IsActive = true }
+            new ReservaMesa { Id = 1, IdEmpresa = 1, IdSucursal = 1, NombreCliente = "Reserva 1", TelefonoCliente = "789", FechaHoraReserva = DateTime.UtcNow.Date.AddHours(12), EstadoReserva = "Confirmada", IsActive = true }
         );
 
         await context.SaveChangesAsync();
