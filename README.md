@@ -20,6 +20,23 @@ El modelo es **modular, escalable y extensible**, lo que permite adaptar el sist
 
 ---
 
+## Configuración de Entorno y Secretos (Local & Producción)
+
+El repositorio no almacena credenciales ni cadenas de conexión en `appsettings.json` por motivos de seguridad y auditoría.
+
+* **Desarrollo Local (`dotnet user-secrets`):**
+  ```powershell
+  cd WebApi
+  dotnet user-secrets set "ConnectionStrings:mesafacil_db" "Server=100.110.215.58;Port=5432;Database=MesaFacil;User Id=orionsys;Password=TU_PASSWORD;"
+  dotnet user-secrets set "JwtSettings:SecretKey" "TU_JWT_SECRET_KEY"
+  ```
+* **Homelab / Producción (Docker + Infisical):**
+  Los secretos se administran centralizadamente en el servidor **Infisical** (`:8088`), se exportan a `/opt/mesafacil/.env` (`chmod 600`) mediante `/opt/mesafacil/export-secrets.sh`, y Docker Compose los inyecta en el contenedor de la API como variables de entorno (`ConnectionStrings__mesafacil_db`).
+
+Para la guía completa, consulta la [Documentación de Gestión de Secretos](file:///c:/OrionSys/MesaFacil/docs/SECRETS_MANAGEMENT.md).
+
+---
+
 ## Arquitectura de Catálogos Fuertemente Tipados
 
 Para mejorar la integridad referencial y simplificar las consultas a nivel base de datos, el sistema ha migrado del antiguo modelo de catálogo dinámico general (`Catalog` / `CatalogItem`) hacia **catálogos fuertemente tipados**, representados por tablas con el prefijo `Cat`. 

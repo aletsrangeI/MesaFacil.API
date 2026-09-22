@@ -23,10 +23,10 @@ jobs:
       - name: Checkout del código
         uses: actions/checkout@v4
 
-      - name: Configurar .NET 9 SDK
+      - name: Configurar .NET 10 SDK
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '9.0.x'
+          dotnet-version: '10.0.x'
 
       - name: Ejecutar pruebas unitarias
         run: |
@@ -107,7 +107,7 @@ jobs:
           set -e
           cd /opt/mesafacil
           if [ -f /opt/mesafacil/export-secrets.sh ]; then
-            bash /opt/mesafacil/export-secrets.sh
+            bash /opt/mesafacil/export-secrets.sh || echo ">> ADVERTENCIA: Falló la exportación de Infisical, usando .env existente."
           fi
           docker compose pull api
           
@@ -139,7 +139,7 @@ jobs:
           echo ">> Estado del puerto 5286 tras limpieza:"
           ss -tulpn | grep 5286 || echo ">> Puerto 5286 libre."
 
-          docker compose up -d --remove-orphans api
+          docker compose up -d --no-deps --remove-orphans api
           echo ">> Esperando verificación de salud de mesafacil-api..."
           for i in $(seq 1 30); do
             if docker inspect --format='{{json .State.Health.Status}}' mesafacil-api 2>/dev/null | grep -q 'healthy'; then
