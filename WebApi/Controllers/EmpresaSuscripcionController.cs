@@ -142,7 +142,9 @@ public class EmpresaSuscripcionController : ControllerBase
             KdsAddonsContratados = s.KdsAddonsContratados,
             ComanderosAddons = s.ComanderosAddons,
             EnPeriodoGracia = s.EnPeriodoGracia,
-            MaxKdsPermitidos = (s.Plan?.MaxKdsBase ?? 0) + s.KdsAddonsContratados
+            MaxKdsPermitidos = (s.Plan?.MaxKdsBase ?? 0) + s.KdsAddonsContratados,
+            MotivoSuspension = s.MotivoSuspension,
+            ContactoWhatsApp = s.ContactoWhatsApp
         };
     }
 }
