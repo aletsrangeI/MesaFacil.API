@@ -101,6 +101,8 @@ app.UseWatchDogExceptionLogger();
 app.UseHttpsRedirection();
 app.UseCors("policyMesaFacil");
 app.UseAuthentication();
+// Spec 033: Kill-Switch operativo para Multi-Tenant SaaS (IMemoryCache, interrumpe con 402 si está suspendido)
+app.UseMiddleware<WebApi.Middlewares.TenantStatusMiddleware>();
 app.UseAuthorization();
 
 app.UseWatchDog(conf =>

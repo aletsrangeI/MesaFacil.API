@@ -104,6 +104,9 @@ public static class ConfigureServices
         // Spec 032: Módulo de Hostess, Reservaciones y Fila de Espera Digital (Waitlist)
         services.AddScoped<Interface.UseCases.IHostessService, Hostess.HostessService>();
 
+        // Spec 033: Motor Kill-Switch y Estado de Suscripción Multi-Tenant (IMemoryCache)
+        services.AddScoped<Interface.Suscripciones.ITenantStatusService, Suscripciones.TenantStatusService>();
+
         return services;
     }
 

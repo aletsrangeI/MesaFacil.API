@@ -38,6 +38,8 @@ public class EmpresaSuscripcionDTO
     public int ComanderosAddons { get; set; }
     public bool EnPeriodoGracia { get; set; }
     public int MaxKdsPermitidos { get; set; }
+    public string? MotivoSuspension { get; set; }
+    public string? ContactoWhatsApp { get; set; }
 }
 
 /// <summary>
@@ -50,3 +52,30 @@ public class AsignarPlanSuscripcionRequestDTO
     public int KdsAddonsContratados { get; set; }
     public int ComanderosAddons { get; set; }
 }
+
+/// <summary>
+/// Spec 033: Payload entrante desde OrionSys Central Hub para actualizar estado de suscripción / Kill-Switch.
+/// </summary>
+public class ActualizarEstadoLicenciaRequestDTO
+{
+    public int EmpresaId { get; set; }
+    public string NuevoEstado { get; set; } = string.Empty; // "Activa", "EnGracia", "Suspendida"
+    public DateTime? FechaFinVigencia { get; set; }
+    public bool? EnPeriodoGracia { get; set; }
+    public string? Motivo { get; set; }
+    public string? ContactoWhatsApp { get; set; }
+}
+
+/// <summary>
+/// Spec 033: Respuesta estructurada cuando la API devuelve 402 Payment Required.
+/// </summary>
+public class TenantSuspendidoResponseDTO
+{
+    public bool IsSuccess { get; set; } = false;
+    public string ErrorCode { get; set; } = "SUBSCRIPTION_SUSPENDED";
+    public string Message { get; set; } = "El servicio de MesaFácil se encuentra temporalmente suspendido por falta de pago.";
+    public string? ContactoWhatsApp { get; set; }
+    public DateTime? FechaFinVigencia { get; set; }
+    public string? Motivo { get; set; }
+}
+

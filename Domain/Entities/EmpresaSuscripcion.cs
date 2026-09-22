@@ -46,6 +46,23 @@ public class EmpresaSuscripcion : BaseAuditableEntity
     /// </summary>
     public bool EnPeriodoGracia { get; set; }
 
+    /// <summary>
+    /// Spec 033: Motivo por el cual la empresa fue suspendida desde OrionSys Central Hub o sistema de cobranza.
+    /// </summary>
+    [MaxLength(250)]
+    public string? MotivoSuspension { get; set; }
+
+    /// <summary>
+    /// Spec 033: Número o enlace de WhatsApp de soporte/cobranza personalizado para mostrar en la pantalla de suspensión.
+    /// </summary>
+    [MaxLength(50)]
+    public string? ContactoWhatsApp { get; set; }
+
+    /// <summary>
+    /// Spec 033: Fecha UTC del último webhook/evento recibido desde OrionSys Central Hub.
+    /// </summary>
+    public DateTime? UltimaActualizacionHub { get; set; }
+
     [ForeignKey(nameof(IdEmpresa))]
     public virtual Empresa? Empresa { get; set; }
 
