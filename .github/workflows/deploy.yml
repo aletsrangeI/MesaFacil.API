@@ -147,8 +147,9 @@ jobs:
               break
             fi
             if [ "$i" -eq 30 ]; then
-              echo ">> ADVERTENCIA: Timeout esperando estado 'healthy'. Logs del contenedor:"
-              docker logs --tail 30 mesafacil-api || true
+              echo ">> ERROR: Timeout esperando estado 'healthy'. Logs del contenedor:"
+              docker logs --tail 50 mesafacil-api || true
+              exit 1
             fi
             echo "Esperando estado saludable (intento $i/30)..."
             sleep 2

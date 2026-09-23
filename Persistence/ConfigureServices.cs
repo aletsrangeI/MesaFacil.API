@@ -29,13 +29,17 @@ public static class ConfigureServices
 
         services.AddDbContext<ApplicationDbContext>(
             options =>
+            {
                 options.UseNpgsql(
                     connString,
                     builder =>
                         builder.MigrationsAssembly(
                             typeof(ApplicationDbContext).Assembly.FullName
                         )
-                )
+                );
+                options.ConfigureWarnings(w =>
+                    w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning));
+            }
         );
         
         var dsBuilder  = new NpgsqlDataSourceBuilder(connString);
